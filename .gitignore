@@ -1,0 +1,16 @@
+# Godot 4
+.godot/
+.import/
+
+# Android build template (regenerated locally)
+/android/
+
+# Build outputs — the APK is published to GitHub Releases, not committed
+*.apk
+*.apk.idsig
+/build/
+
+# OS cruft
+Thumbs.db
+.DS_Store
+desktop.ini

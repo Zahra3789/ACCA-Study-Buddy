@@ -1,0 +1,31 @@
+; Engine configuration file.
+; ACCA Study Buddy — study ACCA/FIA exams by battling topic monsters.
+; Built for Godot 4.x. Open this folder in Godot (it finds project.godot).
+
+config_version=5
+
+[application]
+
+config/name="ACCA Study Buddy"
+config/description="Study ACCA / FIA exams by battling a monster for each topic."
+run/main_scene="res://Main.tscn"
+config/features=PackedStringArray("4.3", "GL Compatibility")
+
+[autoload]
+
+Game="*res://scripts/Game.gd"
+Content="*res://scripts/Content.gd"
+
+[display]
+
+window/size/viewport_width=720
+window/size/viewport_height=1280
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+window/handheld/orientation="portrait"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
