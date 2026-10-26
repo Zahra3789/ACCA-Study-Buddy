@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Font choice</title>
+<!-- Candidate body fonts, all SIL Open Font Licence (free to bundle in the APK). Loaded from Google Fonts for this comparison only. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&family=VT323&family=Nunito:wght@600;800&family=Fredoka:wght@400;600&display=swap">
+<style>
+body { margin: 0; background: #2a1e2e; font-family: sans-serif; color: #fbe9d0; }
+h1 { font: 20px sans-serif; margin: 14px 18px 4px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 10px 18px 18px; }
+.opt { background: #3e2731; border-radius: 8px; padding: 12px; }
+.opt h2 { font: bold 18px sans-serif; margin: 0 0 8px; color: #ffe39a; }
+.dlg { background: #ffb36b; color: #3e2731; border: 4px solid #6e3f33; border-radius: 6px; padding: 12px 14px; font-size: 22px; line-height: 1.3; }
+.dlg b { color: #8c2b3c; }
+.btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.btns div { border: 3px solid #2b1d2a; border-radius: 4px; padding: 10px; font-size: 20px; color: #fff6e6; }
+</style>
+</head>
+<body>
+<h1>Which body font is easiest to read? (titles and banners keep the RPG pack fonts)</h1>
+<div class="grid" id="g"></div>
+<script>
+const fonts = [
+  ['1. Pixelify Sans - pixel style, but clear', "'Pixelify Sans'", 400],
+  ['2. VT323 - retro terminal', "'VT323'", 400, 1.25],
+  ['3. Nunito - rounded, very clear', "'Nunito'", 600],
+  ['4. Fredoka - soft, game-like', "'Fredoka'", 400],
+];
+for (const [name, fam, w, scale] of fonts) {
+  const s = scale || 1;
+  document.getElementById('g').insertAdjacentHTML('beforeend', `<div class="opt"><h2>${name}</h2>
+    <div class="dlg" style="font-family:${fam};font-weight:${w};font-size:${22*s}px"><b>Sensei Otter:</b> An accrual is an expense used but not yet paid, so it is a <b>liability</b>. Rent of 12,000 paid to 30 April - the prepayment at 31 December is 4,000.</div>
+    <div class="btns" style="font-family:${fam};font-weight:${w};font-size:${20*s}px">
+      <div style="background:#e0484f">A  Dr Expense, Cr Accruals</div><div style="background:#4f74b3">B  Dr Accruals, Cr Expense</div>
+      <div style="background:#f2c14e;color:#3e2731">C  Dr Cash, Cr Expense</div><div style="background:#a8263f">D  No entry needed</div></div></div>`);
+}
+</script>
+</body>
+</html>

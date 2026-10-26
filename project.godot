@@ -11,10 +11,15 @@ config/description="Study ACCA / FIA exams by battling a monster for each topic.
 run/main_scene="res://Main.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
 
+[audio]
+
+general/text_to_speech=true
+
 [autoload]
 
 Game="*res://scripts/Game.gd"
 Content="*res://scripts/Content.gd"
+UI="*res://scripts/UI.gd"
 
 [display]
 
@@ -23,6 +28,14 @@ window/size/viewport_height=1280
 window/stretch/mode="canvas_items"
 window/stretch/aspect="keep"
 window/handheld/orientation="portrait"
+
+[gui]
+
+common/snap_controls_to_pixels=true
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
 
 [rendering]
 

@@ -1,0 +1,1642 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>ACCA Study Buddy - preview</title>
+<!-- PREVIEW / PROTOTYPE of the Godot app (720x1280 portrait). Questions come from
+     scripts/Content.gd (served as data.js, or embedded by build-standalone.ps1).
+     UI art: Franuka RPG UI pack (assets/rpg, not redistributed). Samurai: tools/make_samurai.ps1.
+     Monster: Ninja Adventure (CC0). -->
+<style>
+html, body { margin: 0; height: 100%; background: #120d16; overflow: hidden; }
+#stage { position: absolute; left: 50%; top: 50%; width: 720px; height: 1280px; transform-origin: center; }
+#screen { position: relative; width: 720px; height: 1280px; overflow: hidden; font-family: Body, sans-serif; font-size: 30px;
+  color: #3e2731; background: #2a1e2e; image-rendering: pixelated; user-select: none; }
+img { image-rendering: pixelated; }
+.title { font-family: RpgTitle, serif; font-size: 34px; }
+.titleO { font-family: RpgTitleO, serif; font-size: 40px; }
+.screen { position: absolute; inset: 0; display: flex; flex-direction: column; box-sizing: border-box; }
+.hidden { display: none !important; }
+/* 9-slice pieces (3x art): border-image drawn over the padding, independent of layout */
+.box { border-style: solid; border-width: 0; border-image-slice: 48 fill; border-image-width: 48px; padding: 34px 36px; box-sizing: border-box; }
+.btn { font-family: Body, sans-serif; font-size: 28px; border-style: solid; border-width: 0; border-image-slice: 15 24 fill;
+  border-image-width: 15px 24px; background: none; padding: 14px 28px; min-height: 64px; cursor: pointer; box-sizing: border-box;
+  line-height: 1.15; position: relative; }
+.btn:disabled { filter: grayscale(.8) brightness(.8); cursor: default; }
+.light { color: #fff6e6; text-shadow: 2px 2px 0 rgba(43,29,42,.55); }
+.dark { color: #3e2731; }
+.banner { height: 96px; flex: none; border-style: solid; border-width: 0; border-image-slice: 40 48 fill; border-image-width: 40px 48px;
+  display: flex; align-items: center; justify-content: center; padding: 0 60px 14px; box-sizing: border-box; }
+.icon { width: 48px; height: 48px; flex: none; }
+.bar { position: relative; height: 30px; border-style: solid; border-width: 0; border-image-slice: 15 24 fill; border-image-width: 15px 24px; }
+.bar > i { position: absolute; left: 12px; top: 9px; bottom: 9px; width: 0; display: block; transition: width .6s; background: #64c25b; box-shadow: inset 0 -4px 0 rgba(0,0,0,.18); }
+.bar.mid > i { background: #f2c14e; } .bar.low > i { background: #e0484f; }
+.bar.xp > i { background: #6fb6ff; }
+
+/* ---------- home */
+#home { background: linear-gradient(#3b2a52 0%, #5a3a6e 45%, #2a1e2e 100%); padding: 58px 26px 20px; gap: 14px; }
+/* title screen: big Zuru, then one card per exam */
+#title { background: linear-gradient(#141a33 0%, #3b2a52 55%, #2a1e2e 100%); padding: 58px 26px 24px; gap: 18px; align-items: center; }
+#title .hero { width: 192px; height: 208px; animation: bob 1.6s ease-in-out infinite; }
+#title .speech { width: 668px; box-sizing: border-box; text-align: center; padding: 30px 36px 26px; font-size: 24px; }
+#examList { width: 668px; display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; overflow-y: auto; padding: 0 2px 20px; scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(#000 calc(100% - 24px), transparent); mask-image: linear-gradient(#000 calc(100% - 24px), transparent); }
+#examList .grp { color: #ffe39a; font-family: RpgTitleO, serif; font-size: 36px; letter-spacing: 1px; text-shadow: 3px 3px 0 #2b1d2a; margin: 14px 0 2px; text-align: center; }
+#examList .exam { display: flex; align-items: center; gap: 16px; cursor: pointer; padding: 36px 36px 34px 48px; flex: none; transition: transform .12s; height: 164px; box-sizing: border-box; }   /* every row the same size */
+#examList .exam.live:hover { transform: scale(1.02); }
+#examList .exam.soon { opacity: .75; } #examList .exam.done { opacity: .9; }
+#examList .code { font-family: Body, sans-serif; font-weight: 700; font-size: 26px; color: #fff6e6; background: #8c2b3c; border-radius: 12px; padding: 8px 0; width: 92px; text-align: center; flex: none; line-height: 1; box-shadow: 0 3px 0 #2b1d2a; }
+#examList .txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; } #examList .nm { font-size: 27px; line-height: 1.05; } #examList .sub { font-size: 21px; color: #6e3f33; line-height: 1.1; }
+#examList .cd { color: #8c2b3c; font-weight: 700; }
+#examList > .btn { flex: none; font-size: 24px; min-height: 56px; padding: 6px 20px; }
+.planForm label { font-size: 22px; line-height: 1.1; }
+#examList .chip { flex: none; font-size: 22px; font-weight: 700; padding: 8px 14px; border-radius: 14px; white-space: nowrap; box-shadow: 0 3px 0 #2b1d2a; }
+#examList .chip.ok { background: #1a804d; color: #e8ffe8; } #examList .chip.go { background: #c8414b; color: #fff6e6; } #examList .chip.soon { background: rgba(62,39,49,.25); color: #3e2731; }
+#title .note { color: #fbe9d0; opacity: .7; font-size: 22px; }
+#snow { position: absolute; inset: 0; width: 720px; height: 1280px; pointer-events: none; z-index: 36; }
+body.xmas #title { background: linear-gradient(#0f1a3a 0%, #2a3f6e 50%, #1b2238 100%); }
+body.xmas #home { background: linear-gradient(#1f2a4f 0%, #3b2a52 45%, #2a1e2e 100%); }
+body.xmas .banner.titleO { filter: hue-rotate(-20deg) saturate(1.2); }
+body.xmas #title .note::after { content: ' - happy holidays!'; }
+/* decorations: a string of lights under the top buttons on every screen; trees and presents round Zuru on the title screen */
+#xmasDeco { position: absolute; inset: 0; pointer-events: none; z-index: 35; display: none; } body.xmas #xmasDeco { display: block; }
+#xmasDeco .lights { position: absolute; left: 0; top: 50px; width: 720px; height: 24px; background-repeat: repeat-x; background-size: 72px 24px; image-rendering: pixelated; animation: twinkle 1.2s steps(2) infinite; }
+@keyframes twinkle { 50% { filter: brightness(1.35); } }
+#title .xtree, #title .xgift { display: none; position: absolute; image-rendering: pixelated; }
+body.xmas #title .xtree, body.xmas #title .xgift { display: block; }
+#title .xtree { width: 112px; height: 168px; top: 200px; } #title .xtree.l { left: 60px; } #title .xtree.r { right: 60px; }
+#title .xgift { width: 44px; height: 44px; top: 330px; } #title .xgift.a { left: 40px; } #title .xgift.b { left: 150px; top: 338px; } #title .xgift.c { right: 46px; }
+body.xmas .card.box, body.xmas .speech { box-shadow: 0 -6px 0 -2px rgba(255,255,255,.65); }   /* a cap of snow on the frames */
+/* Halloween */
+body.halloween #title { background: linear-gradient(#120a1c 0%, #3a1a4a 55%, #1b0f24 100%); }
+body.halloween #home { background: linear-gradient(#2a1033 0%, #4a1f3f 45%, #1b0f24 100%); }
+body.halloween .banner.titleO { filter: hue-rotate(12deg) saturate(1.4); }
+body.halloween #title .note::after { content: ' - happy Halloween!'; }
+body.halloween #xmasDeco { display: block; } body.halloween #xmasDeco .lights { animation: none; }
+#title .xpump { display: none; position: absolute; image-rendering: pixelated; width: 128px; height: 104px; top: 262px; }
+body.halloween #title .xpump { display: block; } #title .xpump.l { left: 56px; } #title .xpump.r { right: 56px; } #title .xpump.s { width: 72px; height: 58px; left: 180px; top: 318px; }
+body.halloween #foe { filter: drop-shadow(0 0 14px rgba(232,129,43,.8)) hue-rotate(0deg); }
+#home .hero { display: flex; gap: 12px; align-items: flex-end; }
+#home .hero img { width: 144px; height: 156px; flex: none; margin-bottom: 8px; animation: bob 1.6s ease-in-out infinite; }
+#home .speech { flex: 1; }
+#home .lvl { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+#home .lvl .bar { flex: 1; }
+#resetBtn { min-height: 44px; padding: 4px 18px; font-size: 22px; }
+#resetAsk { display: flex; gap: 10px; margin-top: 10px; } #resetAsk .btn { flex: 1; min-height: 52px; font-size: 24px; padding: 6px 10px; }
+#cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; flex: 1; }
+.card { display: flex; flex-direction: column; gap: 6px; cursor: pointer; text-align: left; transition: transform .12s; padding: 44px 40px 40px; line-height: 1; }
+.card:hover { transform: translateY(-4px) scale(1.02); } .card:active { transform: scale(.98); }
+.card .top { display: flex; align-items: center; gap: 10px; }
+.card .title, #chapDetail .title, .chap .name, #lessonBox .title, #mtq .title { font-family: Body, sans-serif; font-weight: 700; font-size: 32px; line-height: 1; }
+.chap .name { font-size: 24px; }
+.card .stat { margin-top: auto; display: flex; gap: 6px; align-items: center; }
+@keyframes bob { 50% { transform: translateY(-6px); } }
+
+/* ---------- menu screens (bank, mock, records) */
+.menu { padding: 58px 26px 24px; gap: 16px; background: linear-gradient(#24314f, #2a1e2e); }
+.menu .panel { flex: 1; min-height: 0; display: flex; padding: 52px 46px 48px; }
+#menuScroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+/* Inner scrollers: no native scrollbar inside the frame art, content fades out before it reaches the frame
+   (Firefox otherwise draws a chunky scrollbar and hard-clips text right on the edge). */
+#menuScroll, #dlgScroll, #lessonBox, #mtqBox, #chapDetail .path, #cmds { scrollbar-width: none; padding-bottom: 28px;
+  -webkit-mask-image: linear-gradient(#000 0, #000 calc(100% - 28px), transparent 100%); mask-image: linear-gradient(#000 0, #000 calc(100% - 28px), transparent 100%); }
+/* Lists that scroll also fade at the top, so a scrolled item never sits hard against the frame. */
+#menuScroll, #chapDetail .path, #lessonBox, #mtqBox { padding-top: 14px;
+  -webkit-mask-image: linear-gradient(transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%); mask-image: linear-gradient(transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%); }
+#menuScroll::-webkit-scrollbar, #dlgScroll::-webkit-scrollbar, #lessonBox::-webkit-scrollbar, #mtqBox::-webkit-scrollbar, #chapDetail .path::-webkit-scrollbar, #cmds::-webkit-scrollbar { display: none; }
+#menuScroll > * { flex: none; }
+.menu .row { display: flex; gap: 10px; }
+.menu .row > * { flex: 1; }
+#menuPinned { flex: none; }   /* type filter stays put above the scrolling list */
+.rec { display: grid; grid-template-columns: 1fr 200px; gap: 6px 12px; align-items: center; }
+
+/* ---------- book */
+#book { background: radial-gradient(circle at 50% 45%, #5a3a2e, #24161c 75%); padding: 58px 0 24px; align-items: center; gap: 10px; }
+#bookWrap { position: relative; width: 720px; height: 450px; margin-top: 30px; }
+#bookImg { position: absolute; left: 0; top: 0; width: 720px; height: 450px; }
+#pageTurn { position: absolute; left: 0; top: -22px; width: 720px; height: 495px; background-size: 5760px 495px; display: none; }
+.page { position: absolute; top: 34px; width: 236px; height: 312px; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+#pageL { left: 84px; } #pageR { left: 400px; }   /* inside the paper: 68-334 and 385-652 measured from the art */
+.chap { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border-radius: 6px; flex: none; box-sizing: border-box; cursor: pointer; border-bottom: 3px solid rgba(140,43,60,.35); }
+.chap:hover { background: rgba(255,255,255,.28); }
+.chap.sel { background: rgba(255,244,214,.75); box-shadow: 0 0 0 3px #f2c14e; }
+#chapDetail { width: 660px; flex: 1; display: grid; grid-template-columns: 200px 1fr; grid-template-rows: 1fr auto; gap: 10px 16px; padding: 44px 44px 40px; line-height: 1.1; }
+#chapDetail .mon { width: 200px; height: 178px; align-self: center; animation: bob 1.4s ease-in-out infinite; }
+#chapDetail .info { display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+#chapDetail .go { grid-column: span 2; }
+.chap .h { display: flex; align-items: center; gap: 8px; }
+.chap .h > div { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; white-space: nowrap; }
+.chap .h img { width: 40px; height: 36px; }
+.chap .name { font-family: RpgTitle, serif; font-size: 24px; color: #8c2b3c; line-height: 1; }
+.chap .mon { color: #6e3f33; font-size: 24px; line-height: 1.1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.chap .stars { display: flex; align-items: center; gap: 2px; }
+.chap .stars img { width: 30px; height: 30px; }
+.chap .prog { font-size: 20px; color: #33497a; line-height: 1; display: flex; justify-content: space-between; }
+.chap .pbar { height: 8px; background: rgba(110,63,51,.25); border-radius: 5px; overflow: hidden; }
+.chap .pbar i { display: block; height: 100%; background: #2e8b57; }
+.tabs { position: absolute; right: 30px; top: 12px; display: flex; flex-direction: column; gap: 2px; }   /* tucked into the cover edge, tips showing */
+.tabs .tab { position: relative; width: 60px; height: 60px; cursor: pointer; }
+.tabs img { width: 60px; height: 60px; display: block; }
+.tabs .tab.sel { transform: translateX(-10px); filter: drop-shadow(0 0 4px #ffe39a); }
+.tabs .tab span { position: absolute; left: 14px; top: 12px; width: 36px; text-align: center; font-size: 20px; white-space: nowrap; font-weight: 700; color: #fff6e6; text-shadow: 1px 1px 0 #2b1d2a; pointer-events: none; line-height: 1; }
+#bookInfo { color: #fbe9d0; text-align: center; padding: 0 40px; }
+#bookInfo b { color: #ffe39a; }
+
+/* ---------- battle */
+#field { position: relative; height: 600px; flex: none; overflow: hidden; }
+.plat { position: absolute; border-radius: 50%; background: radial-gradient(ellipse at 50% 40%, rgba(255,255,255,.3), rgba(0,0,0,.15) 70%); border: 4px solid rgba(43,29,42,.3); }
+#foePlat { width: 300px; height: 70px; right: 40px; top: 290px; }
+#youPlat { width: 340px; height: 80px; left: 20px; top: 512px; }
+#foe { position: absolute; width: 222px; height: 198px; right: 80px; top: 112px; transition: transform .6s, opacity .6s; }
+#you { position: absolute; width: 168px; height: 182px; left: 100px; top: 352px; }
+.plate { position: absolute; width: 360px; padding: 30px 40px 26px; }
+#foePlate { left: 22px; top: 60px; }
+#youPlate { right: 22px; top: 380px; }
+.plate .nm { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; line-height: 1; }
+.plate .nm .title { font-family: Body, sans-serif; font-size: 30px; font-weight: 600; text-transform: uppercase; color: #8c2b3c; }
+.plate .nm span:last-child { white-space: nowrap; font-size: 24px; }
+#foePlate { width: 420px; }
+.plate .bar { margin-top: 6px; }
+.hit { animation: shake .4s; } .flash { animation: flash .5s; }
+.lungeR { animation: lungeR .35s; } .lungeL { animation: lungeL .35s; }
+.faint { transform: translateY(80px) !important; opacity: 0; }
+@keyframes shake { 20%,60% { transform: translateX(-12px); } 40%,80% { transform: translateX(12px); } }
+@keyframes flash { 25%,75% { filter: brightness(3) saturate(0); } }
+@keyframes lungeR { 50% { transform: translate(90px,-50px); } }
+@keyframes lungeL { 50% { transform: translate(-90px,50px); } }
+.dmg { position: absolute; font-family: RpgTitleO, serif; font-size: 40px; color: #ffe39a; text-shadow: 3px 3px 0 #2b1d2a; animation: rise 1s forwards; pointer-events: none; }
+@keyframes rise { to { transform: translateY(-70px); opacity: 0; } }
+#timer { position: absolute; left: 50%; top: 4px; transform: translateX(-50%); color: #ffe39a; font-family: RpgTitleO, serif; font-size: 40px; text-shadow: 3px 3px 0 #2b1d2a; white-space: nowrap; }
+#timer.hud { font-size: 28px; top: auto; bottom: 10px; }   /* bottom of the field: the top row is the ESC/VOICE/SFX buttons */
+/* study plan screen */
+.planForm { display: flex; flex-direction: column; gap: 8px; }
+.planForm .row { display: flex; align-items: center; gap: 10px; } .planForm label { flex: 1; font-size: 24px; } .planForm input { width: 230px; flex: none; }
+.planForm input { font-family: Body, sans-serif; font-size: 24px; color: #3e2731; background: #fff4d6; border: 3px solid #6e3f33; border-radius: 6px; padding: 4px 8px; box-sizing: border-box; }
+/* study-plan calendar */
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; font-size: 17px; line-height: 1.1; }
+.cal .dh { text-align: center; font-weight: 700; color: #6e3f33; font-size: 18px; }
+.cal .d { background: rgba(255,255,255,.45); border: 2px solid rgba(110,63,51,.3); border-radius: 6px; min-height: 108px; padding: 4px; display: flex; flex-direction: column; gap: 3px; box-sizing: border-box; }
+.cal .d .n { display: flex; justify-content: space-between; font-weight: 700; font-size: 18px; } .cal .d .cap { font-size: 15px; color: #6e3f33; }
+.cal .d.off { opacity: .35; } .cal .d.past { background: rgba(255,255,255,.22); } .cal .d.today { outline: 3px solid #f2c14e; background: rgba(255,227,154,.5); }
+.cal .d.exam { background: #8c2b3c; color: #fff6e6; } .cal .d.exam .cap { color: #ffe39a; }
+.chip2 { background: #33497a; color: #fff6e6; border-radius: 5px; padding: 1px 4px; font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip2.mock { background: #c8414b; } .chip2.opt { background: rgba(62,39,49,.35); } .chip2.ok { background: #1a804d; } .chip2.part { background: #c98a2e; }
+/* boxed sections on reading pages (Key dates) */
+.sec { background: rgba(255,255,255,.42); border: 3px solid rgba(110,63,51,.4); border-radius: 10px; padding: 12px 16px 14px; display: flex; flex-direction: column; gap: 10px; line-height: 1.25; }
+.sec .h { font-weight: 700; font-size: 27px; color: #8c2b3c; border-bottom: 3px solid rgba(140,43,60,.35); padding-bottom: 4px; }
+.sec .planRow { border-bottom: none; padding: 0; }
+.planRow { font-size: 22px; line-height: 1.2; padding: 4px 6px; border-bottom: 2px solid rgba(62,39,49,.2); } .planRow .cap { color: #6e3f33; font-size: 20px; }
+.planRow.today { background: rgba(255,227,154,.55); border-radius: 6px; } .planRow.warn { color: #8c2b3c; }
+#saveRow .btn { padding: 4px 6px; }
+#topRow { display: flex; gap: 8px; margin-bottom: 6px; } #topRow .btn { flex: 1; min-height: 44px; padding: 2px 8px; font-size: 24px; }
+#homeSay { font-size: 24px; line-height: 1.15; }
+#home .speech { padding: 30px 36px 26px; }
+#home .card { padding: 36px 38px 32px; }
+#home { gap: 10px; padding-bottom: 14px; } #cards { gap: 12px; }
+.card > div:not(.top) { text-align: center; }   /* the six home cards: description + stat centred */
+.card .top, .card .stat { justify-content: center; }
+.card .top { flex-direction: column; gap: 4px; }                 /* icon above a one-line title */
+.card .title { font-size: 26px; white-space: nowrap; }
+.card .stat { font-size: 24px; flex-wrap: wrap; row-gap: 2px; }
+#datesBtn { position: absolute; left: 430px; top: 6px; z-index: 40; min-height: 44px; padding: 2px 26px; font-size: 20px; }
+#voiceBtn.speaking { animation: talk .5s ease-in-out infinite alternate; }
+@keyframes talk { from { filter: brightness(1); transform: scale(1); } to { filter: brightness(1.35) drop-shadow(0 0 6px #ffe39a); transform: scale(1.06); } }
+#lower { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 0 16px 18px; background: linear-gradient(#3e2731, #2a1e2e); border-top: 6px solid #2b1d2a; }
+#speaker.good { color: #b8ffc8; } #speaker.bad { color: #ffb8c0; }
+#speaker { position: relative; z-index: 2; align-self: flex-start; margin: 10px 0 -34px 26px; height: 48px; padding: 0 34px 6px; border-image-slice: 15 24 fill; border-image-width: 15px 24px; }
+#dlg { position: relative; min-height: 220px; max-height: 320px; line-height: 1.3; cursor: pointer; padding-top: 40px; flex: none; display: flex; flex-direction: column; }
+#dlgScroll { flex: 1; min-height: 0; overflow-y: auto; }
+#cmds > * { min-height: 0; }
+.btn { flex-shrink: 0; }
+#dlgText b { color: #8c2b3c; }
+#more { position: absolute; right: 40px; bottom: 26px; animation: bob .8s infinite; color: #8c2b3c; }
+#cmds { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-content: start; overflow-y: auto; }
+#cmds .btn { min-height: 110px; text-align: left; padding: 28px 28px 28px 74px; line-height: 1.05; }
+#cmds .btn.long { font-size: 24px; line-height: 1.15; }
+/* fit-to-box steps (set by fitBattle / fitPanel) */
+#cmds.tight .btn { font-size: 22px; line-height: 1.1; min-height: 84px; padding-top: 16px; padding-bottom: 16px; }
+#cmds.tight .wide, #cmds.tighter .wide { min-height: 54px; padding-top: 8px; padding-bottom: 8px; }
+#cmds.tighter .btn { font-size: 19px; line-height: 1.1; min-height: 70px; padding-top: 12px; padding-bottom: 12px; }
+#cmds.tight, #cmds.tighter { gap: 8px; }
+#cmds .panelq { line-height: 1.7; padding: 32px 36px; }
+#cmds.tight .panelq { font-size: 24px; line-height: 1.55; padding: 26px 30px; } #cmds.tighter .panelq { font-size: 22px; line-height: 1.5; padding: 22px 26px; }
+#cmds.tight select, #cmds.tighter select { font-size: 22px; padding: 0 4px; }
+#cmds.tight .sortrow .btn, #cmds.tighter .sortrow .btn { min-height: 44px; padding: 4px 6px; font-size: 20px; } #cmds.tighter .sortrow { font-size: 20px; }
+#cmds.tight .sortrow.narrow .btn, #cmds.tighter .sortrow.narrow .btn { font-size: 17px; }
+#cmds.tightest { gap: 5px; } #cmds.tightest .sortrow { font-size: 19px; gap: 5px; } #cmds.tightest .sortrow .btn { min-height: 38px; padding: 2px 4px; font-size: 18px; } #cmds.tightest .sortrow.narrow .btn { font-size: 15px; }
+#cmds.tightest .wide { min-height: 46px; padding-top: 4px; padding-bottom: 4px; font-size: 24px; }
+/* ---------- exam hall: CBE structure (timer, question n of N, flag, navigator) in the game's own art */
+#exam { background: linear-gradient(#141a33 0%, #3c4a7a 45%, #2a1e2e 100%); padding: 58px 26px 20px; gap: 12px; }
+#exHead { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 36px 36px 38px; min-height: 134px; box-sizing: border-box; flex: none; }
+#exHead > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+#exQno { font-weight: 700; font-size: 26px; color: #8c2b3c; } #exTime { font-size: 24px; color: #33497a; white-space: nowrap; } #exTime.low { color: #c8414b; font-weight: 700; }
+#exFlag { flex: none; min-height: 58px; min-width: 150px; padding: 6px 20px; font-size: 24px; } #exFlag.on { filter: brightness(1.15); box-shadow: 0 0 0 5px #ffe39a; }
+#exFrame { flex: 1; min-height: 0; display: flex; padding: 52px 40px 40px; }
+#exBody { flex: 1; min-height: 0; overflow-y: auto; font-size: 26px; line-height: 1.3; scrollbar-width: none; padding-bottom: 28px; -webkit-mask-image: linear-gradient(#000 calc(100% - 28px), transparent); mask-image: linear-gradient(#000 calc(100% - 28px), transparent); }
+#exBody::-webkit-scrollbar { display: none; }
+#exQ { margin-bottom: 14px; } .exTopic { font-size: 20px; color: #6e3f33; margin-bottom: 6px; font-style: italic; }
+.exHint { font-size: 21px; color: #6e3f33; margin: 6px 0; }
+#exAns { display: flex; flex-direction: column; gap: 10px; }
+#exAns .btn.exOpt { position: relative; text-align: left; padding: 20px 24px 20px 74px; min-height: 84px; font-size: 25px; line-height: 1.1; flex: none; }
+#exAns .btn.exOpt .k { position: absolute; left: 22px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border-radius: 50%; background: rgba(43,29,42,.6); display: flex; align-items: center; justify-content: center; font-size: 24px; }
+#exAns .btn.exOpt.picked { filter: brightness(1.12); box-shadow: 0 0 0 6px #ffe39a; }
+#exAns input[type=text] { font-family: Body, sans-serif; font-size: 30px; color: #3e2731; background: none; outline: none; padding: 30px 34px; width: 100%; box-sizing: border-box; }
+.exPick { line-height: 1.9; } .exPick select { font-family: Body, sans-serif; font-size: 25px; color: #3e2731; background: #fff4d6; border: 3px solid #6e3f33; border-radius: 6px; padding: 2px 6px; margin: 0 4px; max-width: 100%; }
+.exSort { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 2px solid rgba(62,39,49,.25); } .exSort .t { flex: 1 1 100%; font-size: 24px; }
+.exSort .btn { min-height: 52px; padding: 6px 16px; font-size: 22px; flex: 1; } .exSort .btn.picked { filter: brightness(1.15); box-shadow: 0 0 0 5px #ffe39a; }
+#exNav { display: flex; gap: 8px; flex: none; } #exNav .btn { flex: 1; min-height: 64px; padding: 6px 4px; font-size: 24px; } #exNav .btn:disabled { opacity: .45; }
+.exGrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+.exCell { font-family: Body, sans-serif; font-weight: 700; font-size: 24px; padding: 12px 0; text-align: center; border: 3px solid #6e3f33; border-radius: 8px; background: #fff4d6; color: #3e2731; cursor: pointer; }
+.exCell.done { background: #33497a; color: #fff6e6; border-color: #2b1d2a; } .exCell.flag { box-shadow: inset 0 0 0 4px #e0892b; } .exCell.cur { outline: 4px solid #f2c14e; }
+.exRes { font-family: RpgTitleO, serif; font-size: 40px; letter-spacing: 1px; padding: 14px 18px; border-radius: 10px; color: #fff6e6; text-align: center; text-shadow: 3px 3px 0 #2b1d2a; } .exRes.pass { background: #1a804d; } .exRes.fail { background: #b3243b; }
+.exRev { padding: 10px 12px; border-left: 6px solid #1a804d; background: rgba(255,255,255,.35); border-radius: 4px; font-size: 22px; line-height: 1.3; } .exRev.bad { border-left-color: #b3243b; }
+.exNavRow { display: flex; gap: 8px; } .exNavRow .btn { flex: 1; min-height: 60px; padding: 6px 4px; font-size: 21px; }
+.exTabs { display: flex; gap: 6px; flex-wrap: wrap; } .exTabs .btn { flex: 1; min-height: 52px; padding: 4px 6px; font-size: 21px; }
+#exAns .tbl input { width: 140px; }
+.exRes { font-size: 32px; }
+#menuScroll.tight, #lessonBox.tight { font-size: 24px; } #menuScroll.tighter, #lessonBox.tighter { font-size: 21px; }
+#menuScroll.tight .btn, #menuScroll.tighter .btn { font-size: 24px; min-height: 56px; padding-top: 6px; padding-bottom: 6px; }
+#menuScroll.tight, #menuScroll.tighter, #lessonBox.tight, #lessonBox.tighter { gap: 8px; }
+#dlgText b, .card b { font-weight: 600; }
+#cmds .btn .k { position: absolute; left: 22px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(43,29,42,.55); color: #fff6e6; font-family: RpgTitle, serif; display: flex; align-items: center; justify-content: center; text-shadow: none; }
+#cmds .wide { grid-column: span 2; min-height: 64px; padding-left: 28px; text-align: center; }
+#cmds input { grid-column: span 2; font-family: Body, sans-serif; font-size: 30px; color: #3e2731; background: none; outline: none; padding: 30px 34px; }
+.ta { margin-top: 10px; background: #fff4d6; border: 3px solid #6e3f33; border-radius: 4px; padding: 6px 10px; }
+.ta .t { text-align: center; color: #8c2b3c; font-family: RpgTitle, serif; }
+.ta .cols { display: flex; } .ta .col { flex: 1; padding: 0 6px; } .ta .col + .col { border-left: 3px solid #6e3f33; }
+.ta .hd { color: #33497a; }
+#note { position: fixed; left: 8px; bottom: 6px; color: #8a86a0; font: 12px sans-serif; }
+
+/* ---------- exam question types in battle */
+#cmds .btn.picked { filter: brightness(1.15); box-shadow: 0 0 0 6px #ffe39a; }
+#cmds .panelq { grid-column: span 2; line-height: 1.9; padding: 40px 40px; }
+#cmds select { font-family: Body, sans-serif; font-size: 26px; color: #3e2731; background: #fff4d6; border: 3px solid #6e3f33; border-radius: 6px; padding: 2px 6px; margin: 0 4px; max-width: 560px; }
+#cmds .sortrow { grid-column: span 2; display: grid; grid-template-columns: 1fr 150px 150px; gap: 8px; align-items: center; color: #fbe9d0; }
+#cmds .sortrow .btn { min-height: 56px; padding: 8px 10px; text-align: center; font-size: 24px; }
+#cmds .sortrow.narrow { font-size: 24px; } #cmds .sortrow.narrow .btn { font-size: 18px; padding: 6px 4px; line-height: 1.05; }
+.marks { position: absolute; right: 26px; top: 14px; z-index: 3; background: #2b1d2a; color: #ffe39a; border-radius: 14px; padding: 2px 12px; font-size: 22px; }
+
+/* ---------- tables (lessons, worked examples, Section B) */
+.tbl { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 24px; background: #fff4d6; }
+.tbl th { background: #6e3f33; color: #fff4d6; font-weight: 600; text-align: left; padding: 6px 8px; }
+.tbl td { border-top: 2px solid #e2c49a; padding: 5px 8px; color: #3e2731; }
+.tbl td, .tbl th { overflow-wrap: break-word; vertical-align: top; }
+.tbl td.num, .tbl th.num { text-align: right; white-space: nowrap; }
+.tbl tr.b td { font-weight: 700; border-top: 3px solid #6e3f33; }
+.tbl tr.new td { background: #ffe39a; animation: pop .5s; }
+@keyframes pop { from { background: #fff; } }
+.tbl input { width: 150px; font-family: Body, sans-serif; font-size: 24px; text-align: right; border: 3px solid #4f74b3; border-radius: 6px; padding: 2px 6px; background: #fff; }
+.tbl input.ok { border-color: #2e8b57; background: #d9f5df; } .tbl input.bad { border-color: #c8414b; background: #ffe0e0; }
+
+/* ---------- lesson screen */
+#lesson { background: linear-gradient(#1f5d63, #2a1e2e); padding: 58px 26px 24px; gap: 14px; }
+#lessonSteps { display: flex; gap: 8px; justify-content: center; }
+/* Zuru sits in the top-right corner of the lesson frame, listening to Sensei (inside the frame's padding, never over text). */
+#lesson { position: relative; }
+#lessonYou { position: absolute; right: 44px; top: 232px; width: 84px; height: 91px; z-index: 3; animation: bob 1.6s ease-in-out infinite; }
+#lessonBox > .title, #lessonOutcome { padding-right: 70px; }   /* keep the heading clear of Zuru */
+.senseiLine { font-size: 22px; color: #6e3f33; font-style: italic; border-left: 4px solid rgba(140,43,60,.5); padding-left: 10px; }
+.applyHead { font-weight: 700; color: #1a804d; background: rgba(26,128,77,.12); border-left: 6px solid #1a804d; padding: 6px 12px; border-radius: 4px; }
+#mtqYou { width: 90px; height: 98px; flex: none; animation: bob 1.6s ease-in-out infinite; }
+#lessonSteps span { padding: 4px 14px; border-radius: 14px; background: rgba(255,255,255,.15); color: #fbe9d0; font-size: 22px; }
+#lessonSteps span.on { background: #ffe39a; color: #3e2731; }
+#lessonFrame { flex: 1; min-height: 0; display: flex; padding-top: 44px; }
+#lessonBox { flex: 1; min-height: 0; overflow-y: auto; line-height: 1.3; display: flex; flex-direction: column; gap: 10px; }
+#lessonBox > * { flex: none; }
+#lessonBox b { color: #8c2b3c; font-weight: 600; }
+#lessonOutcome { font-size: 22px; color: #33497a; margin-bottom: 8px; }
+#lessonNav { display: flex; gap: 12px; } #lessonNav .btn { flex: 1; }
+#lessonSpeaker { align-self: flex-start; margin: 0 0 -60px 26px; position: relative; z-index: 2; height: 48px; padding: 0 34px 6px; border-image-slice: 15 24 fill; border-image-width: 15px 24px; }
+
+/* ---------- Section B (MTQ) */
+#mtq { background: linear-gradient(#3a0f1e, #2a1e2e); padding: 58px 20px 20px; gap: 12px; }
+#mtqHead { display: flex; align-items: center; gap: 14px; }
+#mtqHead img { width: 111px; height: 99px; filter: hue-rotate(141deg); }
+#mtqHead .bar { flex: 1; }
+#mtqTabs { display: flex; gap: 8px; } #mtqTabs .btn { flex: 1; min-height: 56px; font-size: 24px; padding: 8px; }
+#mtqFrame { flex: 1; min-height: 0; display: flex; }
+#mtqBox { flex: 1; min-height: 0; overflow-y: auto; line-height: 1.3; display: flex; flex-direction: column; gap: 10px; }
+#mtqBox > * { flex: none; }
+#mtqBox .exl { margin-top: 10px; font-size: 24px; }
+#mtqBox .exl div { margin-top: 6px; }
+#mtqNav { display: flex; gap: 12px; } #mtqNav .btn { flex: 1; }
+#chapDetail { overflow: hidden; min-height: 0; }
+#chapDetail .path { overflow-y: auto; min-height: 0; }
+#chapDetail .path > * { flex: none; }   /* Firefox squashes buttons in a scrolling column otherwise */
+
+/* ---------- calculator */
+#voiceBtn { position: absolute; left: 108px; top: 6px; z-index: 40; min-height: 44px; padding: 2px 14px; font-size: 20px; }
+#sfxBtn { position: absolute; left: 290px; top: 6px; z-index: 40; min-height: 44px; padding: 2px 14px; font-size: 20px; }
+#saveRow { display: flex; gap: 8px; margin-top: 8px; } #saveRow .btn { flex: 1; min-height: 44px; padding: 4px 10px; font-size: 22px; }
+.backupPanel { grid-column: span 2; align-self: start; display: flex; flex-direction: column; gap: 12px; padding: 44px 44px 40px; }
+#codeBox { width: 100%; height: 150px; box-sizing: border-box; font: 15px monospace; color: #3e2731; background: #fff4d6; border: 3px solid #6e3f33; border-radius: 6px; margin-top: 8px; user-select: text; resize: none; }
+#verdict { position: absolute; left: 50%; top: 230px; transform: translateX(-50%) rotate(-6deg); font-family: Body, sans-serif; font-weight: 700; font-size: 84px; letter-spacing: 2px; padding: 14px 40px; border-radius: 14px; pointer-events: none; z-index: 5; animation: verdictPop .25s; text-shadow: 4px 4px 0 #2b1d2a; }
+#verdict.good { color: #ffffff; background: #1f9a4f; box-shadow: 0 0 0 8px #2b1d2a, 0 0 40px rgba(0,0,0,.5); }
+#verdict.bad { color: #ffffff; background: #c8233f; box-shadow: 0 0 0 8px #2b1d2a, 0 0 40px rgba(0,0,0,.5); }
+@keyframes verdictPop { from { transform: translateX(-50%) rotate(-6deg) scale(.3); opacity: 0; } }
+#calcGrip { position: absolute; right: 22px; bottom: 18px; width: 44px; height: 44px; font-size: 40px; line-height: 44px; text-align: center; color: #ffe39a; cursor: nwse-resize; touch-action: none; user-select: none; text-shadow: 2px 2px 0 #2b1d2a; }
+#escBtn { color: #3e2731; }
+/* top bar: six equal buttons with even gaps */
+#topBar { position: absolute; left: 10px; right: 10px; top: 6px; display: flex; gap: 8px; z-index: 40; }
+#topBar .btn { position: static; flex: 1 1 0; min-width: 0; min-height: 44px; padding: 2px 2px; font-size: 17px; white-space: nowrap; overflow: hidden; line-height: 1; }
+#topBar .btn img { height: 30px; width: auto; image-rendering: pixelated; vertical-align: middle; }
+#calc { position: absolute; left: 30px; top: 58px; width: 660px; height: 780px; min-width: 440px; min-height: 660px; max-width: 720px; max-height: 1222px; box-sizing: border-box; z-index: 41; padding: 40px 40px 36px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+#calc .calcTop { display: flex; justify-content: space-between; align-items: center; cursor: move; touch-action: none; }
+#calc .calcTop .title::after { content: "  (drag me)"; font-size: 18px; opacity: .7; font-weight: 400; }
+#calcExpr, #calcTape, #cmds input, #mtqBox input, .tbl td { user-select: text; }
+#calc .calcTop .btn { min-height: 48px; font-size: 22px; padding: 4px 16px; }
+#calcTape { flex: 1; overflow-y: auto; background: rgba(0,0,0,.25); border-radius: 6px; padding: 4px 10px; font-size: 22px; min-height: 40px; }
+#calcTape div { display: flex; justify-content: space-between; gap: 10px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,.15); padding: 3px 0; }
+#calcTape div:hover { color: #ffe39a; }
+#calcExpr { font-family: Body, sans-serif; font-size: 34px; text-align: right; padding: 6px 12px; border: 3px solid #2b1d2a; border-radius: 6px; background: #fff4d6; color: #3e2731; }
+#calcLive { text-align: right; font-size: 34px; min-height: 42px; color: #ffe39a; font-weight: 600; }
+#calcKeys { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+#calcKeys .btn { min-height: 66px; padding: 4px; font-size: 30px; text-align: center; }
+#chapDetail .path { grid-column: span 2; display: flex; flex-direction: column; gap: 8px; }
+#chapDetail .path .btn { font-size: 26px; text-align: left; min-height: 60px; }
+</style>
+</head>
+<body>
+<div id="stage"><div id="screen">
+
+  <!-- HOME -->
+  <canvas id="snow" class="hidden" width="720" height="1280"></canvas>
+  <div id="xmasDeco"><div class="lights"></div></div>
+  <!-- TITLE: pick the exam -->
+  <div id="title" class="screen hidden">
+    <div class="banner titleO light" data-art="BannerMedium_02C">ACCA STUDY BUDDY</div>
+    <img class="hero" data-src="../assets/characters/samurai.png" data-zuru alt="">
+    <img class="xtree l" data-src="../assets/xmas/tree.png" alt=""><img class="xtree r" data-src="../assets/xmas/tree.png" alt="">
+    <img class="xgift a" data-src="../assets/xmas/present.png" alt=""><img class="xgift b" data-src="../assets/xmas/present.png" alt=""><img class="xgift c" data-src="../assets/xmas/present.png" alt="">
+    <img class="xpump l" data-src="../assets/xmas/pumpkin.png" alt=""><img class="xpump r" data-src="../assets/xmas/pumpkin.png" alt=""><img class="xpump s" data-src="../assets/xmas/pumpkin.png" alt="">
+    <div class="speech box dark" data-art="BGbox_04A" id="titleSay"></div>
+    <div id="examList"></div>
+    <div class="note">Zuru's dojo - choose an exam to enter</div>
+  </div>
+
+  <div id="home" class="screen">
+    <div class="banner titleO light" data-art="BannerMedium_02C">ACCA STUDY BUDDY</div>
+    <div class="hero">
+      <img data-src="../assets/characters/samurai.png" data-zuru alt="">
+      <div class="speech box dark" data-art="BGbox_04A">
+        <div id="topRow"><button class="btn light" data-btn="03A" onclick="showPlan()">&#128197; Study plan</button><button class="btn light" data-btn="06A" onclick="showNotebook()">&#128211; Notebook</button></div>
+        <div id="homeSay"></div>
+        <div class="lvl"><span class="title" id="homeLvl"></span><div class="bar xp" data-art="Slider01_Box"><i></i></div><button class="btn dark" data-btn="04A" id="resetBtn" onclick="askReset()">Reset</button></div>
+        <div id="saveRow"><button class="btn light" data-btn="05A" onclick="askBackup()">Backup</button><button class="btn light" data-btn="02A" onclick="askRestore()">Restore</button></div>
+      </div>
+    </div>
+    <div id="cards"></div>
+  </div>
+
+  <!-- BOOK -->
+  <div id="book" class="screen hidden">
+    <div class="banner titleO light" data-art="BannerMedium_02C">CHAPTER BOOK</div>
+    <div id="bookInfo"></div>
+    <div id="bookWrap">
+      <img id="bookImg" data-src="../assets/rpg/Spellbook.png" alt="">
+      <div id="pageTurn"></div>
+      <div class="page" id="pageL"></div><div class="page" id="pageR"></div>
+      <div class="tabs" id="tabs"></div>
+    </div>
+    <div id="chapDetail" class="box dark" data-art="BGbox_03A"></div>
+    <button class="btn light" data-btn="05A" style="width:660px" onclick="showHome()">Home</button>
+  </div>
+
+  <!-- LESSON (learn -> worked example -> your turn) -->
+  <div id="lesson" class="screen hidden">
+    <div class="banner titleO light" id="lessonBanner" data-art="BannerMedium_02C"></div>
+    <div id="lessonSteps"></div>
+    <div id="lessonSpeaker" class="banner light" data-art="BannerSmall_02C">SENSEI OTTER</div>
+    <img id="lessonYou" data-src="../assets/characters/samurai.png" data-zuru alt="" title="Zuru">
+    <div id="lessonFrame" class="box dark" data-art="BGbox_04A"><div id="lessonBox"></div></div>
+    <div id="lessonNav"></div>
+  </div>
+
+  <!-- SECTION B multi-task question -->
+  <div id="mtq" class="screen hidden">
+    <div id="mtqHead"><img data-src="../assets/monster.png" id="mtqFoe" alt=""><div style="flex:1;color:#fbe9d0"><div class="title" id="mtqTitle"></div><div class="bar" id="mtqHp" data-art="Slider01_Box"><i></i></div><div id="mtqScore" style="font-size:24px"></div></div><img id="mtqYou" data-src="../assets/characters/samurai.png" data-zuru alt="" title="Zuru"></div>
+    <div id="mtqTabs"></div>
+    <div id="mtqFrame" class="box dark" data-art="BGbox_04A"><div id="mtqBox"></div></div>
+    <div id="mtqNav"></div>
+  </div>
+
+  <!-- EXAM HALL: CBE-style mock - laid out like the real ACCA exam screen, not a battle -->
+  <div id="exam" class="screen hidden">
+    <div class="banner titleO light" data-art="BannerMedium_02C" id="exTitle"></div>
+    <div id="exHead" class="box dark" data-art="BGbox_01A"><div><div id="exQno"></div><div id="exTime"></div></div><button class="btn light" data-btn="03A" id="exFlag" onclick="exFlag()"></button></div>
+    <div id="exFrame" class="box dark" data-art="BGbox_04A"><div id="exBody"><div id="exQ"></div><div id="exAns"></div></div></div>
+    <div id="exNav"><button class="btn light" data-btn="05A" id="exPrev" onclick="exGo(-1)">&#9664; Prev</button><button class="btn light" data-btn="05A" id="exNext" onclick="exGo(1)">Next &#9654;</button><button class="btn light" data-btn="04A" onclick="exGridView()">Navigator</button><button class="btn light" data-btn="06A" onclick="exEnd(false)">End exam</button></div>
+  </div>
+
+  <!-- MENU (bank / mock / records) -->
+  <div id="menu" class="screen menu hidden">
+    <div class="banner titleO light" id="menuBanner" data-art="BannerMedium_02C"></div>
+    <div id="menuPinned" class="hidden"></div>
+    <div class="panel box" id="menuPanel"><div id="menuScroll"></div></div>
+    <button class="btn light" data-btn="05A" onclick="showHome()">Home</button>
+  </div>
+
+  <!-- BATTLE -->
+  <div id="battle" class="screen hidden">
+    <div id="field">
+      <div class="plat" id="foePlat"></div><div class="plat" id="youPlat"></div>
+      <img id="foe" data-src="../assets/monster.png" alt="">
+      <img id="you" data-src="../assets/characters/samurai.png" data-zuru alt="">
+      <div class="plate box dark" id="foePlate" data-art="BGbox_01A"><div class="nm"><span class="title" id="foeName"></span><span id="foeLv"></span></div><div class="bar" id="foeHp" data-art="Slider01_Box"><i></i></div></div>
+      <div class="plate box dark" id="youPlate" data-art="BGbox_01A"><div class="nm"><span class="title">ZURU</span><span id="youLv"></span></div><div class="bar" id="youHp" data-art="Slider01_Box"><i></i></div><div style="text-align:right" id="youHpTxt"></div></div>
+      <div id="timer" class="hidden"></div>
+      <div id="verdict" class="hidden"></div>
+    </div>
+    <div id="lower">
+      <div id="speaker" class="banner light" data-art="BannerSmall_02C"></div>
+      <div id="dlg" class="box dark" data-art="BGbox_04A"><div id="dlgScroll"><div id="dlgText"></div><div id="dlgExtra"></div></div><div id="more" class="hidden">&#9660;</div></div>
+      <div id="cmds"></div>
+    </div>
+  </div>
+
+  <!-- Top bar: the same six buttons on every screen, evenly spaced -->
+  <div id="topBar">
+    <button id="escBtn" class="btn light" data-btn="04A" onclick="escapeScreen()">ESC</button>
+    <button id="voiceBtn" class="btn light" data-btn="05A" onclick="toggleVoice()">VOICE OFF</button>
+    <button id="sfxBtn" class="btn light" data-btn="02A" onclick="toggleSfx()">SFX ON</button>
+    <button id="themeBtn" class="btn light" data-btn="01A" onclick="toggleTheme()">THEME OFF</button>
+    <button id="senseiBtn" class="btn light" data-btn="04A" onclick="toggleSensei()">E-LDN OFF</button>
+    <button id="datesBtn" class="btn light" data-btn="03A" onclick="showKeyDates()">DATES</button>
+    <button id="calcBtn" class="btn light" data-btn="06A" onclick="toggleCalc()">CALC</button>
+  </div>
+  <div id="calc" class="box light hidden" data-art="BGbox_01B">
+    <div class="calcTop"><span class="title">Calculator</span><button class="btn dark" data-btn="04A" onclick="toggleCalc()">Close</button></div>
+    <div id="calcTape"></div>
+    <input id="calcExpr" autocomplete="off" spellcheck="false" placeholder="e.g. 130+1495">
+    <div id="calcLive"></div>
+    <div id="calcKeys"></div>
+    <div id="calcGrip" title="Drag to resize">    <div id="calcKeys"></div>#9698;</div>
+  </div>
+</div></div>
+<div id="note">Prototype preview of the Godot app</div>
+<script src="data.js"></script>
+<script>
+// ---------------------------------------------------------------- assets (inlined by build-standalone.ps1)
+const A = p => (typeof ASSETS !== 'undefined' && ASSETS[p]) || p;
+const R = n => A(`../assets/rpg/${n}.png`);
+(function injectArt() {
+  const css = [];
+  css.push(`@font-face{font-family:Body;src:url(${A('../assets/fonts/PixelifySans.ttf')})}`);
+  // Pixelify's "5" reads as "S" - digits come from VT323 (OFL) instead, scaled to match.
+  css.push(`@font-face{font-family:Body;src:url(${A('../assets/fonts/VT323.ttf')});unicode-range:U+30-39;size-adjust:125%}`);
+  css.push(`@font-face{font-family:RpgTitle;src:url(${A('../assets/rpg/fonts/rpg_title.ttf')})}`);
+  css.push(`#xmasDeco .lights{background-image:url(${A('../assets/xmas/lights.png')})}`);
+  css.push(`@font-face{font-family:RpgTitleO;src:url(${A('../assets/rpg/fonts/rpg_title_outline.ttf')})}`);
+  for (const k of ['01A','02A','03A','04A','05A','06A'])
+    css.push(`[data-btn="${k}"]{border-image-source:url(${R('Button_'+k+'_Normal')})}[data-btn="${k}"]:hover:not(:disabled){border-image-source:url(${R('Button_'+k+'_Selected')})}[data-btn="${k}"]:active:not(:disabled){border-image-source:url(${R('Button_'+k+'_Pressed')})}`);
+  document.head.insertAdjacentHTML('beforeend', `<style>${css.join('\n')}</style>`);
+  document.querySelectorAll('[data-src]').forEach(i => i.src = A(i.dataset.src));
+  document.querySelectorAll('[data-art]').forEach(e => e.style.borderImageSource = `url(${R(e.dataset.art)})`);
+})();
+const art = (e, n) => { e.style.borderImageSource = `url(${R(n)})`; return e; };
+
+let stageScale = 1;
+function fit() { const s = Math.min(innerWidth / 720, (innerHeight - 24) / 1280); stageScale = s;   // 24px kept free for the footer note
+  document.getElementById('stage').style.transform = `translate(-50%, calc(-50% - 12px)) scale(${s})`; }
+addEventListener('resize', fit); fit();
+
+// ---------------------------------------------------------------- APP PROFILE: which Study Buddy this build is
+// The content file (scripts/Content.gd for ACCA, scripts/ContentSM.gd for the CIMA Role Simulation) carries `const APP := {...}`;
+// serve.ps1 / build-standalone.ps1 pass it in as APP_CFG next to EXAMS. Everything exam-specific - the name on the banner,
+// the journey list on the title screen, the mock format, key dates, plan defaults and the browser storage keys - comes from
+// there, so the engine itself never mentions one qualification. The defaults below only keep the preview alive without it.
+const APP = Object.assign({ id: 'acca', name: 'ACCA Study Buddy', banner: 'ACCA STUDY BUDDY', key: 'accaStudyBuddy', short: 'FA', planCode: 'FA', dojo: "Zuru's dojo - choose an exam to enter",
+  journey: [], plan: { start: '2026-10-27', exam: '2026-11-07', wd: 3, we: 6, mocks: 2 },
+  hall: { intro: '', links: [], ot: 35, otMarks: 2, otMin: 84, minutes: 120, pass: 50, full: [] }, keyDates: { sections: [], link: null },
+  sylIntro: 'Every learning outcome in the syllabus, and what in the game covers it. Tap an area to open it.' }, typeof APP_CFG === 'object' && APP_CFG ? APP_CFG : {});
+const HALL = APP.hall, PASS = HALL.pass, FULL_MOCKS = HALL.full, OT_SEC = Math.round(HALL.otMin * 60 / HALL.ot);   // seconds per objective-test question at exam pace
+document.title = APP.name; for (const b of document.querySelectorAll('.banner.titleO')) b.textContent = APP.banner; document.querySelector('#title .note').textContent = APP.dojo;
+// ---------------------------------------------------------------- Content.gd mirror
+// Several exams can live in Content.gd; the title screen picks one. Progress keys are prefixed with the exam id.
+const EXAM_LIST = Array.isArray(EXAMS) ? EXAMS : [EXAMS];
+let EXAM = EXAM_LIST[0], examId = EXAM.id, SYL = EXAM.syllabus || [];
+function selectExam(id) { EXAM = EXAM_LIST.find(e => e.id === id) || EXAM_LIST[0]; examId = EXAM.id; SYL = EXAM.syllabus || []; bookTab = 0; bookSel = 1; try { localStorage.setItem(APP.key + '.exam', examId); } catch (e) {} showHome(); }
+// Exam question types: choice (MCQ), multi (multiple response), input (number entry),
+// picklist (drop-down list), sort (drag-and-drop style: place each item in a column).
+const Q_TYPES = ['choice', 'input', 'multi', 'picklist', 'sort'];
+const isQ = b => Q_TYPES.includes(b.type);
+const tagLesson = (c, l, i) => Object.assign({}, l.practice[i], { _key: `${examId}/${c.id}/${l.id}/${i}`, _ch: `${examId}/${c.id}`, _topic: `${c.title}: ${l.title}` });
+const getCh = id => EXAM.chapters.find(c => c.id === id) || {};
+const tag = (c, i) => Object.assign({}, c.beats[i], { _key: `${examId}/${c.id}/${i}`, _ch: `${examId}/${c.id}`, _topic: c.title });
+const chapterBeats = id => { const c = getCh(id); return c.beats.map((b, i) => isQ(b) ? tag(c, i) : b); };
+function questions(chId = -1, kind = '') { const out = [];
+  for (const c of EXAM.chapters) { if (chId !== -1 && c.id !== chId) continue; c.beats.forEach((b, i) => { if (isQ(b) && (!kind || b.type === kind)) out.push(tag(c, i)); });
+    // Lesson practice questions also feed the Training Grounds, Boss Arena and mocks.
+    for (const l of c.lessons || []) l.practice.forEach((q, i) => { if (!kind || q.type === kind) out.push(tagLesson(c, l, i)); }); }
+  return out; }
+// A Section B blank she got wrong becomes a stand-alone number-entry question for the Healer's Shrine:
+// the scenario + the task's figures, then "what goes in this line?". Key: exam/ch/mtq/taskIndex/blankKey.
+function tagMtq(c, ti, key) { const m = c.mtq, t = m && m.tasks[ti], bl = t && t.blanks[key]; if (!bl) return null;
+  const row = t.rows.find(r => r.c.some(x => x === '#' + key)), label = row ? row.c[0] : key;
+  const flat = tb => tb.rows.map(r => r.c.filter(x => x !== '' && !String(x).startsWith('#')).join('  ')).join('\n');
+  const scen = m.scenario.map(p => (p.text ? p.text + '\n' : '') + (p.table ? flat(p.table) + '\n' : '')).join('\n');
+  const given = t.rows.filter(r => !r.c.some(x => String(x).startsWith('#'))).map(r => r.c.filter(x => x !== '').join('  ')).join('\n');
+  return { type: 'input', q: `[b]${m.title} - ${t.title}[/b]\n${scen}${given ? '\n[b]Figures so far:[/b]\n' + given + '\n' : ''}\nWhat is the figure for [b]${label}[/b]?`, accept: bl.accept, display_answer: bl.show, ex: bl.ex,
+    _key: `${examId}/${c.id}/mtq/${ti}/${key}`, _ch: `${examId}/${c.id}`, _topic: `${c.title}: Section B` }; }
+function byKeys(keys) { return keys.map(k => { const p = k.split('/'), c = getCh(+p[1]);
+  if (p.length === 5 && p[2] === 'mtq') return tagMtq(c, +p[3], p[4]);
+  if (p.length === 4) { const l = (c.lessons || []).find(x => x.id === p[2]); return l && l.practice[+p[3]] ? tagLesson(c, l, +p[3]) : null; }
+  return c.beats && c.beats[+p[2]] && isQ(c.beats[+p[2]]) ? tag(c, +p[2]) : null; }).filter(Boolean); }
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+// Seeded random so a numbered mock is the SAME paper every time it is sat (its best score means something).
+const seededRandom = seed => { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
+const shuffleWith = (a, rnd) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function mixedPaper(n, seed) { const rnd = seed != null ? seededRandom(seed * 7919 + 17) : Math.random;
+  const byCh = shuffleWith(EXAM.chapters.map(c => shuffleWith(questions(c.id), rnd)).filter(q => q.length), rnd); const out = [];
+  for (let r = 0; out.length < n; r++) { let added = false; for (const qs of byCh) if (r < qs.length && out.length < n) { out.push(qs[r]); added = true; } if (!added) break; }
+  return shuffleWith(out, rnd); }
+
+// ---------------------------------------------------------------- Game.gd mirror (+ XP, lessons)
+// Saved in the browser (localStorage) after every change, so progress survives closing the tab.
+const SAVE_KEY = APP.key + '.save.v1';   // ACCA: accaStudyBuddy.save.v1 (unchanged); SM: smStudyBuddy.save.v1 - the two builds never share a save
+const SAVED_FIELDS = ['progress', 'stats', 'mistakes', 'xp', 'lessons', 'plan', 'log', 'dates'];
+const G = { progress: {}, stats: {}, mistakes: {}, xp: 0, lessons: {}, plan: null, log: {}, dates: {},   // dates: exam code -> 'YYYY-MM-DD' sitting date
+  // Notebook: one entry per calendar day - questions, lessons passed, mocks, bosses, Section B, seconds studied.
+  note(kind, v) { const k = ymd(today0()), e = this.log[k] || (this.log[k] = { q: 0, right: 0, lessons: [], mocks: [], bosses: 0, mtq: [], sec: 0 });
+    if (kind === 'q') { e.q++; if (v) e.right++; } else if (kind === 'lesson') { if (!e.lessons.includes(v)) e.lessons.push(v); } else if (kind === 'mock') e.mocks.push(v);
+    else if (kind === 'bosses') e.bosses += v; else if (kind === 'mtq') e.mtq.push(v); else if (kind === 'sec') e.sec += v; this.save(); },
+  best(k) { return (this.progress[k] || {}).best || 0; },
+  record(k, pct) { const c = this.progress[k] || { best: 0, cleared: false }; c.best = Math.max(c.best, pct); if (pct >= 70) c.cleared = true; this.progress[k] = c; this.save(); },
+  answer(qk, ck, ok) { const s = this.stats[ck] || { seen: 0, right: 0 }; s.seen++; if (ok) { s.right++; delete this.mistakes[qk]; this.xp += 10; } else this.mistakes[qk] = true; this.stats[ck] = s; this.note('q', ok); },
+  passLesson(k) { this.lessons[k] = true; this.note('lesson', k); },
+  acc(ck) { const s = this.stats[ck]; return s && s.seen ? Math.round(s.right / s.seen * 100) : -1; },
+  seen(ck) { return (this.stats[ck] || {}).seen || 0; },
+  level() { return 1 + Math.floor(this.xp / 100); }, xpInLevel() { return this.xp % 100; },
+  save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(Object.fromEntries(SAVED_FIELDS.map(f => [f, this[f]])))); } catch (e) {} },
+  load() { try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'); for (const f of SAVED_FIELDS) if (d[f] != null) this[f] = d[f]; } catch (e) {} },
+  reset() { Object.assign(this, { progress: {}, stats: {}, mistakes: {}, xp: 0, lessons: {}, log: {} }); try { localStorage.removeItem(SAVE_KEY); } catch (e) {} if (this.plan) this.save(); } };   // the study plan survives a reset
+G.load();
+const stars = pct => pct >= 100 ? 3 : pct >= 70 ? 2 : pct >= 50 ? 1 : 0;
+const totalStars = () => EXAM.chapters.reduce((s, c) => s + stars(G.best(`${examId}/${c.id}`)), 0);
+
+// ---------------------------------------------------------------- helpers
+const $ = id => document.getElementById(id);
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const bb = s => esc(s).replace(/\[b\]/g, '<b>').replace(/\[\/b\]/g, '</b>').replace(/\[i\]/g, '<i>').replace(/\[\/i\]/g, '</i>').replace(/\n/g, '<br>');
+const BTN_TEXT = { '01A': 'light', '02A': 'light', '03A': 'dark', '04A': 'dark', '05A': 'light', '06A': 'light' };
+function button(label, style, fn, cls = '') { const b = el('button', `btn ${BTN_TEXT[style]} ${cls}`, label); b.dataset.btn = style; b.onclick = fn; return b; }
+function setBar(barEl, frac) { frac = Math.max(0, Math.min(1, frac)); barEl.querySelector('i').style.width = `calc((100% - 24px) * ${frac})`;
+  barEl.classList.toggle('mid', frac <= .5 && frac > .2); barEl.classList.toggle('low', frac <= .2); }
+const mmss = sec => { const s = Math.ceil(sec); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function show(id) { for (const s of document.querySelectorAll('.screen')) s.classList.toggle('hidden', s.id !== id); applyFestive(); }
+// ESC (button or key): close the calculator if it's open, otherwise go straight back to the main menu.
+function escapeScreen() {
+  if (!$('calc').classList.contains('hidden')) return toggleCalc(false);
+  if (!$('home').classList.contains('hidden')) return showTitle();   // ESC on the main menu = back to the exam picker
+  showHome();
+}
+// The whole journey (ACCA: 13 exams; SM: the apprenticeship end-point assessment) comes from APP.journey in the content file.
+// `content` links a row to an exam in the content file; `passed` = already in the bag. If the list is empty, one row per content exam.
+const JOURNEY = APP.journey.length ? APP.journey : EXAM_LIST.map(e => ({ grp: '', code: e.id, name: e.name, content: e.id }));
+// Sitting date per exam: the one on the study plan (APP.planCode) follows the plan; the others come from the Exam dates screen.
+const dateOf = x => x.code === APP.planCode && G.plan ? G.plan.exam : G.dates[x.code] || '';
+function showTitle() {
+  stopTimer(); session = null; tapHandler = null; show('title');
+  const passed = JOURNEY.filter(x => x.passed).length, today = today0();
+  const upcoming = JOURNEY.filter(x => !x.passed && dateOf(x)).map(x => ({ x, days: Math.round((parseDay(dateOf(x)) - today) / DAY) })).filter(u => u.days >= 0).sort((a, b) => a.days - b.days)[0];
+  $('titleSay').innerHTML = bb(`[b]Sensei Otter:[/b] ${festive() ? 'Merry Christmas, Zuru! The dojo is snowed in - perfect studying weather.' : spooky() ? 'Happy Halloween, Zuru! The dojo is haunted tonight - the monsters are extra spooky.' : S('welcome_title')} [b]${passed} of ${JOURNEY.length}[/b] ${JOURNEY.length === 1 ? 'exam' : 'exams'} conquered.` + (upcoming ? ` Next up: [b]${upcoming.x.code} ${upcoming.days === 0 ? 'today!' : 'in ' + upcoming.days + ' day' + (upcoming.days === 1 ? '' : 's')}[/b] (${fmtDay(parseDay(dateOf(upcoming.x)))}).` : ' Which one are we training for today?'));
+  const list = $('examList'); list.replaceChildren(); let grp = '';
+  list.append(button('Exam dates - set your sitting dates', '03A', showDates, 'wide'));
+  for (const x of JOURNEY) {
+    if (x.grp !== grp) { grp = x.grp; if (grp) list.append(el('div', 'grp', grp)); }
+    const e = x.content && EXAM_LIST.find(k => k.id === x.content); let sub = '', badge = '', style = 'BGbox_05A';
+    if (x.passed) { badge = '<span class="chip ok">&#10003; PASSED</span>'; style = 'BGbox_01A'; }
+    else if (e) { const prev = EXAM; EXAM = e; examId = e.id;   // borrow the exam to read its stats
+      const chs = e.chapters.length, stars = totalStars(), done = e.chapters.filter(chapterDone).length; EXAM = prev; examId = prev.id;
+      sub = `${chs} chapters &middot; ${stars} / ${chs * 3} stars${done ? ` &middot; ${done} done` : ''}`; badge = '<span class="chip go">&#9654; ENTER</span>'; style = 'BGbox_03A'; }
+    else { badge = '<span class="chip soon">TO TAKE</span>'; }
+    const dt = dateOf(x); if (dt && !x.passed) { const days = Math.round((parseDay(dt) - today) / DAY);
+      sub += (sub ? '<br>' : '') + `<span class="cd">&#9201; ${fmtDay(parseDay(dt))} &middot; ${days > 0 ? `in ${days} day${days === 1 ? '' : 's'}` : days === 0 ? 'today!' : 'sat ' + (-days) + ' days ago'}</span>`; }
+    const c = art(el('div', `exam box dark${e ? ' live' : x.passed ? ' done' : ' soon'}`), style);
+    c.innerHTML = `<span class="code">${x.code}</span><div class="txt"><div class="nm">${esc(x.name)}</div>${sub ? `<div class="sub">${sub}</div>` : ''}</div>${badge}`;
+    c.onclick = () => { if (e) { sfx('page'); selectExam(e.id); } else if (x.passed) { sfx('win'); $('titleSay').innerHTML = bb(`[b]Sensei Otter:[/b] ${x.code} is already conquered, Zuru. Nothing to train here!`); }
+      else { sfx('miss'); $('titleSay').innerHTML = bb(`[b]Sensei Otter:[/b] ${x.code} is not in the dojo yet. Its lessons will appear here once they are written.`); } };
+    list.append(c); }
+}
+// KEY DATES: her countdowns + a quick guide to how the sittings and booking deadlines work (APP.keyDates, written per qualification).
+// Rules of thumb only - the exact dates move each year, so the button to the awarding body's own page is the source of truth.
+function showKeyDates() {
+  const p = menu('KEY DATES', 'BGbox_03A', 'dark'), today = today0(); p.dataset.nofit = '1';   // a reading page: keep full size, let it scroll
+  const sec = (title, ...kids) => { const s = el('div', 'sec'); s.append(el('div', 'h', title), ...kids); p.append(s); return s; };
+  const mine = JOURNEY.filter(x => !x.passed && dateOf(x)).map(x => ({ x, d: parseDay(dateOf(x)) })).sort((a, b) => a.d - b.d);
+  const rows = mine.map(m => { const days = Math.round((m.d - today) / DAY); return el('div', 'planRow', `<b>${m.x.code}</b> ${esc(m.x.name)}<br>${fmtDay(m.d)} <span class="cap">${days > 0 ? `in ${days} days` : days === 0 ? 'today!' : 'done'}</span>`); });
+  sec('My exams', ...(rows.length ? rows : [el('div', '', 'No sitting dates set yet.')]), button('Exam dates - set / change', '03A', showDates));
+  for (const s of APP.keyDates.sections || []) sec(s.title, el('div', '', bb(s.text || '')), ...(s.table ? [table(s.table)] : []));
+  if (APP.keyDates.link) p.append(button(APP.keyDates.link.label, '04A', () => window.open(APP.keyDates.link.url, '_blank')));
+}
+// Exam dates screen: one date per exam still to take. The plan exam's date (APP.planCode) is the study plan's exam date.
+function showDates() {
+  const p = menu('EXAM DATES', 'BGbox_03A', 'dark'), inp = {};
+  p.append(el('div', '', bb(`Set the date you plan to sit each exam. The title screen counts down to the next one. [b]${APP.planCode}[/b] follows your study plan.`)));
+  const f = el('div', 'planForm');
+  for (const x of JOURNEY) { if (x.passed) continue; const i = el('input'); i.type = 'date'; i.value = dateOf(x); inp[x.code] = i;
+    const r = el('div', 'row'); r.append(el('label', '', `${x.code} - ${x.name.replace(/ \(compulsory\)| or Data Science/g, '')}`), i); f.append(r); }
+  f.append(button('Save dates', '06A', () => { for (const [code, i] of Object.entries(inp)) { if (i.value) G.dates[code] = i.value; else delete G.dates[code]; }
+    const pi = inp[APP.planCode]; if (G.plan && pi && pi.value) G.plan.exam = pi.value; G.save(); showTitle(); }, 'wide'), button('Back to the dojo', '05A', showTitle, 'wide'));
+  p.append(f);
+}
+addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); escapeScreen(); } });
+// Short dialogue pages: split on blank lines, then sentences, max ~150 chars a page.
+function pages(text) { const out = [];
+  for (const para of String(text).split(/\n\s*\n/)) {
+    const sents = para.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g) || [para]; let cur = '';
+    for (const s of sents) { if (cur && (cur + s).length > 150) { out.push(cur.trim()); cur = ''; } cur += s; }
+    if (cur.trim()) out.push(cur.trim()); }
+  return out.length ? out : ['']; }
+
+// ---------------------------------------------------------------- areas (each its own colours)
+const AREAS = [
+  { id: 'book', name: 'Chapter Book', sub: 'Battle each topic monster', box: 'BGbox_01C', icon: 'Icon_12', text: 'dark', go: () => showBook() },
+  { id: 'boss', name: 'Boss Arena', sub: 'Boss gauntlet - 32 bosses a lap', box: 'BGbox_07A', icon: 'Icon_06', text: 'light', go: () => showBossLobby() },
+  { id: 'bank', name: 'Training Grounds', sub: 'Drill by topic or type', box: 'BGbox_02B', icon: 'Icon_09', text: 'light', go: () => showBank() },
+  { id: 'heal', name: "Healer's Shrine", sub: 'Fix your mistakes', box: 'BGbox_01A', icon: 'Icon_03', text: 'dark', go: () => startMistakes() },
+  { id: 'mock', name: 'Exam Hall', sub: 'Five timed mock exams', box: 'BGbox_01B', icon: 'Icon_07', text: 'light', go: () => showMock() },
+  { id: 'rec', name: 'Hall of Records', sub: 'Strengths & weak spots', box: 'BGbox_05A', icon: 'Icon_01', text: 'dark', go: () => showRecords() },
+];
+// Battle scenery per chapter / area: [sky top, sky bottom, ground]
+const SCENES = [['#7ec8f0','#cdeefc','#78c25a'], ['#f6a96b','#ffe0b0','#d7a35a'], ['#5a4b9a','#a98ad8','#5aa18a'], ['#3c8f8a','#a7e0c9','#6fae4f'],
+  ['#e0708a','#ffd1c4','#9bc45a'], ['#2f3f73','#6f86c9','#4f7a8f'], ['#c46a3a','#f7c27a','#a07a4a'], ['#4a7f3f','#bfe39a','#6b9e3a']];
+const AREA_SCENE = { boss: ['#3a0f1e','#8c2b3c','#4a2a2a'], bank: ['#1f5d63','#7fd0c8','#3f8a6a'], mistakes: ['#b05a8a','#ffd6e6','#8fc27a'], mock: ['#141a33','#3c4a7a','#2f3f55'] };
+
+// ---------------------------------------------------------------- RESET (asks first - it can't be undone)
+function askReset() {
+  $('homeSay').innerHTML = bb('[b]Sensei Otter:[/b] Wipe ALL progress? Stars, lessons, scores, mistakes and XP go back to zero. This cannot be undone.');
+  $('resetBtn').classList.add('hidden');
+  const row = el('div'); row.id = 'resetAsk';
+  row.append(button('Yes, reset', '06A', () => { G.reset(); showHome(); $('homeSay').innerHTML = bb('[b]Sensei Otter:[/b] ' + S('reset_done')); }),
+    button('No, keep it', '05A', showHome));
+  $('homeSay').after(row);
+}
+
+// ---------------------------------------------------------------- HOME
+function showHome() {
+  $('resetAsk')?.remove(); $('codeBox')?.remove(); $('resetBtn').classList.remove('hidden');
+  stopTimer(); session = null; tapHandler = null; show('home');
+  const nm = byKeys(Object.keys(G.mistakes)).length;
+  $('homeSay').innerHTML = bb(`[b]Sensei Otter:[/b] ` + planSummary() + (nm ? ` ${nm} wound${nm > 1 ? 's' : ''} to heal at the Shrine.` : ''));
+  $('homeLvl').textContent = `Lv ${G.level()}`; setBar(document.querySelector('#home .bar'), G.xpInLevel() / 100);
+  const cards = $('cards'); cards.replaceChildren();
+  for (const a of AREAS) {
+    const c = art(el('div', `card box ${a.text}`), a.box);
+    let stat = '';
+    if (a.id === 'book') stat = `<img src="${R('Icon_01')}" style="width:30px;height:30px">${totalStars()} / ${EXAM.chapters.length * 3} stars`;
+    if (a.id === 'boss') { const g = G.progress[examId + '/gauntlet'] || {}; stat = g.best || g.last ? `Last run ${g.last ?? 0} &middot; Best ${g.best || 0} bosses` : 'Not fought yet'; }
+    if (a.id === 'bank') stat = `${questions().length} questions`;
+    if (a.id === 'heal') stat = nm ? `${nm} to review` : 'All healed!';
+    if (a.id === 'mock') { const nf = FULL_MOCKS.length, fb = FULL_MOCKS.map((f, i) => G.best(`${examId}/full/${i + 1}`)), passed = fb.filter(b => b >= PASS).length, b = Math.max(0, ...fb);
+      stat = b ? `Full mocks: ${passed} / ${nf} passed - best ${b}%` : nf ? `${nf} full mocks - pass mark ${PASS}%` : `Pass mark ${PASS}%`; }
+    if (a.id === 'rec') { const t = EXAM.chapters.filter(ch => G.acc(`${examId}/${ch.id}`) >= 0).length; stat = `${t}/${EXAM.chapters.length} topics tried`;
+      if ((EXAM.syllabus || []).length) stat += `<br>Syllabus map`; }
+    c.innerHTML = `<div class="top"><img class="icon" src="${R(a.icon)}"><span class="title">${a.name}</span></div><div>${typeof a.sub === 'function' ? a.sub() : a.sub}</div><div class="stat">${stat}</div>`;    c.onclick = () => { if (a.id === 'heal' && !nm) { c.classList.remove('hit'); void c.offsetWidth; c.classList.add('hit'); return; } a.go(); };
+    cards.append(c);
+  }
+}
+
+// ---------------------------------------------------------------- STUDY PLANNER
+// Her exam window: chapters in order, then the mocks, packed into the days between start and exam by the
+// hours she has (weekday evenings vs weekends). Recomputed from today every time, so it adapts as she progresses.
+const DAY = 864e5, MOCK_MIN = HALL.otMin + 30;   // Section A mock at exam pace + review
+const mockName = k => typeof k === 'string' ? 'Full Mock ' + k.slice(1) : k ? 'Mock ' + k : 'Mini mock';
+const PLAN_DEFAULT = APP.plan;   // per qualification, from the content file
+const parseDay = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);   // calendar days, safe across clock changes
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+// Study time for the notebook: counted while a lesson, battle or Section B screen is open and the tab is visible.
+setInterval(() => { const cur = [...document.querySelectorAll('.screen')].find(s => !s.classList.contains('hidden'))?.id;
+  if (document.visibilityState === 'visible' && ['battle', 'lesson', 'mtq'].includes(cur)) G.note('sec', 15); }, 15000);
+function showNotebook() {
+  const p = menu('NOTEBOOK', 'BGbox_04A', 'dark'), days = Object.keys(G.log).sort().reverse();
+  p.append(button('Study plan', '03A', showPlan, 'wide'));
+  if (!days.length) { p.append(el('div', '', 'Nothing written yet. Every lesson, battle, boss and mock you do gets a line here, day by day.')); return; }
+  const sum = (f) => days.reduce((a, k) => a + f(G.log[k]), 0), q = sum(e => e.q), r = sum(e => e.right);
+  p.append(el('div', '', bb(`[b]${days.length} study day${days.length === 1 ? '' : 's'}[/b] - ${hm(Math.round(sum(e => e.sec) / 60))} in total, ${q} questions answered${q ? ` (${Math.round(r / q * 100)}% right)` : ''}.`)));
+  for (const k of days) { const e = G.log[k], lines = [];
+    const byCh = {}; for (const lk of e.lessons) { const [, ch, lid] = lk.split('/'); (byCh[ch] = byCh[ch] || []).push(lid); }
+    const finished = Object.keys(byCh).filter(ch => { const c = getCh(+ch); return c && chapterDone(c) && byCh[ch].includes(c.lessons[c.lessons.length - 1].id); });
+    if (e.lessons.length) lines.push('Lessons: ' + Object.entries(byCh).map(([ch, ls]) => `Ch ${ch} ${ls.join(', ')}`).join('; '));
+    if (finished.length) lines.push(`&#10003; Chapter${finished.length > 1 ? 's' : ''} ${finished.join(', ')} finished`);
+    if (e.mtq.length) lines.push('Section B: ' + e.mtq.map(m => `Ch ${m.ch} ${m.pct}%`).join(', '));
+    if (e.q) lines.push(`${e.q} questions, ${e.right} right (${Math.round(e.right / e.q * 100)}%)`);
+    if (e.mocks.length) lines.push('Mocks: ' + e.mocks.map(m => `${mockName(m.k)} ${m.pct}%`).join(', '));
+    if (e.bosses) lines.push(`Boss Arena: ${e.bosses} boss${e.bosses === 1 ? '' : 'es'} defeated`);
+    const row = el('div', 'planRow'); row.innerHTML = `<b>${fmtDay(parseDay(k))}</b> <span class="cap">${hm(Math.round(e.sec / 60))}</span><br>${lines.join('<br>') || 'Looked around, no battles.'}`; p.append(row); }
+}
+const today0 = () => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); };
+const fmtDay = d => d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+const hm = min => min >= 60 ? `${Math.floor(min / 60)}h${min % 60 ? ' ' + (min % 60) + 'm' : ''}` : `${min} min`;
+function chapterDone(c) { return (c.lessons || []).every(l => G.lessons[`${examId}/${c.id}/${l.id}`]) && (!c.mtq || G.best(`${examId}/${c.id}/mtq`) > 0); }
+function buildPlan() {
+  const P = G.plan; if (!P) return null;
+  const start = parseDay(P.start), exam = parseDay(P.exam), today = today0(), first = today > start ? today : start;
+  const days = []; for (let d = new Date(first); d < exam; d = addDays(d, 1)) { const we = d.getDay() === 0 || d.getDay() === 6; days.push({ date: d, cap: (we ? P.we : P.wd) * 60, items: [], used: 0 }); }
+  const items = EXAM.chapters.map(c => ({ kind: 'ch', id: c.id, label: `Ch ${c.id} ${c.title}`, short: `Ch ${c.id}`, min: chapterMinutes(c), done: chapterDone(c) }));
+  // The plan's mandatory mocks are the full 100-mark ones (2 h + review); Section A-only papers are optional extras.
+  for (let k = 1; k <= FULL_MOCKS.length; k++) items.push({ kind: 'full', id: k, label: `Full Mock ${k} (100 marks, ${hm(HALL.minutes)} + review)`, short: `Full ${k}`, min: HALL.minutes + 30, done: G.best(`${examId}/full/${k}`) > 0, optional: k > P.mocks });
+  for (let k = 1; k <= 5; k++) items.push({ kind: 'mock', id: k, label: `Mock ${k} (Section A only, ${HALL.ot} questions)`, short: `Mock ${k}`, min: MOCK_MIN, done: G.best(`${examId}/mock/${k}`) > 0, optional: true });
+  const todo = items.filter(i => !i.done), left = []; let di = 0;
+  for (const it of todo) {
+    while (di < days.length && (days[di].used >= days[di].cap * 0.9 || (days[di].used > 0 && days[di].used + it.min > days[di].cap * 1.15))) di++;
+    if (di >= days.length) { left.push(it); continue; }
+    days[di].items.push(it); days[di].used += it.min; }
+  const need = todo.filter(i => !i.optional).reduce((a, i) => a + i.min, 0), cap = days.reduce((a, d) => a + d.cap, 0);
+  const totalDays = Math.max(1, Math.round((exam - start) / DAY)), daysLeft = Math.round((exam - today) / DAY);
+  return { P, start, exam, today, days, items, left, need, cap, totalDays, daysLeft, dayNo: Math.min(totalDays, Math.round((today - start) / DAY) + 1),
+    behindMin: Math.max(0, need - cap), started: today >= start, over: daysLeft <= 0, todayItems: days[0] && +days[0].date === +today ? days[0].items : [] };
+}
+function planSummary() {
+  const B = buildPlan(); if (!B) return S('welcome_home') + ' No study plan yet - tap [b]Study plan[/b] to set your start and exam dates.';
+  if (B.over) return 'Exam day - go and get it, Zuru!';
+  if (!B.started) return `Your plan starts [b]${fmtDay(B.start)}[/b]: ${B.totalDays} study days to the exam on ${fmtDay(B.exam)}.` + (B.behindMin ? ` Heads up - it needs ${hm(B.behindMin)} more than your hours allow.` : ' It fits your hours.');
+  const t = B.todayItems; const tm = t.reduce((a, i) => a + i.min, 0);
+  return `Day [b]${B.dayNo} of ${B.totalDays}[/b] - ${B.daysLeft} day${B.daysLeft === 1 ? '' : 's'} to the exam.` + (t.length ? ` Today: [b]${t.map(i => i.short).join(', ')}[/b] (${hm(tm)}).` : ' Nothing scheduled today - rest or heal wounds.')
+    + (B.behindMin ? ` [b]Behind by ${hm(B.behindMin)}[/b] - blitz: add ${Math.ceil(B.behindMin / Math.max(B.daysLeft, 1))} min a day.` : ' On track.');
+}
+// Week-grid calendar from the Monday of the start week to the Sunday of exam week.
+// Future days: the plan's items. Past days: what the Notebook recorded (chapters finished, mocks sat). Today highlighted.
+function planCalendar(B) {
+  const cal = el('div', 'cal'); for (const d of ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']) cal.append(el('div', 'dh', d));
+  const mon = d => { const m = new Date(d); m.setDate(m.getDate() - ((m.getDay() + 6) % 7)); return m; };
+  const first = mon(B.start), last = addDays(mon(B.exam), 6), byDay = Object.fromEntries(B.days.map(d => [ymd(d.date), d]));
+  for (let d = new Date(first); d <= last; d = addDays(d, 1)) {
+    const k = ymd(d), c = el('div', 'd'), inPlan = d >= B.start && d < B.exam, isExam = +d === +B.exam, past = d < B.today;
+    if (!inPlan && !isExam) c.classList.add('off'); if (+d === +B.today) c.classList.add('today'); if (isExam) c.classList.add('exam'); if (past) c.classList.add('past');
+    const cap = inPlan ? ((d.getDay() === 0 || d.getDay() === 6) ? B.P.we : B.P.wd) + 'h' : '';
+    c.innerHTML = `<div class="n"><span>${d.getDate()}${d.getDate() === 1 || +d === +first ? ' ' + d.toLocaleDateString('en-GB', { month: 'short' }) : ''}</span><span class="cap">${isExam ? 'EXAM' : cap}</span></div>`;
+    if (isExam) { c.append(el('div', 'chip2 mock', `${APP.short} exam`)); cal.append(c); continue; }
+    if (past) {   // what actually happened, from the notebook
+      const e = G.log[k]; if (e) { const byCh = {}; for (const lk of e.lessons) { const ch = lk.split('/')[1]; (byCh[ch] = byCh[ch] || []).push(lk.split('/')[2]); }
+        for (const ch of Object.keys(byCh)) { const cc = getCh(+ch); c.append(el('div', 'chip2 ' + (cc && chapterDone(cc) && byCh[ch].includes(cc.lessons[cc.lessons.length - 1].id) ? 'ok' : 'part'), `Ch ${ch} ${byCh[ch].length}L`)); }
+        for (const m of e.mocks) c.append(el('div', 'chip2 mock', `${mockName(m.k)} ${m.pct}%`));
+        if (e.sec) c.append(el('div', 'cap', hm(Math.round(e.sec / 60)))); }
+      else if (inPlan) c.append(el('div', 'cap', '-')); }
+    else { const day = byDay[k]; if (day) for (const it of day.items) c.append(el('div', `chip2${it.kind === 'mock' ? ' mock' : ''}${it.optional ? ' opt' : ''}`, it.short + (it.optional ? '*' : ''))); }
+    cal.append(c); }
+  return cal;
+}
+function planForm(p) {
+  const P = Object.assign({}, PLAN_DEFAULT, G.plan || {}), f = el('div', 'planForm'), inp = {};
+  const row = (lab, key, type, extra = '') => { const i = el('input'); i.type = type; i.value = P[key]; Object.assign(i, extra); inp[key] = i; const r = el('div', 'row'); r.append(el('label', '', lab), i); f.append(r); };
+  row('Start date', 'start', 'date'); row('Exam date', 'exam', 'date'); row('Weekday hours', 'wd', 'number', { min: 0.5, max: 12, step: 0.5 }); row('Weekend hours', 'we', 'number', { min: 0.5, max: 12, step: 0.5 }); row('Full mocks (minimum)', 'mocks', 'number', { min: 0, max: 3, step: 1 });
+  f.append(button('Save plan', '06A', () => { if (!inp.start.value || !inp.exam.value || parseDay(inp.exam.value) <= parseDay(inp.start.value)) { speak('The exam date must be after the start date.', true); return; }
+    G.plan = { start: inp.start.value, exam: inp.exam.value, wd: +inp.wd.value || 3, we: +inp.we.value || 6, mocks: Math.min(5, Math.max(0, +inp.mocks.value || 0)) }; G.save(); showPlan(); }, 'wide'));
+  if (G.plan) f.append(button('Clear plan', '04A', () => { G.plan = null; G.save(); showPlan(); }, 'wide'));
+  p.append(f);
+}
+function showPlan() {
+  const p = menu('STUDY PLAN', 'BGbox_03A', 'dark'), B = buildPlan();
+  if (!B) { p.append(el('div', '', bb(`Set your start date, exam date and the hours you can study. Sensei Otter will split the ${EXAM.chapters.length} chapters and the mocks across the days and show today's targets on the home screen.`))); planForm(p); return; }
+  p.append(el('div', 'title', `Exam ${fmtDay(B.exam)} - ${B.over ? 'today!' : B.daysLeft + ' days left'}`), button('Notebook - what I did each day', '04A', showNotebook, 'wide'));
+  p.append(el('div', '', bb(planSummary())));
+  const go = it => it.kind === 'ch' ? openChapter(it.id) : it.kind === 'full' ? startFullMock(it.id) : startMock(HALL.ot, it.id);
+  if (B.started && !B.over) { p.append(el('div', 'title', 'Today\'s targets'));
+    if (!B.todayItems.length) p.append(el('div', '', 'Nothing left for today. Heal wounds at the Shrine or get ahead with tomorrow\'s chapter.'));
+    for (const it of B.todayItems) p.append(button(`${esc(it.label)}  (${hm(it.min)})${it.optional ? ' - if time' : ''}`, it.kind === 'mock' ? '01A' : '05A', () => go(it))); }
+  p.append(el('div', 'title', 'Calendar'), planCalendar(B));
+  p.append(el('div', '', `<span class="cap">Re-planned from today: whatever is not finished moves forward into the days you have left. Past days show what the Notebook recorded.</span>`));
+  p.append(el('div', 'title', 'The schedule'));
+  const done = B.items.filter(i => i.done); if (done.length) p.append(el('div', 'planRow', `&#10003; Done: ${done.map(i => i.short).join(', ')}`));
+  for (const d of B.days) { const r = el('div', 'planRow'); r.innerHTML = `<b>${fmtDay(d.date)}</b> <span class="cap">${hm(d.cap)}</span><br>${d.items.length ? d.items.map(i => esc(i.short) + (i.optional ? '*' : '')).join(', ') + ` <span class="cap">(${hm(d.used)})</span>` : '-'}`; if (+d.date === +B.today) r.classList.add('today'); p.append(r); }
+  const mustLeft = B.left.filter(i => !i.optional), optLeft = B.left.filter(i => i.optional);
+  if (mustLeft.length) p.append(el('div', 'planRow warn', bb(`[b]Does not fit:[/b] ${mustLeft.map(i => i.short).join(', ')} - ${hm(B.behindMin)} over. Add hours, or blitz: lessons only and skip the quick battles.`)));
+  if (optLeft.length) p.append(el('div', 'planRow', `* if time: ${optLeft.map(i => i.short).join(', ')}`));
+  p.append(el('div', 'title', 'Settings')); planForm(p);
+}
+
+// ---------------------------------------------------------------- BOOK (chapter tracker)
+let bookTab = 0, bookSel = 1;
+// Selected chapter: big monster, stats and the Battle button under the book.
+const PER_SPREAD = 4, BOOK_TABS = Math.ceil(EXAM.chapters.length / PER_SPREAD);   // 2 chapters per page
+function openChapter(id) { bookTab = Math.floor((id - 1) / PER_SPREAD); bookSel = id; showBook(); }
+// Rough time to complete a chapter: lesson pages ~45 s, worked-example steps ~30 s, practice questions ~70 s,
+// quick battle 15 q, Section B boss ~25 min. Rounded to 5 minutes.
+function chapterMinutes(c) { let s = 0;
+  for (const l of c.lessons || []) s += l.learn.length * 45 + (l.example ? 60 + (l.example.steps || []).length * 30 : 0) + l.practice.length * 70;
+  s += (c.lessons ? 15 : (c.beats || []).filter(isQ).length) * 60 + (c.mtq ? 25 * 60 : 0);
+  return Math.max(5, Math.round(s / 300) * 5); }
+function chapterDetail(id) {
+  const c = getCh(id), k = `${examId}/${id}`, best = G.best(k), acc = G.acc(k), s = stars(best), d = $('chapDetail');
+  const timeLine = `<div style="font-size:22px;color:#33497a">&#9201; about ${chapterMinutes(c)} min${c.lessons ? ` &middot; ${c.lessons.length} lesson${c.lessons.length > 1 ? 's' : ''}` : ''}${c.mtq ? ' &middot; Section B boss' : ''}</div>`;
+  let st = ''; for (let i = 0; i < 3; i++) st += `<img src="${R(i < s ? 'Icon_01' : 'Icon_02')}" style="width:48px;height:48px">`;
+  if (c.lessons) {
+    // Lesson path: each lesson unlocks the next; Section B boss and the quick battle are always open.
+    d.innerHTML = `<img class="mon" src="${A('../assets/monster.png')}" style="filter:hue-rotate(${id * 47}deg);width:120px;height:107px">`
+      + `<div class="info"><div class="title" style="color:#8c2b3c">${esc(c.monster)}</div><div>Chapter ${id}: ${esc(c.title)}</div>${timeLine}<div class="stars">${st}</div></div>`
+      + `<div class="senseiLine" style="grid-column:span 2">${bb('[b]Sensei:[/b] ' + S('chapter_pick', { monster: c.monster }))}</div>`;
+    d.style.gridTemplateColumns = '130px 1fr'; d.style.gridTemplateRows = 'auto minmax(0, 1fr)';
+    const path = el('div', 'path');
+    c.lessons.forEach((l, i) => { const done = G.lessons[`${k}/${l.id}`], open = i === 0 || G.lessons[`${k}/${c.lessons[i - 1].id}`];
+      const b = button(`${done ? '&#10003; ' : open ? '&#9654; ' : '&#128274; '}Lesson ${i + 1}: ${esc(l.title)}`, done ? '03A' : open ? '05A' : '04A', () => showLesson(id, i));
+      b.disabled = !open; path.append(b); });
+    const mb = G.best(`${k}/mtq`);
+    if (c.mtq) path.append(button(`Section B boss - ${c.mtq.marks} marks${mb ? ` (best ${mb}%)` : ''}`, '06A', () => showMtq(id)));
+    path.append(button(`Quick battle - chapter questions${best ? ` (best ${best}%)` : ''}`, '02A', () => startChapter(id)));
+    d.append(path); return;
+  }
+  d.style.gridTemplateColumns = ''; d.style.gridTemplateRows = '';
+  d.innerHTML = `<img class="mon" src="${A('../assets/monster.png')}" style="filter:hue-rotate(${id * 47}deg)">`
+    + `<div class="info"><div class="title" style="color:#8c2b3c">${esc(c.monster)}</div><div>Ch ${id}: ${esc(c.title)}</div>`
+    + `<div class="stars">${st}</div><div>${best ? `Best ${best}%` : 'Not battled yet'}${acc >= 0 ? `  -  accuracy ${acc}%` : ''}</div>`
+    + `<div style="font-size:24px">${questions(id).length} questions.  1 star = 50%, 2 = 70%, 3 = 100%</div></div>`;
+  d.append(button('Battle!', '06A', () => startChapter(id), 'go'));
+}
+function showBook(turn = 0) {
+  stopTimer(); session = null; tapHandler = null; show('book');
+  $('bookInfo').innerHTML = bb(`[b]${totalStars()} / ${EXAM.chapters.length * 3}[/b] stars collected.  Tap a chapter.`);
+  const tabs = $('tabs'); tabs.replaceChildren();
+  for (let t = 0; t < BOOK_TABS; t++) { const tab = el('div', 'tab'); const im = el('img'); im.src = R(`Tab0${(t % 5) + 1}_Right_${t === bookTab ? 'Selected' : 'Normal'}`); tab.append(im, el('span', '', `${t * PER_SPREAD + 1}`)); tab.classList.toggle('sel', t === bookTab);
+    tab.title = `Chapters ${t * PER_SPREAD + 1}-${Math.min((t + 1) * PER_SPREAD, EXAM.chapters.length)}`; tab.onclick = () => { if (t !== bookTab) { const dir = t > bookTab ? 1 : -1; bookTab = t; showBook(dir); } }; tabs.append(tab); }
+  const fill = () => {
+    const chs = EXAM.chapters.slice(bookTab * PER_SPREAD, (bookTab + 1) * PER_SPREAD);
+    if (!chs.some(c => c.id === bookSel)) bookSel = chs[0].id;
+    for (const [pg, list] of [[$('pageL'), chs.slice(0, 2)], [$('pageR'), chs.slice(2, 4)]]) {
+      pg.replaceChildren();
+      for (const c of list) {
+        const best = G.best(`${examId}/${c.id}`), s = stars(best), e = el('div', 'chap');
+        let st = ''; for (let i = 0; i < 3; i++) st += `<img src="${R(i < s ? 'Icon_01' : 'Icon_02')}">`;
+        const les = c.lessons || [], done = les.filter(l => G.lessons[`${examId}/${c.id}/${l.id}`]).length, pct = les.length ? Math.round(done / les.length * 100) : 0;
+        e.innerHTML = `<div class="h"><img src="${A('../assets/monster.png')}" style="filter:hue-rotate(${c.id * 47}deg)"><div><div class="name">Ch ${c.id}</div><div class="stars">${st}</div></div></div>`
+          + `<div class="mon">${esc(c.title)}</div>`
+          + `<div class="prog">${les.length ? `Lessons ${done}/${les.length}` : 'Quiz only'} · Best ${best}%</div><div class="pbar"><i style="width:${pct}%"></i></div>`;
+        if (c.id === bookSel) e.classList.add('sel');
+        e.onclick = () => { bookSel = c.id; fill(); }; pg.append(e);
+      }
+    }
+    chapterDetail(bookSel);
+  };
+  if (!turn) { fill(); return; }
+  // page-turn animation from the pack (8 frames); pages refill when it ends
+  sfx('page'); const pt = $('pageTurn'); $('pageL').replaceChildren(); $('pageR').replaceChildren(); pt.style.display = 'block';
+  pt.style.backgroundImage = `url(${R(turn > 0 ? 'Spellbook_NextPage' : 'Spellbook_PreviousPage')})`;
+  let f = 0; const iv = setInterval(() => { pt.style.backgroundPosition = `${-f * 720}px 0`; f++; if (f > 8) { clearInterval(iv); pt.style.display = 'none'; fill(); } }, 55);
+}
+
+// ---------------------------------------------------------------- MENUS
+function menu(title, box, textCls) { stopTimer(); session = null; tapHandler = null; show('menu'); $('menuBanner').textContent = title;
+  const frame = $('menuPanel'); art(frame, box); frame.className = `panel box ${textCls}`; const p = $('menuScroll'); p.replaceChildren();
+  const pin = $('menuPinned'); pin.replaceChildren(); pin.classList.add('hidden');
+  setTimeout(() => { if (!p.dataset.nofit) fitPanel(p); }, 0);   // runs after the caller has filled the panel
+  return p; }
+let bankKind = '';
+const ROTATE = ['02A', '05A', '03A', '06A', '01A', '04A'];
+function showBank() {
+  const p = menu('TRAINING GROUNDS', 'BGbox_02B', 'light');
+  // Type filter sits in the pinned strip above the panel so it stays visible while the topic list scrolls.
+  const row = el('div', 'row');
+  for (const [k, l] of [['', 'All'], ['choice', 'Tap'], ['input', 'Type-in']]) row.append(button(bankKind === k ? `> ${l} <` : l, bankKind === k ? '03A' : '04A', () => { bankKind = k; showBank(); }));
+  const pin = $('menuPinned'); pin.append(row); pin.classList.remove('hidden');
+  p.append(el('div', '', 'Drill until it sticks. Pick a type above, then a topic.'));
+  p.append(button(`All topics (${questions(-1, bankKind).length})`, '06A', () => startBank(-1)));
+  EXAM.chapters.forEach((c, i) => { const n = questions(c.id, bankKind).length; if (!n) return; const a = G.acc(`${examId}/${c.id}`);
+    p.append(button(`Ch ${c.id}  ${esc(c.title)}  (${n})${a >= 0 ? '  - ' + a + '%' : ''}`, ROTATE[i % ROTATE.length], () => startBank(c.id))); });
+}
+function showMock() {
+  const p = menu('EXAM HALL', 'BGbox_01B', 'light');
+  p.append(el('div', '', bb('The real FFA exam is [b]2 hours, 100 marks[/b]: Section A = 35 objective-test questions x 2 marks (84 min at exam pace), Section B = 2 multi-task questions x 15 marks. Pass mark [b]50%[/b].\n\n[b]These mocks are NOT real ACCA papers.[/b] They are original questions written in the ACCA CBE format (same question types, marks and pace). Section B practice is the chapter bosses for now. No feedback until the end, just like the real thing.')));
+  p.append(button('Open ACCA\'s real FFA specimen exam (free)', '03A', () => window.open('https://www.accaglobal.com/gb/en/student/exam-support-resources/foundation-level-study-resources/ffa/ffa-pilot-papers.html', '_blank')));
+  p.append(button('Open ACCA\'s Practice Platform (real exam layout)', '04A', () => window.open('https://www.accaglobal.com/gb/en/student/exam-support-resources/professional-exams-study-resources/cbe-platform-support.html', '_blank')));
+  // Three full 100-mark mocks in the real format, five Section A-only papers, plus a quick warm-up. Fixed papers, same every retake.
+  p.append(el('div', 'title', 'Full mocks - the real format'));
+  for (let k = 1; k <= 3; k++) { const best = G.best(`${examId}/full/${k}`), f = FULL_MOCKS[k - 1];
+    p.append(button(`Full Mock ${k} - 100 marks, 2 hours (35 OT + ${getCh(f.mtq[0]).mtq.title.replace('Section B: ', '')} + ${getCh(f.mtq[1]).mtq.title.replace('Section B: ', '')})${best ? `  - best ${best}%${best >= 50 ? ' (pass)' : ''}` : ''}`, ['06A', '02A', '01A'][k - 1], () => startFullMock(k))); }
+  p.append(el('div', 'title', 'Section A practice'));
+  for (let k = 1; k <= 5; k++) { const best = G.best(`${examId}/mock/${k}`);
+    p.append(button(`Mock ${k} - 35 questions, 84 min${best ? `  - best ${best}%${best >= 50 ? ' (pass)' : ''}` : ''}`, ['06A', '02A', '03A', '01A', '05A'][k - 1], () => startMock(35, k))); }
+  const mini = G.best(`${examId}/mock15`);
+  p.append(button(`Mini mock (warm-up) - 15 questions, 36 min, random paper${mini ? '  - best ' + mini + '%' : ''}`, '04A', () => startMock(15, 0)));
+}
+// ---------------------------------------------------------------- SYLLABUS MAP (every ACCA outcome and what covers it)
+// SYL = the selected exam's syllabus map (set in selectExam)
+const sylStatus = o => o.cover.some(c => c.includes('/L')) ? 'taught' : o.cover.length ? 'quiz' : 'gap';
+const SYL_LOOK = { taught: ['Taught', '#2e8b57'], quiz: ['Quiz only', '#c98a2e'], gap: ['Gap', '#c8414b'] };
+function coverLabel(c) { if (c.startsWith('ch')) return `Ch ${c.slice(2)} questions`;
+  const [ch, l] = c.split('/'), les = (getCh(+ch).lessons || []).findIndex(x => x.id === l); return `Ch ${ch} Lesson ${les + 1}`; }
+function showSyllabus(openArea) {
+  const p = menu('SYLLABUS MAP', 'BGbox_06A', 'dark');
+  const n = s => SYL.filter(o => sylStatus(o) === s).length, total = SYL.length;
+  p.append(el('div', '', bb(`Every learning outcome in the ACCA [b]FA/FFA syllabus and study guide (Sept 2026 - June 2027)[/b], and what in the game covers it. Tap an area to open it.`)));
+  const bar = el('div', ''); bar.style.cssText = 'display:flex;height:34px;border:3px solid #3e2731;border-radius:6px;overflow:hidden';
+  for (const s of ['taught', 'quiz', 'gap']) { const seg = el('div'); seg.style.cssText = `width:${n(s) / total * 100}%;background:${SYL_LOOK[s][1]}`; bar.append(seg); }
+  p.append(bar, el('div', '', `<span style="color:${SYL_LOOK.taught[1]}">&#9632;</span> Taught ${n('taught')}  <span style="color:${SYL_LOOK.quiz[1]}">&#9632;</span> Quiz only ${n('quiz')}  <span style="color:${SYL_LOOK.gap[1]}">&#9632;</span> Gap ${n('gap')}  (of ${total})`));
+  for (const a of EXAM.areas || []) {
+    const os = SYL.filter(o => o.code.startsWith(a.code) && !/[A-Z]/.test(o.code.slice(1))), gaps = os.filter(o => sylStatus(o) === 'gap').length, taught = os.filter(o => sylStatus(o) === 'taught').length;
+    const head = button(`${a.code}  ${esc(a.title)}  -  ${taught} taught, ${gaps} gap${gaps === 1 ? '' : 's'} (${os.length})`, gaps === os.length ? '06A' : gaps ? '03A' : '05A', () => showSyllabus(openArea === a.code ? null : a.code));
+    head.style.textAlign = 'left'; head.style.fontSize = '24px'; p.append(head);
+    if (openArea !== a.code) continue;
+    for (const o of os) { const s = sylStatus(o), row = el('div');
+      row.style.cssText = 'font-size:24px;line-height:1.2;padding:6px 4px;border-bottom:2px solid rgba(62,39,49,.25)';
+      row.innerHTML = `<b>${o.code}</b> <span style="background:${SYL_LOOK[s][1]};color:#fff;border-radius:10px;padding:0 8px;font-size:20px">${SYL_LOOK[s][0]}</span> <span style="font-size:20px;color:#6e3f33">[${o.k}]</span> ${esc(o.t)}`
+        + (o.cover.length ? `<div style="font-size:20px;color:#33497a">Covered by: ${o.cover.map(coverLabel).join(', ')}</div>` : '')
+        + (o.note ? `<div style="font-size:20px;color:#8c2b3c">Still to do: ${esc(o.note)}</div>` : '');
+      p.append(row); }
+  }
+  const back = button('Back to Hall of Records', '05A', showRecords); p.append(back);
+}
+
+function showRecords() {
+  const p = menu('HALL OF RECORDS', 'BGbox_05A', 'dark');
+  if (SYL.length) { const t = SYL.filter(o => sylStatus(o) === 'taught').length, g = SYL.filter(o => sylStatus(o) === 'gap').length;
+    p.append(button(`Syllabus map: ${t} of ${SYL.length} outcomes taught, ${g} gaps`, '03A', () => showSyllabus())); }
+  const rows = EXAM.chapters.map(c => ({ c, acc: G.acc(`${examId}/${c.id}`) }))
+    .sort((a, b) => (a.acc >= 0 ? a.acc : 1000) - (b.acc >= 0 ? b.acc : 1000));
+  const tried = rows.filter(r => r.acc >= 0);
+  if (!tried.length) p.append(el('div', '', 'No answers yet. Every question you answer, in any area, is recorded here.'));
+  else { const w = tried[0]; p.append(el('div', '', bb(`Weakest topic: [b]Ch ${w.c.id} ${w.c.title}[/b] at ${w.acc}%.`)));
+    p.append(button('Drill my weakest topic', '06A', () => { bankKind = ''; startBank(w.c.id); })); }
+  const g = el('div', 'rec');
+  for (const r of rows) { g.append(el('div', '', `Ch ${r.c.id} ${esc(r.c.title)}${r.acc >= 0 ? ' - ' + r.acc + '%' : ''}`));
+    const b = art(el('div', 'bar'), 'Slider01_Box'); b.append(el('i')); g.append(b); setTimeout(() => setBar(b, r.acc < 0 ? 0 : r.acc / 100), 30); }
+  p.append(g);
+}
+
+// ---------------------------------------------------------------- BATTLE
+let session = null, timerIv = null, tapHandler = null;
+const MOVES = ['Debit Strike', 'Credit Slash', 'Accrual Cut', 'Ledger Lunge', 'Balance Blade', 'Prudence Parry', 'Matching Thrust', 'Audit Arc'];
+function scene(c) { $('field').style.background = `linear-gradient(${c[0]} 0%, ${c[1]} 62%, ${c[2]} 62%, ${c[2]} 100%)`; }
+function startSession(o) {
+  stopTimer();
+  const s = Object.assign({ idx: 0, correct: 0, log: [] }, o);
+  s.qTotal = s.beats.filter(isQ).length; s.youMax = o.youMax || Math.max(s.qTotal, 1); s.you = s.youMax;
+  session = s; show('battle'); scene(o.scene);
+  $('foe').className = ''; $('foe').style.filter = `hue-rotate(${o.hue || 0}deg)`; $('foeName').textContent = o.foe; $('foeLv').textContent = o.foeLv || '';
+  $('youLv').textContent = `Lv ${G.level()}`; $('timer').classList.toggle('hidden', !o.mock && !o.gauntlet); $('timer').classList.toggle('hud', !!o.gauntlet); if (o.gauntlet) hud(s);
+  updateBars(); runBattle(s);
+}
+function updateBars() { const s = session; setBar($('foeHp'), s.gauntlet ? s.bossHp / s.bossMax : s.qTotal ? (s.qTotal - s.correct) / s.qTotal : 1); setBar($('youHp'), s.you / s.youMax); $('youHpTxt').textContent = `HP ${s.you} / ${s.youMax}`; }
+function anim(id, cls) { const e = $(id); e.classList.remove(cls); void e.offsetWidth; e.classList.add(cls); }
+function dmg(text, x, y) { const d = el('div', 'dmg', text); d.style.left = x + 'px'; d.style.top = y + 'px'; $('field').append(d); setTimeout(() => d.remove(), 1000); }
+
+// Dialogue: typewriter text; tap the box (or Enter / Space) to finish the line, tap again for the next page.
+$('dlg').onclick = () => tapHandler && tapHandler();
+addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && tapHandler && document.activeElement.tagName !== 'INPUT') { e.preventDefault(); tapHandler(); } });
+function speaker(name, style = 'BannerSmall_02C') { $('speaker').textContent = name; art($('speaker'), style); $('speaker').classList.toggle('good', name === 'CORRECT'); $('speaker').classList.toggle('bad', name === 'WRONG'); }
+function type(html, skippable = true, say = true) { if (say) speak(plain(html)); return new Promise(res => {
+  const t = $('dlgText'); t.innerHTML = html; const parts = []; const w = document.createTreeWalker(t, NodeFilter.SHOW_TEXT);
+  while (w.nextNode()) { parts.push([w.currentNode, w.currentNode.textContent]); w.currentNode.textContent = ''; }
+  let ni = 0, ci = 0, done = false;
+  const finish = () => { if (done) return; done = true; clearInterval(iv); for (const [n, s] of parts) n.textContent = s; tapHandler = null; res(); };
+  const iv = setInterval(() => { if (ni >= parts.length) return finish(); const [n, s] = parts[ni]; ci += 2; n.textContent = s.slice(0, ci); if (ci >= s.length) { ni++; ci = 0; } }, 16);
+  tapHandler = skippable ? finish : null; }); }
+async function say(list, who, extra, s) { // resolves after the last page is tapped
+  for (let i = 0; i < list.length; i++) {
+    if (s && s !== session) return;
+    speaker(who); $('cmds').replaceChildren(); $('dlgExtra').replaceChildren(); $('more').classList.add('hidden');
+    await type(bb(list[i]));
+    if (extra && i === list.length - 1) $('dlgExtra').append(extra);
+    $('more').classList.remove('hidden');
+    await new Promise(r => tapHandler = () => { tapHandler = null; r(); });
+  }
+  $('more').classList.add('hidden'); $('dlgExtra').replaceChildren();
+}
+function taccount(b) { const d = el('div', 'ta'); const col = (h, rows, tot) => `<div class="col"><div class="hd">${h}</div>${rows.map(r => `<div>${esc(r)}</div>`).join('')}${tot ? `<div>------<br>${esc(tot)}</div>` : ''}</div>`;
+  d.innerHTML = `<div class="t">${esc(b.name || '')}</div><div class="cols">${col('Dr', b.dr || [], b.dr_total)}${col('Cr', b.cr || [], b.cr_total)}</div>`; return d; }
+const norm = v => String(v).trim().toLowerCase().replace(/[$£,\s()\-]/g, '');
+function correctText(b) {
+  if (b.type === 'choice') return b.opts[b.a];
+  if (b.type === 'multi') return b.a.map(i => b.opts[i]).join(' + ');
+  if (b.type === 'picklist') return b.a.map((a, i) => b.lists[i][a]).join(' / ');
+  if (b.type === 'sort') return b.items.map(([n, k]) => `${n}: ${b.buckets[k]}`).join(', ');
+  return b.display_answer || '';
+}
+// Question text for the dialogue box (pick-list gaps shown as ____).
+const qText = b => b.type === 'picklist' ? 'Complete the sentence below using the drop-down lists.' : b.q;
+const TYPE_HINT = { multi: 'Multiple response', picklist: 'Pick list', sort: 'Sort', input: 'Number entry', choice: 'Multiple choice' };
+
+// Firefox does not grow a <button> past its min-height when the text wraps (Chrome does), so after the
+// answer buttons render, measure each one: shrink the font a step for long text, then set the height to fit.
+// Height a box needs for its content: measured with a Range round the content (Firefox under-reports a <button>'s
+// scrollHeight, so text ended up sitting on the frame), plus the padding the frame art sits over.
+function needed(x) { const r = document.createRange(); r.selectNodeContents(x); const h = r.getBoundingClientRect().height / stageScale; const cs = getComputedStyle(x);
+  return h + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) + 4; }
+function fitButtons(sel) { if (typeof sel !== 'string') sel = '#cmds > *, #cmds .sortrow .btn';   // (requestAnimationFrame passes a timestamp)
+  for (const x of document.querySelectorAll(sel)) {   // buttons, pick-list panel, sort rows, inputs
+  x.style.height = ''; if (x.scrollHeight > x.clientHeight + 1 && x.classList.contains('btn') && !x.classList.contains('long') && x.querySelector('.k')) x.classList.add('long');
+  for (let pass = 0; pass < 2; pass++) { const want = Math.max(x.scrollHeight, x.tagName === 'INPUT' || x.tagName === 'SELECT' ? 0 : needed(x));
+    if (want > x.clientHeight + 1) x.style.height = Math.ceil(want + pass * 4) + 'px'; else break; } } }
+// Fit, don't scroll: shrink the question text and the answer buttons step by step until the whole
+// question + options + Run away fit the lower half. Scrolling stays only as the last resort.
+const over = e => e.scrollHeight > e.clientHeight + 1;
+function fitBattle() {
+  const dt = $('dlgText'), ds = $('dlgScroll'), dlg = $('dlg'), cmds = $('cmds');
+  dt.style.fontSize = ''; dlg.style.maxHeight = ''; dlg.style.minHeight = ''; cmds.classList.remove('tight', 'tighter');
+  for (let f = 26; f >= 22 && over(ds); f -= 2) dt.style.fontSize = f + 'px';
+  fitButtons();
+  for (const cls of ['tight', 'tighter']) { if (!over(cmds)) break; cmds.classList.add(cls); fitButtons(); }
+  if (over(cmds)) { dlg.style.maxHeight = '250px'; for (let f = 24; f >= 20 && over(ds); f -= 2) dt.style.fontSize = f + 'px'; fitButtons(); }
+  if (over(cmds)) { dlg.style.minHeight = '120px'; cmds.classList.add('tightest'); fitButtons(); }   // sort questions with 6 rows: short dialogue, slim rows
+  fitButtons(); requestAnimationFrame(() => fitButtons());   // one more pass after layout settles (fonts, class changes)
+}
+// Same idea for a framed panel: try the 'tight' then 'tighter' classes (smaller text and buttons) before letting it scroll.
+function fitPanel(p) { p.classList.remove('tight', 'tighter'); for (const cls of ['tight', 'tighter']) { if (!over(p)) break; p.classList.add(cls); } }
+function ask(b, s) { return new Promise(async res => {
+  speaker(s.mock ? 'EXAM PAPER' : s.foe.toUpperCase(), 'BannerSmall_01A'); $('more').classList.add('hidden'); $('dlgExtra').replaceChildren(); $('cmds').replaceChildren();
+  const head = (s.mode !== 'trial' && s.mode !== 'lesson' && b._topic) ? `<i>${esc(b._topic)}</i><br>` : '';
+  await type(head + bb(qText(b)) + `<br><i style="font-size:22px;color:#6e3f33">${TYPE_HINT[b.type]} - 2 marks</i>`, true, false);
+  if (s !== session) return;
+  const cmds = $('cmds'), styles = ['02A', '05A', '03A', '06A'];
+  const submit = (label, fn) => button(label || (s.mock ? 'Submit answer' : 'Strike!'), '03A', fn, 'wide');
+  if (b.type === 'choice') {
+    shuffle([...b.opts.keys()]).forEach((i, j) => cmds.append(button(`<span class="k">${'ABCD'[j]}</span>${drcr(esc(b.opts[i]))}`, styles[j % 4], () => res({ ok: i === b.a, given: b.opts[i] }), b.opts[i].length > 40 ? 'long' : '')));
+  } else if (b.type === 'multi') {
+    // Like the real exam: it doesn't stop you picking the wrong number - read the question!
+    const picked = new Set();
+    const conf = submit('Confirm (0 selected)', () => res({ ok: picked.size === b.a.length && b.a.every(i => picked.has(i)), given: [...picked].map(i => b.opts[i]).join(' + ') })); conf.disabled = true;
+    shuffle([...b.opts.keys()]).forEach((i, j) => { const btn = button(`<span class="k">${'ABCD'[j]}</span>${drcr(esc(b.opts[i]))}`, styles[j % 4], () => {
+      picked.has(i) ? picked.delete(i) : picked.add(i); btn.classList.toggle('picked', picked.has(i));
+      conf.textContent = `Confirm (${picked.size} selected)`; conf.disabled = !picked.size; }, b.opts[i].length > 40 ? 'long' : ''); cmds.append(btn); });
+    cmds.append(conf);
+  } else if (b.type === 'picklist') {
+    const box = art(el('div', 'panelq box dark'), 'BGbox_04A'), sels = [];
+    b.q.split(/\{(\d+)\}/).forEach((p, k) => { if (k % 2 === 0) { box.append(document.createTextNode(p)); return; }
+      const sel = el('select', '', `<option value="">Select...</option>` + b.lists[+p].map((o, oi) => `<option value="${oi}">${esc(o)}</option>`).join(''));
+      sels[+p] = sel; box.append(sel); });
+    const go = submit('', () => { if (sels.some(x => x.value === '')) return; res({ ok: sels.every((x, i) => +x.value === b.a[i]), given: sels.map((x, i) => b.lists[i][+x.value]).join(' / ') }); });
+    cmds.append(box, go);
+  } else if (b.type === 'sort') {
+    const choice = {}; let sub;
+    const nb = b.buckets.length;
+    shuffle([...b.items.keys()]).forEach(i => { const row = el('div', 'sortrow'); row.append(el('div', '', esc(b.items[i][0])));
+      row.style.gridTemplateColumns = `1fr repeat(${nb}, ${nb > 3 ? 92 : nb > 2 ? 118 : 150}px)`; if (nb > 2) row.classList.add('narrow');
+      const bs = b.buckets.map((bk, bi) => button(esc(bk), ['05A', '02A', '03A', '06A'][bi % 4], () => { choice[i] = bi; bs.forEach((y, yi) => y.classList.toggle('picked', yi === bi)); sub.disabled = Object.keys(choice).length < b.items.length; }));
+      row.append(...bs); cmds.append(row); });
+    sub = submit('', () => res({ ok: b.items.every(([, k], i) => choice[i] === k), given: b.items.map(([n], i) => `${n}: ${b.buckets[choice[i]]}`).join(', ') })); sub.disabled = true;
+    cmds.append(sub);
+  } else {
+    const inp = art(el('input', 'box'), 'BGbox_06A'); inp.placeholder = 'Type your answer...';
+    const go = () => { const n = norm(inp.value); if (!n) return; res({ ok: (b.accept || []).some(a => norm(String(a)) === n), given: inp.value.trim() }); };
+    inp.onkeydown = e => { if (e.key === 'Enter') go(); };
+    cmds.append(inp, button(s.mock ? 'Submit answer' : 'Strike!', '03A', go, 'wide')); inp.focus();
+  }
+  cmds.append(button(s.mode === 'bank' || s.mode === 'mistakes' ? 'Finish session' : 'Run away', '04A', () => res({ quit: true }), 'wide'));
+  fitBattle();
+  speak(qText(b) + '. ' + [...cmds.querySelectorAll('.btn')].filter(x => x.querySelector('.k')).map(x => x.innerText.replace(/\n/g, ' ')).join('. '));
+}); }
+
+async function runBattle(s) {
+  if (s.intro) await say([s.intro], 'BATTLE', null, s);
+  while ((s.gauntlet || s.idx < s.beats.length) && s === session) {
+    if (s.gauntlet) gauntletFeed(s);
+    const b = s.beats[s.idx];
+    if (!isQ(b)) { await say(pages(b.text || ''), (b.speaker || 'Sensei').toUpperCase(), b.type === 'taccount' ? taccount(b) : null, s); s.idx++; continue; }
+    const r = await ask(b, s); if (s !== session) return;
+    if (r.quit) { if (s.mode === 'bank' || s.mode === 'mistakes') break; if (s.gauntlet) return finishGauntlet(s, true); return showHome(); }
+    if (b._key) G.answer(b._key, b._ch, r.ok);
+    if (r.ok) s.correct++;
+    if (s.mock) { s.log.push({ q: b, given: r.given, ok: r.ok }); s.idx++; continue; }
+    $('cmds').replaceChildren();
+    if (r.ok) {
+      sfx('hit'); verdict(true); mood('happy'); anim('you', 'lungeR'); await sleep(180); anim('foe', 'hit'); dmg('-1', 560, 100); if (s.gauntlet) s.bossHp--; updateBars();
+      await say([S('correct', { move: MOVES[Math.floor(Math.random() * MOVES.length)].toUpperCase() }), ...pages(b.ex || '')], 'CORRECT', null, s);
+      if (s.gauntlet && s.bossHp <= 0) { s.idx++; if (await nextBoss(s)) return; continue; }
+    } else {
+      sfx('miss'); verdict(false); mood('sad'); s.you = Math.max(0, s.you - 1); anim('foe', 'lungeL'); await sleep(180); anim('you', 'hit'); dmg('-1', 200, 330); updateBars();
+      await say([S('wrong', { foe: s.foe, ans: correctText(b) }), ...pages(b.ex || '')], 'WRONG', null, s);
+      if (s.gauntlet && s.you <= 0) { s.idx++; return finishGauntlet(s, false); }
+    }
+    s.idx++;
+  }
+  if (s === session) s.mock ? finishMock(s, false) : finish(s);
+}
+async function finish(s) {
+  const drill = s.mode === 'bank' || s.mode === 'mistakes';
+  const total = drill ? s.beats.slice(0, s.idx).filter(isQ).length : s.qTotal;
+  const pct = total ? Math.round(s.correct / total * 100) : 0;
+  const before = s.key ? stars(G.best(s.key)) : 0; if (s.key) G.record(s.key, pct);
+  const won = pct >= 70;
+  if (won) sfx('win'); if (won && !drill) $('foe').classList.add('faint');
+  const lines = [];
+  if (!drill) lines.push(S(won ? 'won' : 'lost', { foe: s.foe, n: s.correct, total, pct }));
+  else lines.push(S('session_done', { n: s.correct, total, pct }));
+  if (s.mode === 'trial') { const now = stars(pct); if (now > before) lines.push(`New record! [b]${now} star${now > 1 ? 's' : ''}[/b] for this chapter in your Chapter Book.`); }
+  const lessons = s.mode === 'lesson' ? getCh(s.chId).lessons : null, hasNext = lessons && s.li + 1 < lessons.length;
+  if (lessons) { if (won) G.passLesson(s.key);
+    lines.push(won ? S('lesson_pass') + (hasNext ? `Lesson ${s.li + 2} is unlocked.` : getCh(s.chId).mtq ? 'All lessons done - the Section B boss awaits!' : 'All lessons in this chapter done!') : S('lesson_fail')); }
+  lines.push(S('xp', { xp: s.correct * 10, lv: G.level() }) + (pct < 70 && total ? S('shrine_hint') : ''));
+  await say(lines, 'SENSEI OTTER', null, s);
+  if (s !== session) return;
+  const cmds = $('cmds'); cmds.replaceChildren();
+  if (lessons) cmds.append(won ? (hasNext ? button('Next lesson', '06A', () => showLesson(s.chId, s.li + 1)) : getCh(s.chId).mtq ? button('Section B boss', '06A', () => showMtq(s.chId)) : button('Quick battle', '06A', () => startChapter(s.chId)))
+    : button('Read the lesson again', '06A', () => showLesson(s.chId, s.li)), button('Chapter Book', '03A', () => openChapter(s.chId)));
+  else if (s.mode === 'trial') cmds.append(button('Rematch', '06A', () => startChapter(s.chId)), button('Chapter Book', '03A', () => openChapter(s.chId)));
+  else if (s.mode === 'boss') cmds.append(button('Fight again', '06A', showBossLobby), button('Hall of Records', '03A', showRecords));
+  cmds.append(button('Home', '05A', showHome, 'wide'));
+}
+function stopTimer() { if (timerIv) clearInterval(timerIv); timerIv = null; }
+async function finishMock(s, timeUp) {
+  stopTimer(); const n = s.beats.length, pct = Math.round(s.correct / Math.max(n, 1) * 100), pass = pct >= 50; G.record(s.key, pct); G.note('mock', { k: s.mockNo || 0, pct });
+  if (pass) { sfx('win'); $('foe').classList.add('faint'); }
+  const lines = [`${pass ? '[b]PASS![/b]' : '[b]Not a pass yet.[/b]'}  ${s.correct} / ${n}  ([b]${pct}%[/b]).  Time used ${mmss(s.total - s.left)} of ${mmss(s.total)}.` + (timeUp ? `  [b]Time ran out[/b] - ${n - s.log.length} unanswered.` : '')];
+  const done = new Set(s.log.map(e => e.q._key));
+  const missed = s.log.filter(e => !e.ok).map(e => ({ q: e.q, given: e.given })).concat(s.beats.filter(q => !done.has(q._key)).map(q => ({ q, given: '(not answered)' })));
+  lines.push(missed.length ? `Let's review the ${missed.length} you missed, one by one.` : 'Flawless - nothing to review!');
+  await say(lines, 'EXAMINER', null, s);
+  for (const m of missed) { if (s !== session) return; await say([m.q.q, `You: ${m.given}\nAnswer: [b]${correctText(m.q)}[/b]`, ...pages(m.q.ex || '')], 'REVIEW', null, s); }
+  if (s !== session) return;
+  $('cmds').replaceChildren(button(s.mockNo ? `Retake Mock ${s.mockNo}` : 'Another mini mock', '06A', () => startMock(n, s.mockNo)), button('Exam Hall', '03A', showMock), button('Home', '05A', showHome, 'wide'));
+}
+
+function startChapter(id) { const c = getCh(id);
+  // Chapters with lessons: a quick battle of 15 random questions from the whole chapter.
+  const beats = c.lessons ? shuffle(questions(id)).slice(0, 15) : chapterBeats(id);
+  startSession({ mode: 'trial', chId: id, beats, key: `${examId}/${id}`, foe: c.monster, foeLv: `Ch ${id}`, hue: id * 47, scene: SCENES[id % SCENES.length], intro: S('appear', { foe: c.monster, topic: c.title }) }); }
+// ---------------------------------------------------------------- BOSS ARENA: endless gauntlet
+// Each chapter monster is a boss with 5 HP (one hit per right answer). Every 5th boss is the Exam Hall Shogun
+// (8 HP, questions from every chapter). Zuru has 10 HP, loses 1 per wrong answer, heals 3 per boss beaten.
+// A run ends when her HP hits 0, she leaves, or the lap (32 bosses) is cleared - then she may start another lap.
+const BOSS_HP = 5, SHOGUN_HP = 8, HERO_HP = 10, HEAL = 3;
+function makeLineup() { const out = [];
+  shuffle(EXAM.chapters.filter(c => questions(c.id).length)).forEach((c, i) => {
+    out.push({ name: c.monster, chId: c.id, topic: c.title, hue: c.id * 47, lv: `Ch ${c.id}`, hp: BOSS_HP });
+    if (i % 4 === 3) out.push({ name: 'Exam Hall Shogun', chId: -1, topic: 'every chapter', hue: 300, lv: 'SHOGUN', hp: SHOGUN_HP }); });
+  return out; }
+function showBossLobby() {
+  const lineup = makeLineup(), p = menu('BOSS ARENA', 'BGbox_07A', 'light');
+  p.append(el('div', '', bb(`[b]${lineup.length} bosses a lap.[/b] Every boss has ${BOSS_HP} HP and each right answer is a hit. You have ${HERO_HP} HP, lose 1 for a wrong answer and heal ${HEAL} every time a boss falls. Clear the whole lap and you can start another - how far can you go?`)));
+  const g = G.progress[examId + '/gauntlet'] || {}; if (g.best || g.last) p.append(el('div', '', bb(`Last run: [b]${g.last ?? 0}[/b] bosses  ·  Best: [b]${g.best || 0}[/b] bosses.`)));
+  const list = el('div', '', bb('[b]Tonight\'s lineup[/b]')); list.style.cssText = 'font-size:24px;line-height:1.25';
+  lineup.slice(0, 6).forEach((b, i) => { const r = el('div', '', `${i + 1}. ${esc(b.name)}  -  ${esc(b.lv === 'SHOGUN' ? 'mixed questions, ' + SHOGUN_HP + ' HP' : b.topic)}`); r.style.cssText = 'display:flex;align-items:center;gap:8px;padding:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+    const im = el('img'); im.src = A('../assets/monster.png'); im.style.cssText = `width:40px;height:40px;flex:none;image-rendering:pixelated;filter:hue-rotate(${b.hue}deg)`; r.prepend(im); list.append(r); });
+  list.append(el('div', '', `... and the other ${lineup.length - 6} to finish the lap.`));
+  p.append(list, button('Fight!', '06A', () => startGauntlet(lineup), 'wide'));
+}
+// A lap = every boss in the lineup (26 chapter monsters + 6 Shoguns). Clearing a lap ends the run with a win;
+// "Next lap" carries the boss count and HP into a fresh shuffled lineup, so a run can go on for as long as she likes.
+function startGauntlet(lineup, carry = {}) { const b0 = lineup[0], down = carry.bossesDown || 0, lap = carry.lap || 1;
+  startSession({ mode: 'boss', gauntlet: true, lineup, lap, bossNo: 0, bossesDown: down, bossHp: b0.hp, bossMax: b0.hp, youMax: HERO_HP, beats: [], key: examId + '/gauntlet',
+    foe: b0.name, foeLv: b0.lv, hue: b0.hue, scene: AREA_SCENE.boss, intro: `${lap > 1 ? `[b]Lap ${lap}![/b] ` : ''}Boss ${down + 1}: a wild [b]${b0.name}[/b] appeared! Topic: ${b0.topic}.` });
+  if (carry.you) { session.you = carry.you; updateBars(); } }
+function hud(s) { $('timer').textContent = `${s.lap > 1 ? `Lap ${s.lap} · ` : ''}Boss ${s.bossNo + 1}/${s.lineup.length} · Run ${s.bossesDown} · Best ${Math.max(G.best(s.key), s.bossesDown)}`; }
+// Keeps the question queue topped up from the current boss's chapter (the Shogun draws from every chapter).
+function gauntletFeed(s) { while (s.beats.length <= s.idx) { const b = s.lineup[s.bossNo]; s.beats.push(...shuffle(questions(b.chId))); } }
+function setFoe(s, b) { s.foe = b.name; s.bossMax = s.bossHp = b.hp; $('foe').className = ''; $('foe').style.filter = `hue-rotate(${b.hue}deg)`; $('foeName').textContent = b.name; $('foeLv').textContent = b.lv; updateBars(); hud(s); }
+async function nextBoss(s) {   // returns true when the lap is cleared (run is over)
+  const beaten = s.lineup[s.bossNo]; s.bossesDown++; sfx('win'); $('foe').classList.add('faint'); s.you = Math.min(s.youMax, s.you + HEAL); updateBars(); hud(s);
+  await say([S('boss_down', { foe: beaten.name, n: s.bossesDown, es: s.bossesDown === 1 ? '' : 'es', heal: HEAL })], 'VICTORY', null, s);
+  if (s !== session) return;
+  s.bossNo++; if (s.bossNo >= s.lineup.length) { await finishGauntlet(s, 'cleared'); return true; }
+  const nb = s.lineup[s.bossNo]; setFoe(s, nb); s.beats.length = s.idx;
+  await say([`Boss ${s.bossesDown + 1}: a wild [b]${nb.name}[/b] appeared! Topic: ${nb.topic}.`], 'BATTLE', null, s);
+}
+async function finishGauntlet(s, how) {   // how: 'cleared' (lap done), true (left), false (fell)
+  const n = s.bossesDown, asked = s.beats.slice(0, s.idx).filter(isQ).length, before = G.best(s.key); G.record(s.key, n); G.progress[s.key].last = n; G.note('bosses', n);
+  const bosses = `[b]${n}[/b] boss${n === 1 ? '' : 'es'}`;
+  const lines = [S(how === 'cleared' ? 'cleared' : how ? 'left' : 'fell', { bosses, laps: s.lap > 1 ? ` over ${s.lap} laps` : '', foe: s.foe })];
+  lines.push(`Answers: [b]${s.correct} / ${asked}[/b] right.` + (n > before ? `  [b]New record![/b]` : before ? `  Best run: ${before}.` : ''));
+  lines.push(S('xp', { xp: s.correct * 10, lv: G.level() }) + (s.correct < asked ? S('shrine_hint') : ''));
+  await say(lines, how === 'cleared' ? 'VICTORY' : 'SENSEI OTTER', null, s);
+  if (s !== session) return;
+  const first = how === 'cleared' ? button('Next lap - keep the run going', '06A', () => startGauntlet(makeLineup(), { bossesDown: n, you: s.you, lap: s.lap + 1 }), 'wide') : button('Fight again', '06A', showBossLobby);
+  $('cmds').replaceChildren(first, button('Hall of Records', '03A', showRecords), button('Home', '05A', showHome, how === 'cleared' ? '' : 'wide'));
+}
+function startBank(id) { startSession({ mode: 'bank', beats: shuffle(questions(id, bankKind)), key: '', foe: 'Training Dummy', foeLv: id === -1 ? 'All' : `Ch ${id}`, hue: 160, scene: AREA_SCENE.bank, intro: S('training_intro', { topic: id === -1 ? 'all topics' : getCh(id).title }) }); }
+function startMistakes() { startSession({ mode: 'mistakes', beats: shuffle(byKeys(Object.keys(G.mistakes))), key: '', foe: 'Wound Spirit', foeLv: 'Heal', hue: 260, scene: AREA_SCENE.mistakes, intro: S('shrine_intro') }); }
+// ---------------------------------------------------------------- EXAM HALL: CBE-style mock
+// Mirrors the real ACCA exam screen: time remaining, "Question n of N", flag for review, move back and
+// forward, a navigator grid, End exam with a confirmation - and no feedback until the results page.
+let X = null;   // the exam in progress
+const hhmmss = s => { s = Math.max(0, Math.round(s)); return `${String(Math.floor(s / 3600)).padStart(2, '0')}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; };
+function startMock(n, k = 0) {   // k = 1..5 for the fixed numbered mocks, 0 = random mini mock
+  stopTimer(); session = null; tapHandler = null; exReset();
+  const beats = mixedPaper(n, k || null);
+  X = { n: beats.length, k, beats, i: 0, ans: {}, flag: {}, total: beats.length * 144, t0: performance.now(), done: false, confirm: false, key: k ? `${examId}/mock/${k}` : `${examId}/mock${n}` };
+  show('exam'); $('exTitle').textContent = `${k ? 'MOCK ' + k : 'MINI MOCK'} - FA`;
+  exStartTimer(); renderExam(); }
+function exStartTimer() { const tick = () => { if (!X || X.done) return stopTimer(); const left = X.total - (performance.now() - X.t0) / 1000;
+    $('exTime').textContent = 'Time remaining ' + hhmmss(left); $('exTime').classList.toggle('low', left < 300); if (left <= 0) exEnd(true); };
+  tick(); timerIv = setInterval(tick, 500); }
+// FULL MOCK: the real FA format - Section A 35 OT x 2 marks (70) + Section B two 15-mark multi-task cases (30), 2 hours, pass 50.
+// Each full mock = a fixed Section A paper (seed) + one accounts-preparation case + one consolidation case.
+const FULL_MOCKS = [{ seed: 11, mtq: [18, 24] }, { seed: 12, mtq: [20, 25] }, { seed: 13, mtq: [6, 24] }];
+function startFullMock(k) { stopTimer(); session = null; tapHandler = null; exReset();
+  const f = FULL_MOCKS[k - 1], beats = mixedPaper(35, f.seed), mtqs = f.mtq.map(ch => ({ chId: ch, m: getCh(ch).mtq, tab: 0 }));
+  X = { n: beats.length + mtqs.length, k: 'F' + k, fk: k, full: true, beats, mtqs, mtqAns: mtqs.map(() => ({})), i: 0, ans: {}, flag: {}, total: 120 * 60, t0: performance.now(), done: false, confirm: false, key: `${examId}/full/${k}` };
+  show('exam'); $('exTitle').textContent = `FULL MOCK ${k} - FA`; exStartTimer(); renderExam(); }
+function exAnswered(i) { if (X.full && i >= X.beats.length) { const ans = X.mtqAns[i - X.beats.length]; return Object.keys(ans).some(k => String(ans[k]).trim() !== ''); } return X.ans[i] != null; }
+function exAnsweredCount() { let n = 0; for (let i = 0; i < X.n; i++) if (exAnswered(i)) n++; return n; }
+const exLabel = i => X.full && i >= X.beats.length ? 'B' + (i - X.beats.length + 1) : String(i + 1);
+// A Section B case inside the exam: Scenario tab + one tab per task, answer boxes in the table (same as the chapter boss).
+function renderExamMtq(mi) {
+  const S = X.mtqs[mi], m = S.m, ans = X.mtqAns[mi], A = $('exAns');
+  $('exQno').textContent = `Section B  -  Question ${exLabel(X.i)}  -  15 marks`;
+  const fl = $('exFlag'); fl.innerHTML = X.flag[X.i] ? '&#9873; Flagged' : '&#9872; Flag'; fl.classList.toggle('on', !!X.flag[X.i]); fl.dataset.btn = X.flag[X.i] ? '06A' : '03A';
+  $('exPrev').disabled = X.i === 0; $('exNext').disabled = X.i === X.n - 1;
+  $('exQ').innerHTML = `<div class="exTopic">${esc(m.title)}</div>`; A.replaceChildren();
+  const tabs = el('div', 'exTabs'); ['Scenario', ...m.tasks.map((t, i) => `Task ${i + 1} (${taskMarks(t)})`)].forEach((lab, i) => tabs.append(button(lab, i === S.tab ? '03A' : '05A', () => { S.tab = i; renderExam(); }))); A.append(tabs);
+  if (S.tab === 0) { for (const p of m.scenario) { if (p.text) A.append(el('div', '', bb(p.text))); if (p.table) A.append(table(p.table)); } A.append(el('div', 'exHint', 'Read the scenario, then open the tasks above. Type amounts as positive numbers.')); }
+  else { const t = m.tasks[S.tab - 1]; A.append(el('div', 'title', esc(t.title)), el('div', '', `<i>${esc(t.intro)}</i>`));
+    A.append(table({ cols: ['', '$'], rows: t.rows.map(r => ({ ...r, c: r.c.map(x => x === '(from Task 1)' && ans.profit ? ans.profit : x) })) }, null, key => {
+      const inp = el('input'); inp.value = ans[key] || ''; inp.placeholder = '?'; inp.inputMode = 'decimal'; inp.oninput = () => { ans[key] = inp.value; }; inp.onfocus = () => lastAnswerBox = inp; return inp; })); }
+  $('exBody').scrollTop = 0;
+}
+function exReset() { $('exFlag').classList.remove('hidden'); $('exNav').classList.remove('hidden'); }
+function exGo(d) { X.i = Math.max(0, Math.min(X.n - 1, X.i + d)); X.confirm = false; renderExam(); }
+function exFlag() { if (X.done) return; X.flag[X.i] = !X.flag[X.i]; renderExam(); }
+function exSet(v) { if (v == null || v === '') delete X.ans[X.i]; else X.ans[X.i] = v; renderExam(); }
+function renderExam() {
+  if (X.full && X.i >= X.beats.length) return renderExamMtq(X.i - X.beats.length);
+  const b = X.beats[X.i], a = X.ans[X.i], A = $('exAns');
+  $('exQno').textContent = `${X.full ? 'Section A  -  ' : ''}Question ${X.i + 1} of ${X.full ? X.beats.length : X.n}  -  2 marks`;
+  const fl = $('exFlag'); fl.innerHTML = X.flag[X.i] ? '&#9873; Flagged' : '&#9872; Flag'; fl.classList.toggle('on', !!X.flag[X.i]); fl.dataset.btn = X.flag[X.i] ? '06A' : '03A';
+  $('exPrev').disabled = X.i === 0; $('exNext').disabled = X.i === X.n - 1;
+  $('exQ').innerHTML = (b._topic ? `<div class="exTopic">${esc(b._topic)}</div>` : '') + (b.type === 'picklist' ? 'Complete the sentence using the drop-down lists.' : bb(b.q));
+  A.replaceChildren();
+  // Answer options are the game's buttons with the A/B/C/D badge; the chosen one glows (gold) like a ticked radio button.
+  const row = (label, html, on, sel) => { A.append(button(`<span class="k">${label}</span>${drcr(html)}`, sel ? '03A' : '04A', on, 'exOpt' + (sel ? ' picked' : ''))); };
+  if (b.type === 'choice') b.opts.forEach((o, i) => row('ABCD'[i], esc(o), () => exSet(a === i ? null : i), a === i));
+  else if (b.type === 'multi') { const sel = new Set(a || []); A.append(el('div', 'exHint', `Select ${['', 'ONE', 'TWO', 'THREE', 'FOUR'][b.a.length] || b.a.length} option${b.a.length > 1 ? 's' : ''}`));
+    b.opts.forEach((o, i) => row('ABCD'[i], esc(o), () => { sel.has(i) ? sel.delete(i) : sel.add(i); exSet(sel.size ? [...sel] : null); }, sel.has(i), true)); }
+  else if (b.type === 'input') { const inp = art(el('input', 'box'), 'BGbox_06A'); inp.type = 'text'; inp.inputMode = 'decimal'; inp.value = a || ''; inp.placeholder = 'Type your answer...';
+    inp.oninput = () => { const v = inp.value.trim(); if (v) X.ans[X.i] = v; else delete X.ans[X.i]; }; A.append(el('div', 'exHint', 'Type your answer as a number (no units)'), inp); lastAnswerBox = inp; }
+  else if (b.type === 'picklist') { const box = el('div', 'exPick'), vals = (a || []).slice();
+    b.q.split(/\{(\d+)\}/).forEach((p, k) => { if (k % 2 === 0) { box.append(document.createTextNode(p)); return; } const li = +p;
+      const sel = el('select', '', `<option value="">Select...</option>` + b.lists[li].map((o, oi) => `<option value="${oi}"${vals[li] === oi ? ' selected' : ''}>${esc(o)}</option>`).join(''));
+      sel.onchange = () => { vals[li] = sel.value === '' ? undefined : +sel.value; if (vals.some(v => v !== undefined)) X.ans[X.i] = vals.slice(); else delete X.ans[X.i]; }; box.append(sel); });
+    A.append(box); }
+  else if (b.type === 'sort') { const vals = (a || []).slice();
+    b.items.forEach(([name], i) => { const r = el('div', 'exSort'); r.append(el('span', 't', esc(name)));
+      b.buckets.forEach((bk, bi) => r.append(button(esc(bk), vals[i] === bi ? '03A' : ['05A', '02A', '01A', '04A'][bi % 4], () => { vals[i] = bi; X.ans[X.i] = vals.slice(); renderExam(); }, vals[i] === bi ? 'picked' : ''))); A.append(r); }); }
+  fitButtons('#exAns .btn'); requestAnimationFrame(() => fitButtons('#exAns .btn'));
+  $('exBody').scrollTop = 0;
+}
+function exGrade(b, a) { if (a == null) return false;
+  if (b.type === 'choice') return a === b.a;
+  if (b.type === 'multi') return a.length === b.a.length && b.a.every(i => a.includes(i));
+  if (b.type === 'picklist') return b.a.every((v, i) => a[i] === v);
+  if (b.type === 'sort') return b.items.every(([, k], i) => a[i] === k);
+  return (b.accept || []).some(x => norm(String(x)) === norm(a)); }
+function exGiven(b, a) { if (a == null) return '(not answered)';
+  if (b.type === 'choice') return b.opts[a]; if (b.type === 'multi') return a.map(i => b.opts[i]).join(' + ');
+  if (b.type === 'picklist') return a.map((v, i) => v == null ? '?' : b.lists[i][v]).join(' / ');
+  if (b.type === 'sort') return b.items.map(([n], i) => `${n}: ${a[i] == null ? '?' : b.buckets[a[i]]}`).join(', '); return String(a); }
+function exGridView() { if (X.done) return;
+  $('exQ').innerHTML = '<b>Navigator</b> - tap a question. Filled = answered, orange ring = flagged.'; const A = $('exAns'); A.replaceChildren(); const g = el('div', 'exGrid');
+  for (let i = 0; i < X.n; i++) { const c = el('button', 'exCell' + (exAnswered(i) ? ' done' : '') + (X.flag[i] ? ' flag' : '') + (i === X.i ? ' cur' : ''), exLabel(i)); c.onclick = () => { X.i = i; renderExam(); }; g.append(c); }
+  A.append(g, el('div', 'exHint', `${exAnsweredCount()} of ${X.n} answered  -  ${Object.values(X.flag).filter(Boolean).length} flagged${X.full ? '  -  B1, B2 = Section B cases' : ''}`)); }
+function exEnd(force, timeUp = force) { if (!X || X.done) return;   // force: skip the confirmation; timeUp: the clock ended it
+  if (!force && !X.confirm) { X.confirm = true; const un = X.n - exAnsweredCount();
+    $('exQ').innerHTML = `<b>End the exam?</b><br>${un ? `You have ${un} unanswered question${un === 1 ? '' : 's'}. ` : ''}You will not be able to return to it.`;
+    const A = $('exAns'); A.replaceChildren(); const r = el('div', 'exNavRow'); r.append(button('No, go back', '05A', () => { X.confirm = false; renderExam(); }), button('Yes, end the exam', '06A', () => exEnd(true, false))); A.append(r); return; }
+  X.done = true; stopTimer(); const used = Math.min(X.total, (performance.now() - X.t0) / 1000), unanswered = X.n - exAnsweredCount();
+  let right = 0; const rows = X.beats.map((b, i) => { const ok = exGrade(b, X.ans[i]); if (ok) right++; if (b._key) G.answer(b._key, b._ch, ok); return { b, ok, given: exGiven(b, X.ans[i]) }; });
+  // Section B (full mock): every answer box marked on its own with part marks, like the real exam; wrong lines go to the Shrine.
+  let secB = 0; const mtqRev = (X.mtqs || []).map((S, mi) => { const ans = X.mtqAns[mi], lines = [];
+    S.m.tasks.forEach((t, ti) => { for (const r of t.rows) for (const cell of r.c) if (String(cell).startsWith('#')) { const key = String(cell).slice(1), bl = t.blanks[key], ok = bl.accept.some(a => norm(a) === norm(ans[key] || ''));
+      if (ok) secB += bl.marks; G.answer(`${examId}/${S.chId}/mtq/${ti}/${key}`, `${examId}/${S.chId}`, ok); lines.push({ ti, label: r.c[0], ok, bl, given: ans[key] }); } });
+    return { S, lines }; });
+  const secA = right * 2, total = X.full ? secA + secB : right, max = X.full ? 100 : X.n, pct = Math.round(total / max * 100), pass = pct >= 50;
+  G.record(X.key, pct); G.note('mock', { k: X.k, pct }); sfx(pass ? 'win' : 'miss');
+  const name = X.full ? `Full Mock ${X.fk}` : X.k ? 'Mock ' + X.k : 'Mini mock';
+  $('exQno').textContent = `Results - ${name}`; $('exTime').textContent = 'Time used ' + hhmmss(used); $('exTime').classList.remove('low'); $('exFlag').classList.add('hidden'); $('exNav').classList.add('hidden');
+  $('exQ').innerHTML = `<div class="exRes ${pass ? 'pass' : 'fail'}">${pass ? 'PASS' : 'NOT YET'}  -  ${X.full ? `${total} / 100 marks` : `${right} / ${X.n} correct`}  (${pct}%)</div>`
+    + (X.full ? `<div class="exHint"><b>Section A</b> ${secA} / 70 (${right} of 35 right)  -  <b>Section B</b> ${secB} / 30</div>` : '')
+    + `<div class="exHint">${S('exam_hint', { timeup: timeUp && unanswered ? `Time ran out - ${unanswered} unanswered. ` : '' })}</div>`;
+  const A = $('exAns'); A.replaceChildren();
+  const nav = el('div', 'exNavRow');
+  nav.append(button(X.full ? `Retake Full Mock ${X.fk}` : X.k ? `Retake Mock ${X.k}` : 'Another mini mock', '03A', () => X.full ? startFullMock(X.fk) : startMock(X.n, X.k)), button('Exam Hall', '05A', () => { exReset(); showMock(); }), button('Home', '04A', () => { exReset(); showHome(); })); A.append(nav);
+  if (X.full) A.append(el('div', 'title', 'Section A'));
+  rows.forEach((r, i) => { const d = el('div', 'exRev ' + (r.ok ? 'ok' : 'bad')); d.innerHTML = `<b>Q${i + 1} ${r.ok ? '&#10003;' : '&#10007;'}</b> ${bb(r.b.q)}<br><span class="exHint">Your answer: ${esc(r.given)}</span>` + (r.ok ? '' : `<br><span class="exHint">Correct: ${esc(correctText(r.b))}</span>`) + (r.b.ex ? `<br><i>${bb(r.b.ex)}</i>` : ''); A.append(d); });
+  mtqRev.forEach(({ S, lines }, mi) => { const got = lines.reduce((a, l) => a + (l.ok ? l.bl.marks : 0), 0); A.append(el('div', 'title', `Section B${mi + 1} - ${esc(S.m.title.replace('Section B: ', ''))}  (${got} / 15)`));
+    for (const l of lines) { const d = el('div', 'exRev ' + (l.ok ? 'ok' : 'bad')); d.innerHTML = `<b>Task ${l.ti + 1} - ${esc(l.label)} ${l.ok ? '&#10003;' : '&#10007;'}</b> (${l.ok ? l.bl.marks : 0}/${l.bl.marks})<br><span class="exHint">Your answer: ${esc(l.given || 'nothing')}${l.ok ? '' : `  -  correct: ${esc(l.bl.show)}`}</span>` + (l.bl.ex ? `<br><i>${bb(l.bl.ex)}</i>` : ''); A.append(d); } });
+  $('exBody').scrollTop = 0; }
+
+// ---------------------------------------------------------------- tables (lessons, worked examples, Section B)
+// rows: {c: cells, s: worked-example step it appears on, b: bold}. A cell "#key" is a Section B answer box.
+function table(t, step, blanks) {
+  const tb = el('table', 'tbl');
+  const isNum = v => /^[\d,.()%\s-]*$/.test(String(v)) || String(v).startsWith('#');
+  const numCol = t.cols.map((h, ci) => ci > 0 && t.rows.every(r => isNum(r.c[ci] ?? '')));
+  tb.innerHTML = `<tr>${t.cols.map((h, ci) => `<th class="${numCol[ci] ? 'num' : ''}">${esc(h)}</th>`).join('')}</tr>`;
+  for (const r of t.rows) {
+    if (step != null && r.s && r.s > step) continue;
+    const tr = el('tr', [r.b ? 'b' : '', step != null && r.s === step ? 'new' : ''].join(' '));
+    for (const cell of r.c) { const td = el('td');
+      if (blanks && String(cell).startsWith('#')) { td.append(blanks(String(cell).slice(1))); td.className = 'num'; }
+      else { td.innerHTML = bb(cell); if (/^[\d,.()%\s-]*$/.test(String(cell))) td.className = 'num'; }   // numbers stay on one line, text wraps
+      tr.append(td); }
+    tb.append(tr);
+  }
+  return tb;
+}
+
+// ---------------------------------------------------------------- LESSONS: learn -> worked example -> your turn
+let L = null;
+function showLesson(chId, li) { stopTimer(); session = null; tapHandler = null; L = { chId, li, phase: 'learn', i: 0 }; show('lesson'); renderLesson(); }
+function renderLesson() { renderLessonInner(); speak($('lessonBox').innerText); }
+function renderLessonInner() {
+  const c = getCh(L.chId), l = c.lessons[L.li], box = $('lessonBox'), nav = $('lessonNav');
+  // Learn -> Apply it (the lemonade-stand story) -> Worked example -> Your turn
+  const phases = [['learn', 'Learn'], ...(l.apply ? [['apply', 'Apply it']] : []), ...(l.example ? [['example', 'Worked example']] : []), ['turn', 'Your turn']];
+  $('lessonBanner').textContent = `LESSON ${L.li + 1}`;
+  $('lessonSteps').innerHTML = phases.map(([k, n]) => `<span class="${k === L.phase ? 'on' : ''}">${n}</span>`).join('');
+  box.replaceChildren(el('div', 'title', esc(l.title)), el('div', '', `<div id="lessonOutcome">Syllabus: ${esc(l.outcome || c.title)}</div>`));
+  // Sensei's aside for this page (random; sometimes none mid-lesson). The lesson text below it never changes.
+  const aside = S(L.phase === 'learn' ? (L.i === 0 ? 'lesson_open' : 'lesson_page') : L.phase === 'apply' ? 'lesson_apply' : L.phase === 'example' ? 'lesson_example' : 'lesson_turn');
+  if (aside) box.append(el('div', 'senseiLine', bb('[b]Sensei:[/b] ' + aside)));
+  nav.replaceChildren();
+  const go = (phase, i) => { L.phase = phase; L.i = i; renderLesson(); box.scrollTop = 0; };
+  const next = () => { const pi = phases.findIndex(p => p[0] === L.phase); go(phases[pi + 1][0], 0); };
+  const prev = () => { const pi = phases.findIndex(p => p[0] === L.phase); if (pi === 0) return openChapter(L.chId);
+    const pp = phases[pi - 1][0]; go(pp, pp === 'learn' ? l.learn.length - 1 : pp === 'apply' ? l.apply.pages.length - 1 : pp === 'example' ? l.example.steps.length - 1 : 0); };
+  if (L.phase === 'apply') {
+    const a = l.apply, p = a.pages[L.i];
+    box.append(el('div', 'applyHead', `&#127819; ${esc(a.title || "Zuru's Lemonade Stand")}`), el('div', '', bb(p.text || ''))); if (p.table) box.append(table(p.table));
+    box.append(el('div', '', `<p style="font-size:22px;color:#6e3f33">Scene ${L.i + 1} of ${a.pages.length}</p>`));
+    nav.append(button('Back', '04A', () => L.i ? go('apply', L.i - 1) : prev()), button('Next', '03A', () => L.i + 1 < a.pages.length ? go('apply', L.i + 1) : next()));
+    return;
+  }
+  if (L.phase === 'learn') {
+    const p = l.learn[L.i]; box.append(el('div', '', bb(p.text || ''))); if (p.table) box.append(table(p.table));
+    box.append(el('div', '', `<p style="font-size:22px;color:#6e3f33">Page ${L.i + 1} of ${l.learn.length}</p>`));
+    nav.append(button('Back', '04A', () => L.i ? go('learn', L.i - 1) : prev()), button('Next', '03A', () => L.i + 1 < l.learn.length ? go('learn', L.i + 1) : next()));
+  } else if (L.phase === 'example') {
+    const ex = l.example, k = L.i;
+    box.append(el('div', '', `<b>${esc(ex.title)}</b> - step ${k + 1} of ${ex.steps.length}`), el('div', '', bb(ex.steps[k])), table(ex.table, k + 1));
+    nav.append(button('Back', '04A', () => k ? go('example', k - 1) : prev()), button(k + 1 < ex.steps.length ? 'Next step' : 'Next', '03A', () => k + 1 < ex.steps.length ? go('example', k + 1) : next()));
+  } else {
+    const kinds = [...new Set(l.practice.map(q => TYPE_HINT[q.type]))].join(', ');
+    box.append(el('div', '', bb(`Time to test it! [b]${l.practice.length} exam-style questions[/b] (${kinds}).\n\nScore [b]70% or more[/b] to pass` + (L.li + 1 < c.lessons.length ? ` and unlock Lesson ${L.li + 2}.` : c.mtq ? ' and face the Section B boss.' : ' and finish the chapter.') + `\n\nYou get Sensei's explanation after every answer.`)));
+    nav.append(button('Read again', '04A', () => go('learn', 0)), button('Start battle!', '06A', () => startLessonPractice(L.chId, L.li)));
+  }
+}
+function startLessonPractice(chId, li) { const c = getCh(chId), l = c.lessons[li];
+  startSession({ mode: 'lesson', chId, li, beats: l.practice.map((q, i) => tagLesson(c, l, i)), key: `${examId}/${chId}/${l.id}`, foe: c.monster, foeLv: `L${li + 1}`, hue: chId * 47,
+    scene: SCENES[(chId + li) % SCENES.length], intro: S('practice_intro', { n: li + 1, title: l.title, q: l.practice.length }) }); }
+
+// ---------------------------------------------------------------- SECTION B: multi-task question (15 marks, part marks)
+let M = null;
+function showMtq(chId) { stopTimer(); session = null; tapHandler = null; const c = getCh(chId); M = { chId, m: c.mtq, tab: 0, done: {}, got: 0, ans: {} }; show('mtq'); renderMtq(); }
+const taskMarks = t => Object.values(t.blanks).reduce((s, b) => s + b.marks, 0);
+function renderMtq() {
+  const { m } = M, box = $('mtqBox'), nav = $('mtqNav'), tabs = $('mtqTabs');
+  $('mtqTitle').textContent = m.title; $('mtqFoe').style.filter = `hue-rotate(${M.chId * 47}deg)`;
+  setBar($('mtqHp'), 1 - M.got / m.marks); $('mtqScore').textContent = `${m.monster}  -  your marks ${M.got} / ${m.marks}` + (M.tab === 0 && !M.got ? `  ·  ${S('mtq_intro')}` : '');
+  tabs.replaceChildren(...['Scenario', ...m.tasks.map((t, i) => `Task ${i + 1} (${taskMarks(t)})${M.done[i] != null ? ' &#10003;' : ''}`)]
+    .map((lab, i) => button(lab, i === M.tab ? '03A' : '05A', () => { M.tab = i; renderMtq(); })));
+  box.replaceChildren(); nav.replaceChildren();
+  const allDone = m.tasks.every((t, i) => M.done[i] != null);
+  if (M.tab === 0) {
+    for (const p of m.scenario) { if (p.text) box.append(el('div', '', bb(p.text))); if (p.table) box.append(table(p.table)); }
+    nav.append(button('Start Task 1', '06A', () => { M.tab = 1; renderMtq(); }));
+  } else {
+    const ti = M.tab - 1, t = m.tasks[ti], done = M.done[ti] != null;
+    box.append(el('div', 'title', esc(t.title)), el('div', '', `<i>${esc(t.intro)}</i>`));
+    box.append(table({ cols: ['', '$'], rows: t.rows.map(r => ({ ...r, c: r.c.map(x => x === '(from Task 1)' && M.ans.profit ? M.ans.profit : x) })) }, null, key => {
+      const inp = el('input'); inp.value = M.ans[key] || ''; inp.placeholder = '?'; inp.inputMode = 'decimal';
+      inp.oninput = () => M.ans[key] = inp.value;
+      if (done) { inp.disabled = true; inp.className = t.blanks[key].accept.some(a => norm(a) === norm(inp.value)) ? 'ok' : 'bad'; }
+      return inp; }));
+    if (done) {
+      const ex = el('div', 'exl', `<b>Task ${ti + 1}: ${M.done[ti]} / ${taskMarks(t)} marks</b>`);
+      for (const r of t.rows) for (const cell of r.c) if (String(cell).startsWith('#')) { const key = cell.slice(1), bl = t.blanks[key], ok = bl.accept.some(a => norm(a) === norm(M.ans[key] || ''));
+        ex.append(el('div', '', bb(`${ok ? '&#10003;' : '&#10007;'} [b]${r.c[0]}: ${bl.show}[/b] (${ok ? bl.marks : 0}/${bl.marks})${ok ? '' : ` - you put ${M.ans[key] || 'nothing'}`}. ${bl.ex}`).replace(/&amp;#(\d+);/g, '&#$1;'))); }
+      box.append(ex);
+    }
+    if (!done) nav.append(button('Submit task', '06A', () => markTask(ti)));
+    else if (ti + 1 < m.tasks.length) nav.append(button(`Go to Task ${ti + 2}`, '06A', () => { M.tab = ti + 2; renderMtq(); }));
+  }
+  if (allDone) {
+    const pct = Math.round(M.got / m.marks * 100);
+    box.prepend(el('div', '', bb(`[b]Section B result: ${M.got} / ${m.marks} marks (${pct}%)[/b]. ` + (M.got >= 10 ? 'Strong - that is pass territory.' : M.got >= 8 ? 'Over halfway - check the ✗ lines below.' : 'Keep going - redo the lessons for the lines you missed.') + '\n\n')));
+    nav.replaceChildren(button('Try again', '06A', () => showMtq(M.chId)), button('Chapter Book', '03A', () => openChapter(M.chId)));
+  } else nav.append(button('Chapter Book', '04A', () => openChapter(M.chId)));
+}
+function markTask(ti) {
+  const t = M.m.tasks[ti]; let got = 0;
+  for (const [key, bl] of Object.entries(t.blanks)) { const ok = bl.accept.some(a => norm(a) === norm(M.ans[key] || '')); if (ok) got += bl.marks;
+    G.answer(`${examId}/${M.chId}/mtq/${ti}/${key}`, `${examId}/${M.chId}`, ok); }   // wrong blanks wait at the Healer's Shrine
+  M.done[ti] = got; M.got += got;
+  const foe = $('mtqFoe'); foe.classList.remove('hit'); void foe.offsetWidth; foe.classList.add('hit');
+  mood(got >= taskMarks(t) / 2 ? 'happy' : 'sad', 'mtqYou', 4000); sfx(got >= taskMarks(t) / 2 ? 'hit' : 'miss');
+  if (M.done.hasOwnProperty(M.m.tasks.length - 1) && M.m.tasks.every((x, i) => M.done[i] != null)) { const pct = Math.round(M.got / M.m.marks * 100); G.record(`${examId}/${M.chId}/mtq`, pct); G.note('mtq', { ch: M.chId, pct }); }
+  renderMtq();
+}
+
+// ---------------------------------------------------------------- CALCULATOR
+// Live result as you type, a history tape as working paper, and 'Use' to drop the
+// answer into the answer box you were filling in. Safe parser - typed text is never run as code.
+let calcAns = 0, lastAnswerBox = null; const calcTape = [];
+// Movable + resizable calculator; last position and size are remembered in this browser.
+const CALC_KEY = APP.key + '.calc.v1'; let calcLoaded = false;
+function calcClamp() { const c = $('calc'); c.style.right = 'auto';
+  c.style.left = Math.max(0, Math.min(c.offsetLeft, 720 - c.offsetWidth)) + 'px'; c.style.top = Math.max(0, Math.min(c.offsetTop, 1280 - c.offsetHeight)) + 'px'; }
+function calcSave() { const c = $('calc'); if (c.classList.contains('hidden')) return;
+  try { localStorage.setItem(CALC_KEY, JSON.stringify({ l: c.offsetLeft, t: c.offsetTop, w: c.offsetWidth, h: c.offsetHeight })); } catch (e) {} }
+function calcLayoutLoad() { calcLoaded = true; const c = $('calc');
+  try { const s = JSON.parse(localStorage.getItem(CALC_KEY) || 'null'); if (s) { c.style.width = s.w + 'px'; c.style.height = s.h + 'px'; c.style.left = s.l + 'px'; c.style.top = s.t + 'px'; } } catch (e) {}
+  calcClamp(); }
+(function calcDrag() { const bar = document.querySelector('#calc .calcTop'); let sx, sy, ol, ot, dragging = false;
+  bar.addEventListener('pointerdown', e => { if (e.target.closest('.btn')) return; dragging = true; sx = e.clientX; sy = e.clientY; ol = $('calc').offsetLeft; ot = $('calc').offsetTop; try { bar.setPointerCapture(e.pointerId); } catch (x) {} e.preventDefault(); });
+  bar.addEventListener('pointermove', e => { if (!dragging) return; const c = $('calc'); c.style.right = 'auto'; c.style.left = (ol + (e.clientX - sx) / stageScale) + 'px'; c.style.top = (ot + (e.clientY - sy) / stageScale) + 'px'; });
+  const stop = () => { if (!dragging) return; dragging = false; calcClamp(); calcSave(); };
+  bar.addEventListener('pointerup', stop); bar.addEventListener('pointercancel', stop);
+  new ResizeObserver(() => calcSave()).observe($('calc'));
+})();
+document.addEventListener('focusin', e => { if (e.target.matches('#cmds input, #mtqBox input')) lastAnswerBox = e.target; });
+function calcEval(src) {
+  const s = String(src).replace(/Ans/gi, `(${calcAns})`).replace(/,/g, '').replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/√/g, 'r').replace(/\s+/g, '');
+  if (!s) return null;
+  let i = 0; const peek = () => s[i];
+  const num = () => { const m = /^(\d+\.?\d*|\.\d+)/.exec(s.slice(i)); if (!m) throw new Error('number'); i += m[0].length; return parseFloat(m[0]); };
+  const primary = () => { if (peek() === '(') { i++; const v = expr(); if (peek() === ')') i++; return v; } if (peek() === 'r') { i++; return Math.sqrt(unary()); } return num(); };
+  const postfix = () => { let v = primary(); while (peek() === '%') { i++; v /= 100; } return v; };
+  const power = () => { const b = postfix(); if (peek() === '^') { i++; return Math.pow(b, unary()); } return b; };
+  const unary = () => { if (peek() === '-') { i++; return -unary(); } if (peek() === '+') { i++; return unary(); } return power(); };
+  const term = () => { let v = unary(); for (;;) { const op = peek();
+      if (op === '*' || op === '/') { i++; const r = unary(); v = op === '*' ? v * r : v / r; }
+      else if (op === '(' || op === 'r') v *= unary();   // 2(3+4) = 14
+      else return v; } };
+  const expr = () => { let v = term(); while (peek() === '+' || peek() === '-') { const op = s[i++]; const r = term(); v = op === '+' ? v + r : v - r; } return v; };
+  const v = expr(); if (i < s.length || !isFinite(v)) throw new Error('syntax');
+  return Math.round(v * 1e10) / 1e10;
+}
+const calcFmt = v => v.toLocaleString('en-GB', { maximumFractionDigits: 6 });
+function calcLive() { const e = $('calcExpr'); let t = ''; try { const v = calcEval(e.value); if (v != null && /[+\-*/^%×÷−√(]/.test(e.value.replace(/^-/, ''))) t = '= ' + calcFmt(v); } catch (err) { t = ''; } $('calcLive').textContent = t; }
+function calcTapeDraw() { const tp = $('calcTape'); tp.replaceChildren();
+  if (!calcTape.length) { tp.append(el('div', '', '<span style="opacity:.7">Your working appears here - tap a line to reuse its answer</span>')); return; }
+  for (const r of calcTape) { const row = el('div', '', `<span>${esc(r.e)}</span><b>${calcFmt(r.v)}</b>`); row.onclick = () => { $('calcExpr').value += String(r.v); calcLive(); }; tp.append(row); }
+  tp.scrollTop = tp.scrollHeight; }
+function calcEquals() { const e = $('calcExpr'); let v; try { v = calcEval(e.value); } catch (err) { $('calcLive').textContent = 'Check the sum'; return null; }
+  if (v == null) return null; calcTape.push({ e: e.value, v }); if (calcTape.length > 40) calcTape.shift(); calcAns = v; e.value = String(v); calcTapeDraw(); calcLive(); return v; }
+function calcUse() { let v; try { v = calcEval($('calcExpr').value); } catch (err) { v = null; } if (v == null) v = calcAns;
+  const usable = x => x && document.body.contains(x) && !x.disabled && x.offsetParent !== null;
+  if (!usable(lastAnswerBox)) lastAnswerBox = [...document.querySelectorAll('#cmds input, #mtqBox input')].find(x => usable(x) && !x.value) || null;
+  if (lastAnswerBox) { lastAnswerBox.value = String(Math.round(v * 100) / 100); lastAnswerBox.dispatchEvent(new Event('input')); toggleCalc(false); lastAnswerBox.focus(); }
+  else $('calcLive').textContent = 'Tap an answer box first'; }
+function toggleCalc(force) { const c = $('calc'), open = force != null ? force : c.classList.contains('hidden'); if (!open) calcSave(); c.classList.toggle('hidden', !open); if (open) { if (!calcLoaded) calcLayoutLoad(); calcTapeDraw(); calcLive(); $('calcExpr').focus(); } }
+(function buildCalc() {
+  const keys = ['AC', '⌫', '(', ')', '÷', '7', '8', '9', '×', '%', '4', '5', '6', '−', 'x²', '1', '2', '3', '+', '√', '0', '.', 'Ans', '=', 'Use'];
+  const style = k => /^[0-9.]$/.test(k) ? '04A' : k === '=' ? '03A' : k === 'Use' ? '02A' : k === 'AC' || k === '⌫' ? '06A' : '05A';
+  for (const k of keys) $('calcKeys').append(button(k, style(k), () => { const e = $('calcExpr');
+    if (k === 'AC') e.value = ''; else if (k === '⌫') e.value = e.value.slice(0, -1); else if (k === '=') { calcEquals(); return; } else if (k === 'Use') { calcUse(); return; }
+    else e.value += k === 'x²' ? '^2' : k === '√' ? '√(' : k === 'Ans' ? 'Ans' : k;
+    calcLive(); }));
+  $('calcExpr').addEventListener('input', calcLive);
+  $('calcExpr').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); calcEquals(); } if (e.key === 'Escape') toggleCalc(false); e.stopPropagation(); });
+})();
+
+// ---------------------------------------------------------------- SETTINGS: voice + sound effects
+const SET_KEY = APP.key + '.settings.v1';
+const settings = Object.assign({ voice: false, sfx: true, theme: 'off', sensei: 'proper' }, (() => { try { return JSON.parse(localStorage.getItem(SET_KEY) || '{}'); } catch (e) { return {}; } })());
+function saveSettings() { try { localStorage.setItem(SET_KEY, JSON.stringify(settings)); } catch (e) {} drawToggles(); }
+function drawToggles() { $('voiceBtn').textContent = settings.voice ? 'VOICE ON' : 'VOICE OFF'; $('sfxBtn').textContent = settings.sfx ? 'SFX ON' : 'SFX OFF'; $('senseiBtn').textContent = settings.sensei === 'east' ? 'E-LDN ON' : 'E-LDN OFF';
+  const t = theme(), tb = $('themeBtn');   // icon when a theme is on (tree / pumpkin), the word THEME when off
+  tb.innerHTML = t ? `<img src="${A(t === 'xmas' ? '../assets/xmas/tree.png' : '../assets/xmas/pumpkin.png')}" alt="${themeLabel()}" title="${themeLabel()}">` : 'THEME'; }
+
+// ---------------------------------------------------------------- SENSEI'S VOICE: proper, or East London (cheeky, a bit dark, never cruel)
+// Only Sensei's chatter changes - lessons, questions and explanations stay exactly as written. Toggle = E-LDN button in the top bar.
+const SENSEI = {
+  welcome_title: { proper: 'Welcome to the dojo, Zuru.', east: "Wallahi, you're back. Welcome to the dojo, Zuru - wipe your feet, fam." },
+  welcome_home: { proper: 'Welcome back, Zuru!', east: 'Oi, Zuru! Back again, innit. Say less - let\'s go.' },
+  appear: { proper: 'A wild [b]{foe}[/b] appeared! Topic: {topic}.', east: "Oi oi - [b]{foe}[/b] has rolled up wanting beef about {topic}. Allow it? Nah. Clap it." },
+  correct: { proper: ["[b]Correct![/b] Zuru used [b]{move}[/b]! It's super effective!"],
+    east: ["[b]Wallahi, that's it![/b] [b]{move}[/b] - clean.", "[b]Say less.[/b] {move}! The monster's got bare problems now.", "[b]Mashallah![/b] {move}! The auditor's shook.", "[b]Big up yourself.[/b] {move}. Debit the monster, credit your ego, styll.", "[b]That's calm.[/b] {move}! Nobody got hurt. Well - nobody important."] },
+  wrong: { proper: ['[b]Wrong.[/b] {foe} blocked it and struck back! The answer was [b]{ans}[/b].'],
+    east: ["[b]Nah, bruv.[/b] {foe} saw that coming from Whitechapel. It was [b]{ans}[/b].", "[b]Peak.[/b] That answer's gone straight to irrecoverable debts. It was [b]{ans}[/b].", "[b]Wallahi, allow it.[/b] {foe} clapped you right back. It was [b]{ans}[/b].", "[b]That's long.[/b] Still, nobody died - the ledger just cried a bit. It was [b]{ans}[/b].", "[b]Suspense account, that answer.[/b] Unexplained, and about to be cleared: it was [b]{ans}[/b]."] },
+  won: { proper: '{foe} fainted! You landed [b]{n} / {total}[/b] hits ([b]{pct}%[/b]).', east: "Say less - {foe}'s gone home crying to its mum. [b]{n} / {total}[/b] hits ([b]{pct}%[/b])." },
+  lost: { proper: '{foe} is still standing... [b]{n} / {total}[/b] hits ([b]{pct}%[/b]). Aim for 70% to defeat it.', east: "{foe}'s still standing - wallahi, the cheek. [b]{n} / {total}[/b] hits ([b]{pct}%[/b]). 70% or it's back to the shoebox, fam." },
+  session_done: { proper: 'Session complete: [b]{n} / {total}[/b] right ([b]{pct}%[/b]).', east: "Done, innit: [b]{n} / {total}[/b] right ([b]{pct}%[/b]). The dummy's seen worse. Barely." },
+  lesson_pass: { proper: '[b]Lesson passed![/b] ', east: '[b]Lesson done, you absolute don.[/b] ' },
+  lesson_fail: { proper: 'Not passed yet. Have another look at the lesson, then try again - you need 70%.', east: "Not yet, fam. Go back through the lesson and come back swinging - 70%, you get me." },
+  xp: { proper: '+{xp} XP.  You are [b]Lv {lv}[/b].', east: '+{xp} XP. [b]Lv {lv}[/b]. Mashallah.' },
+  shrine_hint: { proper: " Anything you missed is waiting at the Healer's Shrine.", east: " Whatever you flopped is sulking at the Healer's Shrine." },
+  shrine_intro: { proper: 'Every question you missed is here. Get it right and the wound heals.', east: "Every one you flopped is in here. Get it right and the wound heals - like the NHS, minus the eight-hour wait at the Royal London." },
+  training_intro: { proper: 'Training: [b]{topic}[/b]. Answer as many as you like, then choose Finish session.', east: "Training on [b]{topic}[/b]. Go as long as you like, fam - the dummy doesn't feel pain. Wallahi, probably." },
+  practice_intro: { proper: 'Lesson {n} practice: [b]{title}[/b]. {q} exam-style questions - score 70% to pass!', east: 'Lesson {n} practice: [b]{title}[/b]. {q} questions, 70% to pass. No pressure. Bit of pressure, styll.' },
+  boss_down: { proper: "[b]{foe} fainted![/b] That's [b]{n}[/b] boss{es} down. Zuru recovers {heal} HP.", east: "[b]{foe}'s done![/b] {n} boss{es} down. Zuru gets {heal} HP back and a cup of shaah." },
+  cleared: { proper: '[b]DOJO CLEARED![/b] Every boss in the lineup is down - {bosses} in this run{laps}.', east: "[b]DOJO CLEARED![/b] Whole lineup's on the floor - {bosses} this run{laps}. Wallahi, someone ring the undertaker." },
+  left: { proper: 'You leave the arena with {bosses} defeated.', east: "Cool, cool. Off you go then - {bosses} down. Not bad for a Tuesday, innit." },
+  fell: { proper: '[b]Zuru fell![/b] {foe} wins this time - but {bosses} went down first.', east: "[b]Zuru's on the deck![/b] {foe} took this one - but {bosses} went down first, so who's the real loser? (Still you. A bit. Allow it.)" },
+  exam_hint: { proper: "Pass mark 50%. {timeup}Every wrong answer is now waiting at the Healer's Shrine.", east: "Pass mark 50%. {timeup}The examiner feeds on tears; the Shrine feeds on your wrong answers. Say less - off you go." },
+  reset_done: { proper: 'A fresh start, Zuru! All progress has been reset.', east: 'Wiped, wallahi. Like it never happened. Dark, but clean.' },
+  // Sensei's asides around the lessons (the lesson text itself never changes)
+  lesson_open: { proper: ["Let's take it from the top."], east: ['Right, listen up, fam. From the top.', 'Wallahi, this one matters - eyes open.', "Say less, let's get into it."] },
+  lesson_page: { proper: ['', '', 'Keep going.'], east: ['Still with me? Good.', "Keep going - you're doing bits.", 'This bit comes up in the exam, styll.', '', 'Allow the phone, this is the important part.'] },
+  lesson_apply: { proper: ['Now see it at the lemonade stand.'], east: ['Now watch Zuru do it with lemons, innit.', 'Lemonade stand time. Real life, fam.', "Same thing, but with yuzu. You get me."] },
+  lesson_example: { proper: ['Watch the numbers build up step by step.'], east: ['Numbers time. Follow the steps - no skipping.', 'Watch this. Step by step, no long ting.'] },
+  lesson_turn: { proper: ['Your turn.'], east: ["Your turn, fam. Don't flop it.", 'Right - prove it. Wallahi I believe in you. Mostly.', 'Go on then. Make the monster regret turning up.'] },
+  chapter_pick: { proper: '{monster} guards this chapter. Pick a lesson.', east: "{monster}'s guarding this one. Pick a lesson and let's clap it." },
+  mtq_intro: { proper: '15 marks, part marks for every box. Take your time.', east: 'Section B, fam. 15 marks, part marks for every box. No pressure. Bit of pressure.' },
+};
+function S(key, vars = {}) { const v = SENSEI[key][settings.sensei === 'east' ? 'east' : 'proper']; let t = Array.isArray(v) ? v[Math.floor(Math.random() * v.length)] : v; for (const [k, val] of Object.entries(vars)) t = t.split('{' + k + '}').join(val); return t; }
+function toggleSensei() { settings.sensei = settings.sensei === 'east' ? 'proper' : 'east'; saveSettings(); speak(settings.sensei === 'east' ? "Alright fam? Sensei's gone East London. Wallahi." : 'Sensei is back to proper.', true); if (!$('home').classList.contains('hidden')) showHome(); if (!$('title').classList.contains('hidden')) showTitle(); }
+const plain = html => { const d = document.createElement('div'); d.innerHTML = html; return d.innerText; };
+// Voice: the device's own text-to-speech (works offline). Reads dialogue, lesson pages and questions with their options.
+function speak(text, force) { if (!('speechSynthesis' in window) || (!settings.voice && !force)) return;
+  const t = String(text).replace(/\s+/g, ' ').trim(); if (!t) return;
+  const u = new SpeechSynthesisUtterance(t); u.lang = 'en-GB'; u.rate = 1.0;
+  // Best voice the device has: British English first, then any English (phones have Google/Samsung TTS built in).
+  const vs = speechSynthesis.getVoices(); u.voice = vs.find(v => /^en[-_]GB/i.test(v.lang)) || vs.find(v => /^en/i.test(v.lang)) || null;
+  // The VOICE button glows while Sensei is actually talking, so it is obvious whether sound is coming out.
+  const vb = $('voiceBtn'); u.onstart = () => vb.classList.add('speaking'); u.onend = u.onerror = () => vb.classList.remove('speaking');
+  speechSynthesis.cancel(); clearTimeout(speak._t); speak._t = setTimeout(() => speechSynthesis.speak(u), 80); }   // speak right after cancel() gets dropped in some browsers
+if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();   // warms the voice list (it is empty on first call)
+function currentText() { const cur = [...document.querySelectorAll('.screen')].find(s => !s.classList.contains('hidden'))?.id;
+  if (cur === 'battle') return $('dlgText').innerText + '. ' + [...document.querySelectorAll('#cmds .btn')].filter(b => b.querySelector('.k')).map(b => b.innerText.replace(/\n/g, ' ')).join('. ');
+  if (cur === 'lesson') return $('lessonBox').innerText; if (cur === 'mtq') return $('mtqBox').innerText; if (cur === 'home') return $('homeSay').innerText; return ''; }
+function toggleVoice() { settings.voice = !settings.voice; saveSettings();
+  if (!settings.voice) return speechSynthesis.cancel();
+  const vs = ('speechSynthesis' in window) ? speechSynthesis.getVoices() : [];
+  if (!('speechSynthesis' in window) || (!vs.length && speechSynthesis.onvoiceschanged === null)) { $('voiceBtn').textContent = 'NO VOICE'; return; }
+  speak('Voice on. ' + (currentText() || ''), true); }
+// Sound effects: WAV files in assets/sfx (made by tools/make_sfx.ps1, also used by the Godot build);
+// the WebAudio synth below is the fallback if a file can't play.
+let audioCtx = null; const SFX_FILES = { hit: 'hit', miss: 'miss', win: 'win', page: 'page', bells: 'bells', tap: 'tap' }, sfxCache = {};
+function sfx(kind) { if (!settings.sfx) return;
+  const f = SFX_FILES[kind]; if (f) { try { const a = sfxCache[kind] || (sfxCache[kind] = new Audio(A(`../assets/sfx/${f}.wav`))); a.currentTime = 0; const p = a.play(); if (p && p.catch) p.catch(() => sfxSynth(kind)); if (kind === 'win' && festive()) setTimeout(() => sfx('bells'), 450); return; } catch (e) {} }
+  sfxSynth(kind); }
+function sfxSynth(kind) { try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+  const ac = audioCtx, t0 = ac.currentTime;
+  const tone = (f0, f1, dur, type = 'square', gain = 0.12, at = 0) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = type;
+    o.frequency.setValueAtTime(f0, t0 + at); o.frequency.exponentialRampToValueAtTime(f1, t0 + at + dur); g.gain.setValueAtTime(gain, t0 + at); g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + dur);
+    o.connect(g).connect(ac.destination); o.start(t0 + at); o.stop(t0 + at + dur + 0.02); };
+  if (kind === 'hit') { tone(600, 1200, 0.12); tone(150, 60, 0.18, 'sawtooth', 0.15, 0.05); }
+  else if (kind === 'miss') tone(220, 90, 0.35, 'sawtooth', 0.12);
+  else if (kind === 'win') { [523, 659, 784, 1047].forEach((f, i) => tone(f, f, 0.18, 'square', 0.1, i * 0.12));
+    if (festive()) [1760, 2093, 1760, 2637, 2349].forEach((f, i) => tone(f, f * 0.98, 0.25, 'triangle', 0.05, 0.5 + i * 0.13)); }   // sleigh bells
+  else if (kind === 'page') tone(900, 300, 0.15, 'triangle', 0.06); }
+function toggleSfx() { settings.sfx = !settings.sfx; saveSettings(); if (settings.sfx) sfx('hit'); }
+drawToggles();
+
+// Zuru's face: happy after a right answer, distressed after a wrong one, back to normal after a moment.
+const ZURU = { normal: '../assets/characters/samurai.png', happy: '../assets/characters/samurai_happy.png', sad: '../assets/characters/samurai_sad.png' };
+const ZURU_X = { normal: '../assets/characters/samurai_x.png', happy: '../assets/characters/samurai_x_happy.png', sad: '../assets/characters/samurai_x_sad.png' };   // Santa hat
+const ZURU_H = { normal: '../assets/characters/samurai_h.png', happy: '../assets/characters/samurai_h_happy.png', sad: '../assets/characters/samurai_h_sad.png' };   // witch hat
+const zuruSrc = m => A((festive() ? ZURU_X : spooky() ? ZURU_H : ZURU)[m]);
+function mood(m, id = 'you', ms = 2600) { const im = $(id); if (!im) return; im.src = zuruSrc(m); clearTimeout(im._mood); if (m !== 'normal') im._mood = setTimeout(() => im.src = zuruSrc('normal'), ms); }
+
+// ---------------------------------------------------------------- THEMES (only when she picks one - THEME button in the top bar)
+// off -> Christmas (snow, lights, trees, Santa-hat Zuru, bells) -> Halloween (bats + falling leaves, pumpkins, witch-hat Zuru) -> off.
+// The choice is saved with the other settings in this browser (accaStudyBuddy.settings.v1) and travels in the Backup code.
+function theme() { return settings.theme === 'xmas' || settings.theme === 'halloween' ? settings.theme : ''; }
+function festive() { return theme() === 'xmas'; }
+function spooky() { return theme() === 'halloween'; }
+function toggleTheme() { settings.theme = settings.theme === 'xmas' ? 'halloween' : settings.theme === 'halloween' ? 'off' : 'xmas'; saveSettings(); applyFestive(); if (!$('title').classList.contains('hidden')) showTitle(); }
+function themeLabel() { return ({ xmas: 'XMAS', halloween: 'SPOOKY' })[theme()] || 'THEME OFF'; }
+let fxRunning = false, batImg = null;
+function applyFestive() { const t = theme(); document.body.classList.toggle('xmas', t === 'xmas'); document.body.classList.toggle('halloween', t === 'halloween');
+  for (const im of document.querySelectorAll('img[data-zuru]')) if (!im._mood || t !== im._xm) { im.src = zuruSrc('normal'); im._xm = t; }
+  const strip = document.querySelector('#xmasDeco .lights'); if (strip) strip.style.backgroundImage = t ? `url(${A(t === 'xmas' ? '../assets/xmas/lights.png' : '../assets/xmas/bunting.png')})` : '';
+  const c = $('snow'); c.classList.toggle('hidden', !t); if (t && !fxRunning) { fxRunning = true; fx(); } }
+// Falling things over every screen: snowflakes at Christmas, leaves and bats at Halloween.
+function fx() { const c = $('snow'), g = c.getContext('2d'), f = [], bats = [];
+  for (let i = 0; i < 70; i++) f.push({ x: Math.random() * 720, y: Math.random() * 1280, r: 2 + Math.random() * 3, v: 0.6 + Math.random() * 1.2, w: Math.random() * 6.28, c: Math.random() });
+  for (let i = 0; i < 5; i++) bats.push({ x: Math.random() * 720, y: 100 + Math.random() * 700, v: 1 + Math.random() * 1.5, w: Math.random() * 6.28 });
+  if (!batImg) { batImg = new Image(); batImg.src = A('../assets/xmas/bat.png'); }
+  // Effects keep clear of the text: every few frames we note where the boxes, banners, buttons and plates are and don't draw inside them.
+  let frame = 0, rects = [];
+  const refresh = () => { const sr = $('stage').getBoundingClientRect();
+    rects = [...document.querySelectorAll('.screen:not(.hidden) .box, .screen:not(.hidden) .banner, .screen:not(.hidden) .btn, .screen:not(.hidden) .plate, .screen:not(.hidden) .tbl, .screen:not(.hidden) #bookWrap, .screen:not(.hidden) #chapDetail, .screen:not(.hidden) #dlg, .screen:not(.hidden) #cmds, .screen:not(.hidden) #exFrame, .screen:not(.hidden) #mtqHead, #calc:not(.hidden), #topBar')]
+      .map(e => { const r = e.getBoundingClientRect(); return [(r.left - sr.left) / stageScale - 6, (r.top - sr.top) / stageScale - 6, r.width / stageScale + 12, r.height / stageScale + 12]; }); };
+  const inside = (x, y) => { for (const r of rects) if (x >= r[0] && x <= r[0] + r[2] && y >= r[1] && y <= r[1] + r[3]) return true; return false; };
+  const step = () => { const t = theme(); if (!t) { g.clearRect(0, 0, 720, 1280); fxRunning = false; return; }
+    if (document.visibilityState === 'visible') { if (frame++ % 20 === 0) refresh(); g.clearRect(0, 0, 720, 1280);
+      for (const s of f) { s.y += s.v * (t === 'xmas' ? 1 : 0.8); s.w += 0.02; s.x += Math.sin(s.w) * (t === 'xmas' ? 0.4 : 1.2); if (s.y > 1290) { s.y = -10; s.x = Math.random() * 720; }
+        if (inside(s.x, s.y)) continue;
+        g.fillStyle = t === 'xmas' ? 'rgba(255,255,255,.85)' : (s.c < 0.5 ? 'rgba(232,129,43,.9)' : s.c < 0.8 ? 'rgba(184,94,28,.9)' : 'rgba(201,138,46,.9)');
+        if (t === 'xmas') g.fillRect(Math.round(s.x), Math.round(s.y), s.r, s.r); else g.fillRect(Math.round(s.x), Math.round(s.y), s.r + 2, s.r); }
+      if (t === 'halloween' && batImg.complete) for (const b of bats) { b.x -= b.v; b.w += 0.15; b.y += Math.sin(b.w) * 1.2; if (b.x < -60) { b.x = 780; b.y = 100 + Math.random() * 700; }
+        if (inside(b.x + 24, b.y + 12)) continue; g.drawImage(batImg, Math.round(b.x), Math.round(b.y), 48, Math.abs(Math.sin(b.w)) > 0.5 ? 24 : 16); } }
+    requestAnimationFrame(step); }; requestAnimationFrame(step); }
+// Big green / red verdict over the battlefield so a hit or miss is impossible to miss.
+function verdict(ok) { const v = $('verdict'); v.textContent = ok ? 'CORRECT!' : 'WRONG'; v.className = ok ? 'good' : 'bad'; clearTimeout(v._t); v._t = setTimeout(() => v.className = 'hidden', 1600); }
+// "Dr X, Cr Y" reads better on two lines.
+const drcr = s => String(s).replace(/^(Dr [^,]+), (Cr .+)$/, '$1<br>$2');
+
+// ---------------------------------------------------------------- BACKUP / RESTORE (move progress between devices)
+const toB64 = s => btoa(unescape(encodeURIComponent(s))), fromB64 = s => decodeURIComponent(escape(atob(s)));
+const progressJson = () => JSON.stringify(Object.assign(Object.fromEntries(SAVED_FIELDS.map(f => [f, G[f]])), { settings }));   // settings (theme, voice, sfx) travel with the backup
+function askBackup() { $('resetAsk')?.remove(); $('codeBox')?.remove(); const json = progressJson(), code = toB64(json);
+  $('homeSay').innerHTML = bb('[b]Sensei Otter:[/b] Your progress code. Copy it, then paste it into Restore on your other device.');
+  $('resetBtn').classList.add('hidden'); const ta = el('textarea'); ta.id = 'codeBox'; ta.value = code; ta.readOnly = true; ta.onclick = () => ta.select();
+  const row = el('div'); row.id = 'resetAsk';
+  row.append(button('Copy code', '06A', async () => { try { await navigator.clipboard.writeText(code); } catch (e) { ta.select(); document.execCommand('copy'); } $('homeSay').innerHTML = bb('[b]Sensei Otter:[/b] Copied! Paste it into Restore on your other device.'); }),
+    button('Download file', '03A', () => { const a = el('a'); a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json); a.download = 'acca-study-buddy-progress.json'; document.body.append(a); a.click(); a.remove(); }),
+    button('Done', '05A', showHome));
+  const panel = art(el('div', 'box dark backupPanel'), 'BGbox_03A'); panel.append(ta, row); $('cards').replaceChildren(panel); }
+function askRestore() { $('resetAsk')?.remove(); $('codeBox')?.remove();
+  $('homeSay').innerHTML = bb('[b]Sensei Otter:[/b] Paste your progress code below and tap Load (this replaces the progress here).');
+  $('resetBtn').classList.add('hidden'); const ta = el('textarea'); ta.id = 'codeBox'; ta.placeholder = 'Paste here...'; const row = el('div'); row.id = 'resetAsk';
+  row.append(button('Load', '06A', () => { let data; try { const raw = ta.value.trim(); data = JSON.parse(raw.startsWith('{') ? raw : fromB64(raw)); } catch (e) { $('homeSay').innerHTML = bb('[b]Sensei Otter:[/b] That code does not look right - check it was copied in full, then try again.'); return; }
+      for (const f of SAVED_FIELDS) if (data[f] != null) G[f] = data[f]; G.save(); if (data.settings) { Object.assign(settings, data.settings); saveSettings(); applyFestive(); } showHome(); $('homeSay').innerHTML = bb('[b]Sensei Otter:[/b] Progress restored, Zuru!'); }),
+    button('Cancel', '05A', showHome));
+  const panel = art(el('div', 'box dark backupPanel'), 'BGbox_03A'); panel.append(ta, row); $('cards').replaceChildren(panel); }
+
+// Calculator corner resize handle (the browser's own grip is hidden under the frame art).
+(function calcResize() { const h = $('calcGrip'), c = $('calc'); let sx, sy, ow, oh, on = false;
+  h.addEventListener('pointerdown', e => { on = true; sx = e.clientX; sy = e.clientY; ow = c.offsetWidth; oh = c.offsetHeight; try { h.setPointerCapture(e.pointerId); } catch (x) {} e.preventDefault(); });
+  h.addEventListener('pointermove', e => { if (!on) return; c.style.width = Math.max(440, Math.min(720 - c.offsetLeft, ow + (e.clientX - sx) / stageScale)) + 'px'; c.style.height = Math.max(660, Math.min(1280 - c.offsetTop, oh + (e.clientY - sy) / stageScale)) + 'px'; });
+  const stop = () => { if (!on) return; on = false; calcSave(); }; h.addEventListener('pointerup', stop); h.addEventListener('pointercancel', stop);
+})();
+
+// Deep links for testing: #mock, #bank, #book, #records, #calc
+document.fonts.ready.then(() => { const h = location.hash.slice(1); if (h) showHome(); else showTitle(); if (h === "mock") showMock(); else if (h === "bank") showBank(); else if (h === "book") showBook(); else if (h === "records") showRecords(); else if (h === "plan") showPlan(); else if (h === "notebook") showNotebook(); else if (h === "dates") showKeyDates(); else if (h === "calc") toggleCalc(true); });
+</script>
+</body>
+</html>

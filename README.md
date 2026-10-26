@@ -1,40 +1,47 @@
-# ACCA Study Buddy 🏯
+# ACCA Study Buddy 🏯🍋
 
-A monster-battling study game for **ACCA / FIA exams**, built in **Godot 4.x**. You enter a dojo, a monster appears for each topic, and you defeat it by answering questions — exam-style tap questions plus type-the-number/term "strikes" for real recall. Topics are replayable any time.
+A monster-battling study game for **ACCA FA (FFA)**, built in **Godot 4.x** for Android, with an HTML prototype
+of the same game in `preview/`. You are **Zuru**, a samurai at the dojo gate; each chapter is a monster, each
+lesson ends in a practice battle, and the mocks are laid out like the real ACCA CBE.
 
-> The app and APK are named **"ACCA Study Buddy"** (set in `project.godot` → `config/name`), so it's labelled clearly on your phone and easy to update later.
-
-This is a **vertical slice**: one fully playable room — the **Double-Entry Oni** (FFA, Chapter 2). It has been run headless and plays through cleanly (8/8). Once you're happy with the feel, we add the other topics and the extra modes.
+## What's in it
+- **26 chapters** following the FA/FFA study text, 88 lessons (Learn → Apply it → Worked example → Your turn),
+  535 exam-style questions (multiple choice, multiple response, number entry, pick lists, sort), 5 Section B
+  15-mark cases, and a syllabus map covering all 154 ACCA FA outcomes.
+- **Apply it**: every lesson has a scene from *Zuru's Lemonade Stand* — one story that grows from a shoebox of
+  receipts to a group with a subsidiary, using the same numbers chapter after chapter.
+- **Exam Hall**: five fixed Section A mocks, a mini mock, and three **full 100-mark mocks** (35 OT + two Section B
+  cases, 2-hour clock, marks by section). Original questions — not ACCA papers.
+- **Boss Arena** (endless gauntlet in laps of 32 bosses), **Training Grounds**, **Healer's Shrine** (everything you
+  get wrong, anywhere, until you clear it), **Hall of Records**.
+- **Study Planner** (daily targets packed into the hours you have, re-planned from today, calendar), **Notebook**
+  (what you did each day), exam sitting dates with countdowns, a key-dates guide, an in-game calculator, voice
+  (device text-to-speech), sound effects, backup/restore codes, and a festive mode (snow, lights, Santa-hat Zuru).
 
 ## Run it
-1. Open **Godot 4.x** (you have 4.7.2).
-2. Import / Open the project: point it at this folder (it finds `project.godot`).
-3. Press **F5** (Run). It runs with cute placeholder art straight away — no downloads needed to test.
+1. Open **Godot 4.x** (4.3 or later; 4.7 works).
+2. Open this folder (it finds `project.godot`) and press **F5**.
+3. Optional: copy the Franuka RPG UI pack into `assets/rpg/` for the full look (see `CREDITS.md`).
+
+> **Status:** the Godot port in `scripts/` runs cleanly in Godot 4.7.2 and is the v2.0 Android build. It was
+> checked headless by playing every chapter battle, lesson, Section B case, mock and planner screen with no
+> script errors. Its screen logic matches `preview/index.html`.
 
 ## Files
-- `project.godot` — settings, app name, portrait + mobile renderer, autoloads.
-- `Main.tscn` — a near-empty scene; everything is built in code.
-- `scripts/Game.gd` — saves your best score per exam+chapter (e.g. `FFA/2`).
-- `scripts/Content.gd` — **all words, questions and answers**. This is the file to edit to grow the game.
-- `scripts/Main.gd` — the engine (menu → battle → feedback → result → replay), drawn T-accounts, placeholder monster.
-- `assets/` — drop art & font here (`assets/README_ASSETS.md`).
+- `project.godot` — settings, autoloads (`Game` save data, `Content` questions, `UI` theme), TTS enabled.
+- `Main.tscn` — a single Control; everything is built in code.
+- `scripts/Content.gd` — **all lessons, questions, Section B cases and the syllabus map** (JSON-compatible).
+- `scripts/Main.gd` — top bar, title (exam picker), home, menus, records, syllabus, helpers.
+- `scripts/Book.gd` lessons · `Battle.gd` battles and the Boss Arena · `Mtq.gd` Section B · `Exam.gd` mocks ·
+  `Planner.gd` plan / calendar / notebook / dates · `Calc.gd` calculator · `Snow.gd` festive snow.
+- `preview/` — the HTML prototype (`serve.ps1` to run locally on port 8126; `build-standalone.ps1` builds a
+  single-file version). `preview/update_syllabus_map.ps1` refreshes the syllabus map from the lessons.
+- `tools/` — generators for the samurai sprites, Christmas art and sound effects.
 
-## Growing it (this is the important part for you)
-Everything lives in `scripts/Content.gd`, organised as **Exams → Chapters → Beats**:
-- **Add questions** → add more `choice` / `input` beats to a chapter.
-- **Add a chapter (new monster)** → copy a chapter block; change `id`, `title`, `monster`, `beats`.
-- **Add a whole new exam** (e.g. a different ACCA paper) → copy the `EXAMS` block with a new `id`/`name`.
-The menu lists whatever is in there, so new content shows up automatically.
-
-## Planned modes (next build)
-The content model is ready for these; right now it plays the **chapter trials**:
-1. **Chapter trials** — one monster per topic ✅
-2. **General-knowledge boss** — a mixed-topic battle so you can't breeze through.
-3. **Question bank** — practise by topic or by type (tap vs type-in).
-4. **Timed exam mock** — a 2-hour countdown boss in exam format, feedback at the end.
-
-## A note on the Exam Kit
-The questions here are **original**, written to match the exam style. Please don't paste Exam Kit questions in wholesale — that's their copyright. Individual questions you own can be added one at a time for personal study.
+## Growing it
+Everything lives in `scripts/Content.gd`: Exams → Chapters → `beats` (quiz questions), `lessons` (with `learn`,
+`apply`, `example`, `practice`) and `mtq`. Add an exam block with a new `id` and it appears on the title screen
+once linked in `ACCA_EXAMS` (Main.gd / preview). Keep questions original.
 
 ## Export to Android (APK)
 See `EXPORT_APK.md`.

@@ -10,7 +10,14 @@
 *.apk.idsig
 /build/
 
+# HTML preview: data.js is regenerated from scripts/Content.gd by preview/serve.ps1
+/preview/data.js
+
 # OS cruft
 Thumbs.db
 .DS_Store
 desktop.ini
+
+# Franuka RPG UI pack - licence allows use in the game but NOT redistributing the raw files,
+# so they stay out of this public repo. Copy them into assets/rpg/ locally (see CREDITS.md).
+/assets/rpg/

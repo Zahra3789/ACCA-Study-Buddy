@@ -1,19 +1,22 @@
 # Credits & Asset Licences
 
-Every third-party asset bundled in this project is **CC0 1.0 Universal (public domain)** —
-free for personal, educational **and commercial** use, and free to redistribute. This is
-checked deliberately so the project can be shared publicly without licence issues.
-
 | Asset in game | Source | Licence |
 |---|---|---|
-| Font (`assets/font.ttf`) | **Ninja Adventure Asset Pack** — Pixel-boy | CC0 1.0 |
-| Monster sprite (`assets/monster.png`) | **Ninja Adventure Asset Pack** — Pixel-boy | CC0 1.0 |
-| Dialogue panel, buttons, input (`assets/ui/*`) | **Kenney UI Pack 2.0** — kenney.nl | CC0 1.0 |
+| Body font `assets/fonts/PixelifySans.ttf` | Pixelify Sans — Stefie Justprince (Google Fonts) | SIL OFL 1.1 (`assets/fonts/PixelifySans-OFL.txt`) |
+| Digit font `assets/fonts/VT323.ttf` | VT323 — Peter Hull (Google Fonts) | SIL OFL 1.1 (`assets/fonts/OFL-vt323.txt`) |
+| `assets/fonts/Silkscreen.ttf` (kept, unused) | Silkscreen — Jason Kottke (Google Fonts) | SIL OFL 1.1 (`assets/fonts/OFL-silkscreen.txt`) |
+| Monster sprite `assets/monster.png`, `assets/font.ttf` | **Ninja Adventure Asset Pack** — Pixel-boy | CC0 1.0 |
+| Dialogue panel / buttons `assets/ui/*` (fallback UI) | **Kenney UI Pack 2.0** — kenney.nl | CC0 1.0 |
+| Zuru the samurai (`assets/characters/*`), Christmas trees, presents, lights (`assets/xmas/*`) | drawn for this project by `tools/make_samurai.ps1` and `tools/make_xmas.ps1` | CC0 (original) |
+| Sound effects `assets/sfx/*.wav` | synthesised for this project by `tools/make_sfx.ps1` | CC0 (original) |
+
+**Not in this repository:** the Franuka RPG UI pack (`assets/rpg/`) — its licence allows use inside a game
+but not redistribution of the raw files, so it is git-ignored. Copy it into `assets/rpg/` locally; without it
+the game falls back to plain coloured frames and the Kenney UI pieces.
 
 - Ninja Adventure: https://pixel-boy.itch.io/ninja-adventure-asset-pack
 - Kenney UI Pack: https://kenney.nl/assets/ui-pack
+- Google Fonts: https://fonts.google.com
 
-The background, T-account diagrams and placeholder shapes are generated in-engine (original to this project).
-
-**Not used:** asset packs whose licence could not be confirmed (an unlicensed pixel-monster
-pack and a Japanese-background pack with no licence file) were deliberately left out.
+All questions, lessons, the Zuru's Lemonade Stand scenarios and the mocks are **original** material written for
+this project — they are NOT ACCA papers. The ACCA syllabus and study guide were used as the backbone for coverage.
