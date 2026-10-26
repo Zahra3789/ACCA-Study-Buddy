@@ -24,3 +24,6 @@ desktop.ini
 # Zuru's sprites come from the FREE_Samurai pixel pack, whose licence forbids redistributing the art as an
 # asset - so they ship inside the game but stay out of this public repo. tools/make_zuru.gd rebuilds them.
 /assets/characters/
+# Journey banner scenery: LyniaDesign "Tiny Pixel Japan Parallax Background" - free for any game, but not to be
+# redistributed even modified, so it ships inside the game only. Get it from lyniadesign.itch.io.
+/assets/scenery/
