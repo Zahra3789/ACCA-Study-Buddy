@@ -115,10 +115,10 @@ func _ready() -> void:
 	help.guide_on_start()   # the walk-through, unless it's been switched off
 
 # ---------------------------------------------------------------- the opening splash
-# The moving banner over the whole phone with the title, for 5 seconds: when the app opens and again just after an
-# update has been put in (cold start or mid-session), saying which update it is now on. Shown from here because the
+# The loading screen carried on when the app opens and just after an update: the moving banner, the title, a bar,
+# then a Continue button it waits on (saying which update it is now on after one). Shown from here because the
 # loading screen itself (Boot.gd) comes from the installed app and only changes with a new APK.
-const SPLASH_SECS := 5.0
+const SPLASH_SECS := 3.0   # the loading bar fills, then Continue appears and it waits for a tap
 
 func _installed_update() -> int:
 	var n := BuildInfo.BUILD
@@ -157,6 +157,16 @@ func _splash() -> void:
 	var tw0 := create_tween()
 	tw0.tween_method(func(v: float): _sp["p"] = v; ov.queue_redraw(), 0.0, 1.0, SPLASH_SECS)
 	await get_tree().create_timer(SPLASH_SECS).timeout
+	# then it waits as long as you like, the banner running on, until you tap Continue
+	_sp["status"] = ("Updated to update %d - ready!" % n) if updated else "Ready!"
+	ov.queue_redraw()
+	var go := UI.button("Continue  ▶", "03A", Callable(), false, 30)
+	go.anchor_left = 0.5; go.anchor_right = 0.5
+	go.offset_left = -190; go.offset_right = 190
+	go.offset_top = H / 2.0 + 84.0; go.offset_bottom = H / 2.0 + 156.0
+	ov.add_child(go)
+	await go.pressed
+	sfx("tap")
 	var tw := create_tween()
 	tw.tween_property(ov, "modulate:a", 0.0, 0.45)
 	await tw.finished
@@ -180,7 +190,7 @@ func _draw_splash(c: Control) -> void:
 	# the space underneath: what's installed, the exam, and a tip
 	var lines := [["App v%s  ·  update %d" % [ProjectSettings.get_setting("application/config/version", "?"), _sp["n"]], 22, Color(1, 1, 1, 0.75)],
 		["ACCA Financial Accounting (FA)", 22, Color(1, 1, 1, 0.75)], ["", 12, Color.WHITE], ["Tip", 24, Color("f2c14e")], [_sp["tip"], 22, Color(1, 1, 1, 0.85)]]
-	var ly := y + 130.0
+	var ly := y + 210.0   # under the Continue button
 	for l in lines:
 		c.draw_multiline_string(font, Vector2(30, ly), l[0], HORIZONTAL_ALIGNMENT_CENTER, W - 60, l[1], -1, l[2])
 		ly += (l[1] + 14.0) * maxf(1.0, ceilf(font.get_string_size(l[0], HORIZONTAL_ALIGNMENT_LEFT, -1, l[1]).x / (W - 60)))
