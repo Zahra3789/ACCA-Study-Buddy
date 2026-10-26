@@ -298,19 +298,32 @@ const BOSS_NAMES = {
 const more = (k, mode, lines) => SENSEI[k][mode].push(...lines);
 more('quip_win', 'proper', ['+1000 aura.', 'Let her cook!', 'Sigma accountant behaviour.', 'You just mogged that question.', 'W rizz on the ledger.']);
 more('quip_win', 'east', ['+1000 aura, wallahi.', 'Let her cook, walaal!']);
-more('quip_taunt', 'proper', ['-1000 aura.', "That answer is giving Ohio.", 'NPC behaviour.', 'Bro is COOKED.', 'That was messier than an Ash and Bri fight.', 'Delulu is not the solulu.']);
+more('quip_taunt', 'proper', ['-1000 aura.', "That answer is giving Ohio.", 'NPC behaviour.', 'Bro is COOKED.', 'Delulu is not the solulu.']);
 more('quip_taunt', 'east', ['Ash and Bri argue better than you answer, walaal.', "-1000 aura, ceeb!"]);
+// Boss 1 in East London mode is "Ash Trevino Vs Bri (Round 47)" - only that fight uses these lore lines (q below).
+Object.assign(SENSEI, {
+  ab_win: { proper: ['Round 47 to me.'], east: ['Round 47 to ME, wallahi. Ring Santos.', "Get the menudo on, you're COOKED.", 'Knocked out quicker than Santos at the boxing, sxb.',
+    'Sit down and eat your brisket, walaal.', "That's going on Bri's live, mashallah.", 'Ask Santos, he saw that one!'] },
+  ab_hurt: { proper: ['Santos!'], east: ["SANTOS! Grab the brisket, we're leaving!", 'Bri, stop going live on my pain!', 'Not in front of the menudo, wallahi!',
+    'Worse than Round 46, HOOYOOO!', 'Santos, whose side are you ON?!', 'Ash, you burnt the brisket AND this?!'] },
+  ab_taunt: { proper: ['Ask Santos.'], east: ['Ask Santos, he knows it smells well!', "Drier than Santos' brisket, ceeb!", 'Even Santos picks a side faster than that, nacas.',
+    "Go stir the menudo, ukun, you're not ready.", "The beef's fake but that answer's REALLY wrong.", "Bri's doing a 40-minute live on that answer, wallahi.",
+    'My tia cooks better answers than you, walaal.'] },
+  ab_low: { proper: ['Truce!'], east: ['Okay okay, the beef was fake for views! Spare us!', 'SANTOS! Bring the car round, walaal!', "Truce! We'll share the brisket, I swear!",
+    'Round 48 tomorrow, same time, on live!', 'Waan ka xumahay! Have the menudo, just go!'] } });
+const q = k => (settings.sensei === 'east' && session && String(session.foe || '').startsWith('Ash Trevino')) ? S(k.replace('quip_', 'ab_')) : S(k);
 more('quip_hurt', 'proper', ['Fanum taxed my margins!', 'My aura!', "That's lowkey violating."]);
 more('quip_low', 'proper', ["Okay okay, you've got rizz!", "Please, I'm just an NPC!"]);
 more('shout_right', 'proper', ['+1000 AURA!', 'SIGMA!', 'COOKED IT!']);
 more('shout_right', 'east', ['+1000 AURA!']);
 more('shout_wrong', 'proper', ['-1000 AURA!', 'OHIO!', 'COOKED!', 'NPC!']);
 more('shout_wrong', 'east', ['-1000 AURA!']);
-BOSS_NAMES.proper.push('Ash Trevino (Mid-Rant)', 'Bri, Round 7', 'Skibidi Toilet Auditor', 'The Fanum Tax Collector', 'Sigma Grindset CFO', 'Ohio Final Boss', 'Mewing Accountant', 'Delulu Debtor');
-BOSS_NAMES.east.push('Ash And Bri, Arguing Again', 'The Fanum Tax Collector');
+BOSS_NAMES.proper.push('Skibidi Toilet Auditor', 'The Fanum Tax Collector', 'Sigma Grindset CFO', 'Ohio Final Boss', 'Mewing Accountant', 'Delulu Debtor');
+BOSS_NAMES.east.push('The Fanum Tax Collector');
 const _makeLineup = makeLineup;
 makeLineup = function () { const out = _makeLineup(), east = settings.sensei === 'east', names = shuffle([...BOSS_NAMES[east ? 'east' : 'proper']]); let i = 0;
   for (const b of out) b.name = b.lv === 'SHOGUN' ? (east ? 'Hooyo, Final Boss' : "Karen's Final Form") : names[i++ % names.length];
+  if (east && out.length) out[0].name = 'Ash Trevino Vs Bri (Round 47)';   // East London mode always opens with the main event
   return out; };
 let bubble = null;
 function quip(fromYou, text) { if (bubble) bubble.remove(); const b = document.createElement('div'); b.className = 'quip' + (fromYou ? '' : ' foe'); b.textContent = text;
@@ -324,8 +337,8 @@ anim = function (id, cls) { const e = $(id);
 mood = function (m, id = 'you') { const c = $(id); if (!c || !c._live) return;
   if (id !== 'you') { c._live.act(m); return; }
   if (m === 'happy') { c._live.act((session && session.combo >= 3) ? 'slash' : 'happy');
-    setTimeout(() => { if (FX.knocked) quip(false, S('quip_low')); else if (Math.random() < 0.45) quip(true, S('quip_win')); else if (Math.random() < 0.5) quip(false, S('quip_hurt')); }, 450); }
-  else if (m === 'sad') { c._live.act('sad'); if (Math.random() < 0.65) setTimeout(() => quip(false, S('quip_taunt')), 300); }
+    setTimeout(() => { if (FX.knocked) quip(false, q('quip_low')); else if (Math.random() < 0.45) quip(true, q('quip_win')); else if (Math.random() < 0.5) quip(false, q('quip_hurt')); }, 450); }
+  else if (m === 'sad') { c._live.act('sad'); if (Math.random() < 0.65) setTimeout(() => quip(false, q('quip_taunt')), 300); }
   else c._live.act(m); };
 
 // ---------------------------------------------------------------- one clock for everything animated here

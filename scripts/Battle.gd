@@ -406,14 +406,20 @@ func _quip(from_you: bool, text: String) -> void:
 	tw.tween_property(p, "modulate:a", 0.0, 0.3)
 	tw.tween_callback(p.queue_free)
 
+# A banter line - the Ash Trevino Vs Bri fight has its own lore lines (Main.SENSEI ab_*), every other boss the usual ones.
+func _q(key: String) -> String:
+	if main.east() and str(s.get("foe", "")).begins_with("Ash Trevino"):
+		return main.S(key.replace("quip_", "ab_"))
+	return main.S(key)
+
 # After a hit: the monster begs when it's down; otherwise sometimes Zuru brags or the monster yelps.
 func _banter_hit() -> void:
 	if fx.knocked:
-		_quip(false, main.S("quip_low"))
+		_quip(false, _q("quip_low"))
 	elif randf() < 0.45:
-		_quip(true, main.S("quip_win"))
+		_quip(true, _q("quip_win"))
 	elif randf() < 0.5:
-		_quip(false, main.S("quip_hurt"))
+		_quip(false, _q("quip_hurt"))
 
 func _dmg(text: String, pos: Vector2) -> void:
 	var l := UI.label(text, 40, UI.GOLD)
@@ -727,7 +733,7 @@ func run_battle(sess: Dictionary) -> void:
 			fx.hurt(sess["you"] > 0 and sess["you"] <= maxi(2, int(sess["youMax"] * 0.3)))
 			_anim(you, "hit"); _dmg("-1", Vector2(200, 330))
 			if randf() < 0.65:
-				_quip(false, main.S("quip_taunt"))
+				_quip(false, _q("quip_taunt"))
 			update_bars()
 			await say([main.SL("wrong", {"foe": sess["foe"], "ans": main.correct_text(b)})] + pages(str(b.get("ex", ""))), "WRONG", sess)
 			if sess.get("gauntlet", false) and sess["you"] <= 0:
@@ -855,6 +861,8 @@ func make_lineup() -> Array:
 		out.append({"name": names[i % names.size()], "chId": int(c["id"]), "topic": c["title"], "hue": int(c["id"]) * 47, "lv": "Ch %d" % int(c["id"]), "hp": BOSS_HP})
 		if i % 4 == 3:
 			out.append({"name": main.S("boss_final"), "chId": -1, "topic": "every chapter", "hue": 300, "lv": "SHOGUN", "hp": SHOGUN_HP})
+	if main.east() and out.size():   # East London mode always opens with the main event
+		out[0]["name"] = "Ash Trevino Vs Bri (Round 47)"
 	return out
 
 func show_boss_lobby() -> void:

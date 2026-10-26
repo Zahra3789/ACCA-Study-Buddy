@@ -293,7 +293,17 @@ const SENSEI := {
 	"quip_hurt": {"proper": ["Ouch! My margins!", "Not the depreciation!", "That really accrued!", "My reserves!"],
 		"east": ["Ay! HOOYOOO!", "Wallahi that hurt!", "Ow, ow, OW, walaal!", "I'm telling my aabo!", "Waa maxay?! That's not fair!"]},
 	"quip_taunt": {"proper": ["Is that all?", "Your trial balance doesn't balance!", "Wrong side of the ledger!", "Ha! Back to the textbook!", "I've seen better from an intern.", "Suspense account for you!"],
-		"east": ["Ceeb! Your hooyo saw that.", "Nacas! Who taught you, YouTube?", "That was embarrassing, wallahi.", "Allow it, you're getting cooked.", "Even my ayeeyo knows that one!", "Ha! Back to dugsi with you!", "Ukun! Sit down."]},
+		"east": ["Ceeb! Your hooyo saw that.", "Nacas! Who taught you, YouTube?", "That was embarrassing, wallahi.", "Allow it, you're getting cooked.", "Even my ayeeyo knows that one!", "Ha! Back to dugsi with you!", "Ukun! Sit down.", "Ash and Bri argue better than you answer, walaal."]},
+	# Boss 1 in East London mode is "Ash Trevino Vs Bri (Round 47)" - only that fight uses these (Battle._q)
+	"ab_win": {"proper": ["Round 47 to me."], "east": ["Round 47 to ME, wallahi. Ring Santos.", "Get the menudo on, you're COOKED.", "Knocked out quicker than Santos at the boxing, sxb.",
+			"Sit down and eat your brisket, walaal.", "That's going on Bri's live, mashallah.", "Ask Santos, he saw that one!"]},
+	"ab_hurt": {"proper": ["Santos!"], "east": ["SANTOS! Grab the brisket, we're leaving!", "Bri, stop going live on my pain!", "Not in front of the menudo, wallahi!",
+			"Worse than Round 46, HOOYOOO!", "Santos, whose side are you ON?!", "Ash, you burnt the brisket AND this?!"]},
+	"ab_taunt": {"proper": ["Ask Santos."], "east": ["Ask Santos, he knows it smells well!", "Drier than Santos' brisket, ceeb!", "Even Santos picks a side faster than that, nacas.",
+			"Go stir the menudo, ukun, you're not ready.", "The beef's fake but that answer's REALLY wrong.", "Bri's doing a 40-minute live on that answer, wallahi.",
+			"My tia cooks better answers than you, walaal."]},
+	"ab_low": {"proper": ["Truce!"], "east": ["Okay okay, the beef was fake for views! Spare us!", "SANTOS! Bring the car round, walaal!", "Truce! We'll share the brisket, I swear!",
+			"Round 48 tomorrow, same time, on live!", "Waan ka xumahay! Have the menudo, just go!"]},
 	# Boss Arena names (Battle.make_lineup): daft ones with a few Somali names mixed in; E-LDN = Somali characters
 	"boss_names": {"proper": ["Karen", "Karen's Sister-in-Law's Boyfriend", "Phil Mitchell", "Gemma Collins' Accountant", "Your Ex's New Situationship", "Gary From Finance",
 			"The Man Who Replies-All", "Peggy Mitchell's Ghost", "Deliveroo Driver Who Ate Your Chips", "Hun From Facebook Selling Leggings", "Landlord Who Won't Fix The Boiler",
