@@ -10,6 +10,7 @@ signal answered
 
 const MOVES := ["Debit Strike", "Credit Slash", "Accrual Cut", "Ledger Lunge", "Balance Blade", "Prudence Parry", "Matching Thrust", "Audit Arc"]
 const BOSS_HP := 5
+const RM_SHARE := 0.5      # how much of a Boss Arena lineup is Running Man (her favourite)
 const SHOGUN_HP := 8
 const HERO_HP := 10
 const HEAL := 3
@@ -420,8 +421,13 @@ func _clear_quip() -> void:
 
 # A banter line - the Ash Trevino Vs Bri fight has its own lore lines (Main.SENSEI ab_*), every other boss the usual ones.
 func _q(key: String) -> String:
-	if main.east() and str(s.get("foe", "")).begins_with("Ash Trevino"):
+	var foe := str(s.get("foe", ""))
+	if main.east() and foe.begins_with("Ash Trevino"):
 		return main.S(key.replace("quip_", "ab_"))
+	# a Running Man boss mostly talks Running Man (name tags, betrayals, water bombs); now and then anyone does
+	var rm_boss: bool = foe in main.SENSEI["boss_rm"]["east" if main.east() else "proper"]
+	if randf() < (0.7 if rm_boss else 0.15):
+		return main.S(key.replace("quip_", "rm_"))
 	return main.S(key)
 
 # After a hit: the monster begs when it's down; otherwise sometimes Zuru brags or the monster yelps.
@@ -867,7 +873,15 @@ func make_lineup() -> Array:
 	var chs: Array = main.EXAM["chapters"].filter(func(c): return main.questions(int(c["id"])).size() > 0)
 	chs = main.shuffled(chs)
 	# the bosses get silly names (Somali characters with E-LDN on); the chapter is still on the plate and in the topic
-	var names: Array = main.shuffled(main.SENSEI["boss_names"]["east" if main.east() else "proper"])
+	# Half of them are Running Man (RM_SHARE), the rest the usual daft names, all shuffled together.
+	var mode := "east" if main.east() else "proper"
+	var base: Array = main.shuffled(main.SENSEI["boss_names"][mode])
+	var rm: Array = main.shuffled(main.SENSEI["boss_rm"][mode])
+	var k := roundi(chs.size() * RM_SHARE)
+	var names := []
+	for i in chs.size():
+		names.append(rm[i % rm.size()] if i < k else base[(i - k) % base.size()])
+	names = main.shuffled(names)
 	for i in chs.size():
 		var c: Dictionary = chs[i]
 		out.append({"name": names[i % names.size()], "chId": int(c["id"]), "topic": c["title"], "hue": int(c["id"]) * 47, "lv": "Ch %d" % int(c["id"]), "hp": BOSS_HP})

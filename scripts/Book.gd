@@ -27,7 +27,7 @@ func show_book() -> void:
 	v.add_child(UI.banner("CHAPTER BOOK"))
 	var chs: Array = main.EXAM["chapters"]
 	var tabs_n := int(ceil(chs.size() / float(PER_SPREAD)))
-	var stars := UI.rich("[b]%d / %d[/b] stars collected.  Tap a chapter." % [main.total_stars(), chs.size() * 3], 26, false, true)
+	var stars := UI.rich("[b]%d chapters[/b]  ·  [b]%d / %d[/b] stars collected.  Tap a chapter." % [chs.size(), main.total_stars(), chs.size() * 3], 26, false, true)
 	if not main.landscape:   # sideways it sits above the chapter detail instead, to leave the book its height
 		v.add_child(stars)
 	var wrap := Control.new()

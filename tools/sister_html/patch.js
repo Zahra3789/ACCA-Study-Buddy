@@ -323,7 +323,10 @@ Object.assign(SENSEI, {
     'My tia cooks better answers than you, walaal.'] },
   ab_low: { proper: ['Truce!'], east: ['Okay okay, the beef was fake for views! Spare us!', 'SANTOS! Bring the car round, walaal!', "Truce! We'll share the brisket, I swear!",
     'Round 48 tomorrow, same time, on live!', 'Waan ka xumahay! Have the menudo, just go!'] } });
-const q = k => (settings.sensei === 'east' && session && String(session.foe || '').startsWith('Ash Trevino')) ? S(k.replace('quip_', 'ab_')) : S(k);
+const q = k => { const foe = String((session && session.foe) || ''), east = settings.sensei === 'east';
+  if (east && foe.startsWith('Ash Trevino')) return S(k.replace('quip_', 'ab_'));
+  const rmBoss = typeof BOSS_RM !== 'undefined' && BOSS_RM[east ? 'east' : 'proper'].includes(foe);   // a Running Man boss mostly talks Running Man
+  return Math.random() < (rmBoss ? 0.7 : 0.1) ? S(k.replace('quip_', 'rm_')) : S(k); };
 more('quip_hurt', 'proper', ['Fanum taxed my margins!', 'My aura!', "That's lowkey violating."]);
 more('quip_low', 'proper', ["Okay okay, you've got rizz!", "Please, I'm just an NPC!"]);
 more('shout_right', 'proper', ['+1000 AURA!', 'SIGMA!', 'COOKED IT!']);
@@ -331,10 +334,33 @@ more('shout_right', 'east', ['+1000 AURA!']);
 more('shout_wrong', 'proper', ['-1000 AURA!', 'OHIO!', 'COOKED!', 'NPC!']);
 more('shout_wrong', 'east', ['-1000 AURA!']);
 BOSS_NAMES.proper.push('Skibidi Toilet Auditor', 'The Fanum Tax Collector', 'Sigma Grindset CFO', 'Ohio Final Boss', 'Mewing Accountant', 'Delulu Debtor');
-BOSS_NAMES.east.push('The Fanum Tax Collector');
+BOSS_NAMES.east.push('The Fanum Tax Collector',
+  "Abdifatah 'Ambuulo' Mohamed Abdullahi Farah", "Xaliimo Cabdiraxmaan Cali Faarax 'Dheere'", 'Mohamed Mohamed Mohamed Mohamed (The Fourth)',
+  "Cabdiqaadir 'Shaah Badan' Xirsi Jaamac Guuleed", 'Abdirahman Abdirashid Abdirizak Abdiwali', 'Hodan Hibaaq Hamdi Haweeya Hassan',
+  "Ugaaso 'Bariis Iyo Moos' Cumar Warsame", "Ahmed 'Muufo' Cawil Diiriye Yuusuf", "Uncle Abdiwahab Abdikarim 'Two Phones' Abdillahi",
+  'Ayaan Asha Amina Aisha Abdi (The Whole Family)', "Faadumo 'Sambuus Queen' Maxamed Cismaan", "Sheikh Abdullahi 'Anjeero' Nuur Aadan");
+// Running Man: 30% of her lineup (the app has half), with their own banter when one of them is up
+const RM_SHARE = 0.3;
+const BOSS_RM = {
+  proper: ['Kim Jong-kook, The Commander', 'Sparta-kooks (Here For Your Name Tag)', 'Lee Kwang-soo, Icon Of Betrayal', 'Kwang-soo The Giraffe (Betraying Again)',
+    'Yoo Jae-suk, The Grasshopper', 'Yoo-Mes Is Watching You', 'Ji Suk-jin, Big Nose Hyung', 'Ji Suk-jin, Asleep In The Van', 'Haha, The Haroro',
+    'Mong Ji-hyo (Ace Mode: ON)', 'Gary And Ji-hyo, The Monday Couple', 'Jeon So-min, Chaos Queen', "Yang Se-chan's Wild Card", 'The PD Who Hid The Mission Card',
+    'Water Bomb Penalty', 'The Flour Bomb Penalty', 'Name Tag Elimination Round', 'Final Mission: Ring The Bell', 'The 5 AM Wake-Up Mission'],
+  east: ['Kim Jong-kook, The Commander (From Mogadishu)', 'Lee Kwang-soo, Betrayer Of The Whole Qabiil', 'Yoo Jae-suk, The Grasshopper, Wallahi',
+    'Sparta-kooks (Wants Your Name Tag, Walaal)', 'Ji Suk-jin, Asleep In The Uber', 'Mong Ji-hyo (Ace Mode: ON)', 'Haha, The Haroro', 'Water Bomb Penalty',
+    'Name Tag Elimination Round', 'Gary And Ji-hyo, The Monday Couple', 'Jeon So-min, Chaos Queen', 'Final Mission: Ring The Bell'] };
+Object.assign(SENSEI, {
+  rm_win: { proper: ["Name tag RIPPED! You're out!", 'Kim Jong-kook would be proud.', "Ring the bell, that's a win!"],
+    east: ["Name tag RIPPED, walaal! You're out!", 'Kim Jong-kook would be proud, wallahi.', 'Ring the bell, mashallah!'] },
+  rm_hurt: { proper: ['Not my name tag!', 'Kwang-soo, you BETRAYED me!', 'Water bomb, NOOO!'], east: ['Not my name tag, HOOYOOO!', 'Kwang-soo betrayed me, wallahi!', 'Water bomb, waa maxay?!'] },
+  rm_taunt: { proper: ['Kwang-soo-level betrayal of that answer.', 'Even Ji Suk-jin got that, and he was asleep.', "Your name tag's hanging by a thread!", 'Water bomb penalty for you!'],
+    east: ['Kwang-soo-level betrayal, ceeb!', 'Ji Suk-jin got that one asleep, nacas.', "Name tag's hanging by a thread, ukun!"] },
+  rm_low: { proper: ["I'll give you the hint envelope, I swear!", "Don't rip my name tag! Please!"], east: ['Have the hint envelope, just go, walaal!', "Not the name tag, I've got kids!"] } });
 const _makeLineup = makeLineup;
-makeLineup = function () { const out = _makeLineup(), east = settings.sensei === 'east', names = shuffle([...BOSS_NAMES[east ? 'east' : 'proper']]); let i = 0;
-  for (const b of out) b.name = b.lv === 'SHOGUN' ? (east ? 'Hooyo, Final Boss' : "Karen's Final Form") : names[i++ % names.length];
+makeLineup = function () { const out = _makeLineup(), east = settings.sensei === 'east', mode = east ? 'east' : 'proper';
+  const n = out.filter(b => b.lv !== 'SHOGUN').length, k = Math.round(n * RM_SHARE), base = shuffle([...BOSS_NAMES[mode]]), rm = shuffle([...BOSS_RM[mode]]);
+  const names = shuffle(Array.from({ length: n }, (_, j) => j < k ? rm[j % rm.length] : base[(j - k) % base.length])); let i = 0;
+  for (const b of out) b.name = b.lv === 'SHOGUN' ? (east ? 'Hooyo, Final Boss' : "Karen's Final Form") : names[i++];
   if (east && out.length) out[0].name = 'Ash Trevino Vs Bri (Round 47)';   // East London mode always opens with the main event
   return out; };
 let bubble = null;
@@ -388,33 +414,102 @@ function iconFor(text) { const n = text.toLowerCase();
   for (const [k, id] of KEY_CARD) if (n.includes(k)) { const a = AREAS.find(x => x.id === id); if (a) return a.icon; }
   for (const [k, ic] of KEY_ICON) if (n.includes(k)) return ic;
   return 'Icon_07'; }
-function helpRows(text, firstTime) { const paras = text.split('\n\n'); let h = `<p class="hIntro">${bb(paras[0])}</p>`;
+// One help line -> a row: picture, name, one short line.
+const rowHtml = (nm, d, icon) => { if (!d.startsWith('[')) d = d.charAt(0).toUpperCase() + d.slice(1);
+  return `<div class="hRow"><img src="${A('../assets/rpg/' + (icon || iconFor(nm + ' ' + d.slice(0, 30))) + '.png')}" alt=""><div>${nm ? `<b class="hName">${bb(nm)}</b>` : ''}<span>${bb(d)}</span></div></div>`; };
+// A page's text -> its intro and its lines ({nm, d} for "• [b]Name[/b] - what it does", {note} for anything else), in order.
+function parseHelp(text) { const paras = text.split('\n\n'), items = [];
   for (const para of paras.slice(1)) for (const line of para.split('\n')) {
     if (line.startsWith('• ')) { const l = line.slice(2), cut = l.indexOf(' - '), left = cut > 0 ? l.slice(0, cut) : '';
-      let nm = '', d = l; if (cut > 0 && left.startsWith('[b]') && left.endsWith('[/b]') && left.split('[b]').length === 2) { nm = left.slice(3, -4); d = l.slice(cut + 3); }
-      if (!d.startsWith('[')) d = d.charAt(0).toUpperCase() + d.slice(1);
-      h += `<div class="hRow"><img src="${A('../assets/rpg/' + iconFor(nm + ' ' + d.slice(0, 30)) + '.png')}" alt=""><div>${nm ? `<b class="hName">${bb(nm)}</b>` : ''}<span>${bb(d)}</span></div></div>`; }
-    else if (line.trim()) h += `<p class="hNote">${bb(line)}</p>`; }
+      if (cut > 0 && left.startsWith('[b]') && left.endsWith('[/b]') && left.split('[b]').length === 2) items.push({ nm: left.slice(3, -4), d: l.slice(cut + 3) });
+      else items.push({ nm: '', d: l }); }
+    else if (line.trim()) items.push({ note: line }); }
+  return { intro: paras[0], items }; }
+function helpRows(text, firstTime) { const p = parseHelp(text); let h = `<p class="hIntro">${bb(p.intro)}</p>`;
+  for (const it of p.items) h += it.note !== undefined ? `<p class="hNote">${bb(it.note)}</p>` : rowHtml(it.nm, it.d);
   if (firstTime) return h + '<p class="hNote"><i>Tap <b>?</b> at the top right any time to see this again.</i></p>';
   h += '<p class="hHead">The buttons along the top</p><div class="hKeys">';
   for (const [id, label, what] of TOP_KEYS) { const src = $(id); if (!src) continue; const b = src.cloneNode(true); b.removeAttribute('id'); b.removeAttribute('onclick'); b.textContent = label;
     h += b.outerHTML + `<span>${bb(what)}</span>`; }
   return h + '</div><p class="hNote">Swipe back from the screen\'s edge to go back, like <b>ESC</b>.</p>'; }
-const helpCredits = $('helpRow').querySelector('.btn');
-openHelp = function () { const [t, b] = helpPage(); $('help').classList.remove('first'); helpCredits.style.display = '';
-  $('helpTitle').textContent = 'HELP - ' + t; $('helpBody').innerHTML = helpRows(b, false); $('help').classList.remove('hidden'); $('helpBody').scrollTop = 0; };
+
+// The buttons under the panel: help (Guide, Credits, Got it), first / box (just Got it), guide (show-on-open switch, Back, Next).
+const [credBtn, gotBtn] = $('helpRow').querySelectorAll('.btn');
+const cloneBtn = (src, text, fn) => { const b = src.cloneNode(true); b.removeAttribute('onclick'); b.removeAttribute('id'); b.textContent = text; b.onclick = () => { sfx('tap'); fn(); }; return b; };
+const guideBtn = cloneBtn(credBtn, 'Guide', () => openGuide(0));
+$('helpRow').prepend(guideBtn); credBtn.textContent = 'Credits';
+const guideRow = document.createElement('div'); guideRow.id = 'guideRow';
+const gToggle = cloneBtn(credBtn, '', () => { settings.guideOnOpen = settings.guideOnOpen === false; saveSettings(); drawToggle(); });
+const gBack = cloneBtn(credBtn, '◀ Back', () => openGuide(gStep - 1)), gNext = cloneBtn(gotBtn, 'Next ▶', () => gStep >= GUIDE.length - 1 ? closeHelp() : openGuide(gStep + 1));
+const gNav = document.createElement('div'); gNav.className = 'gNav'; gNav.append(gBack, gNext); guideRow.append(gToggle, gNav);
+$('helpPanel').append(guideRow);
+function helpMode(m) { $('helpRow').style.display = m === 'guide' ? 'none' : ''; guideRow.style.display = m === 'guide' ? '' : 'none';
+  guideBtn.style.display = credBtn.style.display = m === 'help' ? '' : 'none'; $('help').classList.toggle('first', m !== 'help'); }
+const showPanel = (title, html) => { $('helpTitle').textContent = title; $('helpBody').innerHTML = html; $('help').classList.remove('hidden'); $('helpBody').scrollTop = 0; };
+openHelp = function () { const [t, b] = helpPage(); helpMode('help'); showPanel('HELP - ' + t, helpRows(b, false)); };
 const _openCredits = openCredits;
-openCredits = function () { $('help').classList.remove('first'); helpCredits.style.display = ''; _openCredits(); };
+openCredits = function () { helpMode('help'); _openCredits(); };
 // First visit to each part: a short "what is this?" card, once (we can't assume anyone knows how a part works).
 function maybeIntro() { setTimeout(() => {   // after the screen has set its mode (battle type, lesson step)
   if (!$('help').classList.contains('hidden') || ($('calc') && !$('calc').classList.contains('hidden'))) return;
   const [t, b] = helpPage(); if (t === 'HELP') return;
   const key = t + ':' + b.length, seen = settings.seenHelp || []; if (seen.includes(key)) return;
   settings.seenHelp = [...seen, key]; saveSettings();
-  $('helpTitle').textContent = 'FIRST TIME HERE?  ' + t; $('helpBody').innerHTML = helpRows(b, true); helpCredits.style.display = 'none';
-  $('help').classList.add('first'); $('help').classList.remove('hidden'); $('helpBody').scrollTop = 0; }, 450); }
+  helpMode('first'); showPanel('FIRST TIME HERE?  ' + t, helpRows(b, true)); }, 450); }
 const _show = show;
 show = function (id) { _show(id); maybeIntro(); };
-maybeIntro();
+
+// ---------------------------------------------------------------- the guide: a walk-through before she starts (as in the app)
+// Opens by itself when the page opens (unless switched off with its own button) and again from Help > Guide.
+const GUIDE = [
+  ['WELCOME TO THE DOJO', "SM Study Buddy turns your CIMA Level 4 end-point assessment into a game. Here's how it works - it takes a minute.", [
+    ['Icon_01', 'The aim', 'Learn every chapter, practise until it sticks, and walk into the assessment ready.'],
+    ['Icon_05', 'Stars and XP', 'Passing a lesson earns stars; every right answer gives XP and levels Sisi up.'],
+    ['Icon_10', 'Always saved', 'Progress saves in this browser by itself. [b]Backup[/b] on Home copies it to another phone or laptop.']]],
+  ['STEP 1 - MAKE A PLAN', "Tell Sensei when you sit it, and he'll plan the days for you.", [
+    ['Icon_11', 'Exam dates', 'On the first screen, tap [b]Exam dates[/b] and enter when you sit each part. A countdown appears.'],
+    ['Icon_11', 'Study plan', 'On Home, tap [b]Study plan[/b], add your hours, and Sensei spreads the chapters over the days.'],
+    ['Icon_12', 'Notebook', 'Fills itself in: what you did each day.']]],
+  ['STEP 2 - LEARN', 'Work through the Chapter Book in order. Each chapter is guarded by a monster.', [
+    ['book', 'Chapter Book', 'Every chapter of the revision notes. Start with chapter 1.'],
+    ['Icon_02', 'Each lesson', '[b]Learn[/b], then [b]Apply it[/b], then a [b]Worked example[/b], then [b]Your turn[/b].'],
+    ['Icon_09', 'Your turn', 'A short battle: score 70% to pass the lesson and unlock the next one.']]],
+  ['STEP 3 - PRACTISE', 'A little every day keeps it stuck.', [
+    ['review', 'Daily Review', "Old questions come back just before you'd forget them. 10 minutes a day."],
+    ['scrolls', "Sensei's Scrolls", 'Flip-cards for formulas, formats and rules.'],
+    ['bank', 'Training Grounds', 'Drill any chapter or question type, no pressure.'],
+    ['heal', "Healer's Shrine", 'Everything you got wrong waits here until you get it right.']]],
+  ['STEP 4 - TEST YOURSELF', "When the chapters are done, check you're ready.", [
+    ['boss', 'Boss Arena', 'Bosses from every chapter, back to back. How far can you get?'],
+    ['mock', 'Exam Hall', "Mocks in the assessment's shape, with a timer."],
+    ['rec', 'Hall of Records', 'Your strongest and weakest topics, so you know what to fix.']]],
+  ["IF YOU'RE EVER STUCK", 'Help is always one tap away.', [
+    ['Icon_08', '? at the top right', "Explains the page you're on."],
+    ['Icon_08', 'Small ? on a box', 'Explains just that box.'],
+    ['Icon_02', 'ESC or swipe back', 'Goes back one step.'],
+    ['Icon_07', 'This guide', 'Open it again any time: [b]?[/b] then [b]Guide[/b].']]]];
+let gStep = 0;
+const areaIcon = id => (AREAS.find(a => a.id === id) || {}).icon || id;
+function drawToggle() { gToggle.textContent = 'Show this guide when it opens: ' + (settings.guideOnOpen === false ? 'OFF' : 'ON'); }
+function openGuide(i) { gStep = Math.max(0, Math.min(GUIDE.length - 1, i)); const [t, intro, rows] = GUIDE[gStep];
+  helpMode('guide'); drawToggle(); gBack.style.visibility = gStep === 0 ? 'hidden' : '';
+  gNext.textContent = gStep === GUIDE.length - 1 ? "Let's go!" : 'Next ▶';
+  showPanel(`${t}  (${gStep + 1}/${GUIDE.length})`, `<p class="hIntro">${bb(intro)}</p>` + rows.map(([ic, nm, d]) => rowHtml(nm, d, areaIcon(ic))).join('')); }
+window.openGuide = openGuide;
+
+// ---------------------------------------------------------------- a small ? in the corner of each Home box
+// Explains just that box (the big ? at the top explains the whole page), using the matching lines of the Home help.
+function openBox(title, names) { const p = parseHelp(HELP.home[1]);
+  helpMode('box'); showPanel(title, p.items.filter(it => it.nm && names.includes(it.nm)).map(it => rowHtml(it.nm, it.d)).join('')); }
+const badge = (title, names) => { const q = document.createElement('span'); q.className = 'qBadge'; q.textContent = '?';
+  q.onclick = e => { e.stopPropagation(); sfx('tap'); openBox(title, names); }; return q; };
+const _showHome = showHome;
+showHome = function () { _showHome(...arguments);
+  const sp = document.querySelector('#home .speech'); if (sp && !sp.querySelector('.qBadge')) sp.append(badge('SENSEI & YOUR PROGRESS', ['Study plan', 'Notebook', 'Exam-ready', 'Lv / XP bar', 'Reset', 'Backup / Restore']));
+  for (const c of document.querySelectorAll('#cards .card')) { const nm = (c.querySelector('.title') || {}).textContent || ''; if (nm && !c.querySelector('.qBadge')) c.append(badge(nm.toUpperCase(), [nm])); } };
+if (!$('home').classList.contains('hidden')) showHome();
+
+// On open: the guide first (if switched on), otherwise the first-time card for this screen.
+if (settings.guideOnOpen !== false) openGuide(0); else maybeIntro();
 })();
 </script>

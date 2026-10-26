@@ -41,6 +41,8 @@ $app = Must $app $east[2] $east[3] 'East London wrong-answer lines'
 $before = $app.Length
 $app = [regex]::Replace($app, '(<div class="stars">\$\{st\}</div></div>`)\s*\+ `<div class="senseiLine"[^\n]*', '$1;')
 if ($app.Length -eq $before) { throw "chapter Sensei line not removed" }
+# --- the Chapter Book says how many chapters there are
+$app = Must $app '`[b]${totalStars()} / ${EXAM.chapters.length * 3}[/b] stars collected.' ('`[b]${EXAM.chapters.length} chapters[/b]  ' + [char]0xB7 + '  [b]${totalStars()} / ${EXAM.chapters.length * 3}[/b] stars collected.') 'chapter count'
 # --- the character is Sisi in this version (names only; asset file names are lower case and untouched)
 $head = $head -creplace 'Zuru', 'Sisi' -creplace 'ZURU', 'SISI'
 $exams = $exams -creplace 'Zuru', 'Sisi' -creplace 'ZURU', 'SISI'

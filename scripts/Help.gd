@@ -49,9 +49,19 @@ func setup(m: Node) -> void:
 			close())
 	add_child(dim)
 	panel = UI.box("BGbox_04A", true, Vector4(40, 40, 40, 36))
+	# Help and every pop-up in its own colours (pale blue, navy frame) so it never blends into the orange boxes behind it
+	var hs := StyleBoxFlat.new()
+	hs.bg_color = Color("e6f2ff")
+	hs.border_color = Color("2f4f8f")
+	hs.set_border_width_all(6)
+	hs.set_corner_radius_all(18)
+	hs.shadow_color = Color(0, 0, 0, 0.45)
+	hs.shadow_size = 14
+	hs.content_margin_left = 34; hs.content_margin_right = 34; hs.content_margin_top = 30; hs.content_margin_bottom = 28
+	panel.add_theme_stylebox_override("panel", hs)
 	add_child(panel)
 	var v := UI.content(panel)
-	title_label = UI.title_label("HELP", 30, UI.RED)
+	title_label = UI.title_label("HELP", 30, Color("2f4f8f"))
 	v.add_child(title_label)
 	body = UI.rich("", 24, true)
 	list = UI.vbox(18)
@@ -62,13 +72,33 @@ func setup(m: Node) -> void:
 	sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	v.add_child(sc)
 	body.meta_clicked.connect(func(url): OS.shell_open(str(url)))
-	var row := UI.hbox(10)
-	credits_btn = UI.button("Credits & disclaimer", "05A", open_credits, true, 22)
-	row.add_child(credits_btn)
-	row.add_child(UI.button("Got it", "03A", close, false, 26))
-	v.add_child(row)
+	help_row = UI.hbox(10)
+	guide_btn = UI.button("Guide", "06A", func(): open_guide(0), true, 22)
+	help_row.add_child(guide_btn)
+	credits_btn = UI.button("Credits", "05A", open_credits, true, 22)
+	help_row.add_child(credits_btn)
+	help_row.add_child(UI.button("Got it", "03A", close, false, 26))
+	v.add_child(help_row)
+	# the guide's own row: Back, the show-on-open switch, Next
+	guide_row = UI.vbox(10)
+	g_toggle = UI.button("", "05A", _toggle_guide_on_open, true, 20)
+	guide_row.add_child(g_toggle)
+	var gr := UI.hbox(10)
+	g_back = UI.button("◀ Back", "04A", func(): _guide_step(-1), true, 24)
+	g_next = UI.button("Next ▶", "03A", func(): _guide_step(1), false, 26)
+	gr.add_child(g_back); gr.add_child(g_next)
+	guide_row.add_child(gr)
+	guide_row.visible = false
+	v.add_child(guide_row)
 	relayout()
 
+var help_row: HBoxContainer
+var guide_row: VBoxContainer
+var guide_btn: Button
+var g_toggle: Button
+var g_back: Button
+var g_next: Button
+var g_step := 0
 var list: VBoxContainer
 var sc: ScrollContainer
 var credits_btn: Button
@@ -118,9 +148,9 @@ func _parse(text: String) -> Dictionary:
 				out["items"].append([null, line])   # a plain line (a little heading or a note) stays where it was written
 	return out
 
-func _row(name: String, desc: String) -> Control:
+func _row(name: String, desc: String, icon := "") -> Control:
 	var r := UI.hbox(16)
-	var ic := UI.icon(_icon_for(name + " " + desc.substr(0, 30)), 48.0)
+	var ic := UI.icon(icon if icon != "" else _icon_for(name + " " + desc.substr(0, 30)), 48.0)
 	ic.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	r.add_child(ic)
 	var col := UI.vbox(2)
@@ -175,7 +205,7 @@ func maybe_intro() -> void:
 	title_label.text = "FIRST TIME HERE?  " + p[0]
 	_compact = true
 	_fill(p, true)
-	credits_btn.visible = false
+	_mode("first")
 	relayout()
 	visible = true
 	sc.scroll_vertical = 0
@@ -189,7 +219,7 @@ func relayout() -> void:
 	var full: float = main.H - 84.0
 	var h: float = full
 	if _compact:
-		h = minf(full, list.get_combined_minimum_size().y + 190.0)
+		h = minf(full, list.get_combined_minimum_size().y + (330.0 if guide_row.visible else 230.0))
 	panel.size = Vector2(main.W - 40, h)
 	panel.position = Vector2(20, 64 + (full - h) / 2.0)
 
@@ -217,7 +247,7 @@ func open() -> void:
 	title_label.text = "HELP - " + p[0]
 	_compact = false
 	_fill(p, false)
-	credits_btn.visible = true
+	_mode("help")
 	relayout()
 	visible = true
 	sc.scroll_vertical = 0
@@ -229,6 +259,7 @@ const CREDITS := "[b]Not affiliated with ACCA.[/b] This is a free, personal stud
 func open_credits() -> void:
 	title_label.text = "CREDITS & DISCLAIMER"
 	_compact = false
+	_mode("help")
 	list.visible = false
 	body.visible = true
 	body.text = "[font_size=24]" + CREDITS + "[/font_size]"
@@ -237,3 +268,135 @@ func open_credits() -> void:
 
 func close() -> void:
 	visible = false
+
+# Which buttons sit under the panel: help (Guide, Credits, Got it), first (just Got it), guide (show-on-open, Back, Next)
+func _mode(m: String) -> void:
+	help_row.visible = m != "guide"
+	guide_row.visible = m == "guide"
+	guide_btn.visible = m == "help"
+	credits_btn.visible = m == "help"
+
+# ---------------------------------------------------------------- the guide: a walk-through before you start
+# Opens by itself when the app starts (unless switched off with its own button) and again from Help > Guide.
+# Each step: [title, a line saying what it's about, rows of [icon, name, one short line]].
+const GUIDE := [
+	["WELCOME TO THE DOJO", "Samurai Ledger turns ACCA Financial Accounting (FA) into a game. Here's how it works - it takes a minute.", [
+		["Icon_01", "The aim", "Learn every chapter, practise until it sticks, and walk into the exam ready."],
+		["Icon_05", "Stars and XP", "Passing a lesson earns stars; every right answer gives XP and levels Zuru up."],
+		["Icon_10", "Always saved", "Progress saves by itself. [b]Backup[/b] on Home copies it to another phone."]]],
+	["STEP 1 - MAKE A PLAN", "Tell Sensei when your exam is, and he'll plan the days for you.", [
+		["Icon_11", "Exam dates", "On the exam list, tap [b]Exam dates[/b] and enter the day you sit FA. A countdown appears."],
+		["Icon_11", "Study plan", "On Home, tap [b]Study plan[/b], add your hours, and Sensei spreads the chapters over the days."],
+		["Icon_12", "Notebook", "Fills itself in: what you did each day."]]],
+	["STEP 2 - LEARN", "Work through the Chapter Book in order. Each chapter is guarded by a monster.", [
+		["book", "Chapter Book", "Every chapter of the syllabus. Start with chapter 1."],
+		["Icon_02", "Each lesson", "[b]Learn[/b], then [b]Apply it[/b], then a [b]Worked example[/b], then [b]Your turn[/b]."],
+		["Icon_09", "Your turn", "A short battle: score 70% to pass the lesson and unlock the next one."]]],
+	["STEP 3 - PRACTISE", "A little every day keeps it stuck.", [
+		["review", "Daily Review", "Old questions come back just before you'd forget them. 10 minutes a day."],
+		["scrolls", "Sensei's Scrolls", "Flip-cards for formats, rules and double entries."],
+		["bank", "Training Grounds", "Drill any chapter or question type, no pressure."],
+		["heal", "Healer's Shrine", "Everything you got wrong waits here until you get it right."]]],
+	["STEP 4 - TEST YOURSELF", "When the chapters are done, check you're ready.", [
+		["boss", "Boss Arena", "Bosses from every chapter, back to back. How far can you get?"],
+		["mock", "Exam Hall", "Mocks laid out like the real computer exam, with a timer."],
+		["rec", "Hall of Records", "Your strongest and weakest topics, so you know what to fix."]]],
+	["IF YOU'RE EVER STUCK", "Help is always one tap away.", [
+		["Icon_08", "? at the top right", "Explains the page you're on."],
+		["Icon_08", "Small ? on a box", "Explains just that box."],
+		["Icon_02", "ESC or swipe back", "Goes back one step."],
+		["Icon_07", "This guide", "Open it again any time: [b]?[/b] then [b]Guide[/b]."]]],
+]
+
+func _area_icon(id: String) -> String:
+	for a in main.AREAS:
+		if a["id"] == id:
+			return a["icon"]
+	return id
+
+func open_guide(step := 0) -> void:
+	g_step = clampi(step, 0, GUIDE.size() - 1)
+	_compact = true
+	_mode("guide")
+	var st: Array = GUIDE[g_step]
+	title_label.text = "%s  (%d/%d)" % [st[0], g_step + 1, GUIDE.size()]
+	UI.clear(list)
+	body.visible = false
+	list.visible = true
+	list.add_child(UI.rich(st[1], 25, true))
+	for r in st[2]:
+		list.add_child(_row(r[1], r[2], _area_icon(r[0])))
+	g_back.disabled = g_step == 0
+	g_next.text = "Let's go!" if g_step == GUIDE.size() - 1 else "Next ▶"
+	_draw_toggle()
+	relayout()
+	visible = true
+	sc.scroll_vertical = 0
+	for i in 2:
+		await get_tree().process_frame
+		relayout()
+
+func _guide_step(d: int) -> void:
+	main.sfx("tap")
+	if g_step + d >= GUIDE.size():
+		close()
+		return
+	open_guide(g_step + d)
+
+func _draw_toggle() -> void:
+	g_toggle.text = "Show this guide when the app opens: " + ("ON" if Game.settings.get("guide_on_open", true) else "OFF")
+
+func _toggle_guide_on_open() -> void:
+	Game.settings["guide_on_open"] = not Game.settings.get("guide_on_open", true)
+	Game.save_settings()
+	_draw_toggle()
+
+# Once per app start (not again after a live update reloads the screens), if it's switched on.
+func guide_on_start() -> void:
+	if Engine.has_meta("sl_guide_shown") or not Game.settings.get("guide_on_open", true):
+		return
+	Engine.set_meta("sl_guide_shown", true)
+	open_guide(0)
+
+# ---------------------------------------------------------------- a small ? in the corner of a box
+# Explains just that box (the big ? at the top explains the whole page): the matching lines from the page's help.
+func add_corner(box: Control, title: String, names: Array, page := "home") -> void:
+	var layer := Control.new()   # a plain layer over the box, so the ? keeps its corner inside the box's container
+	layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(layer)
+	var q := Button.new()   # a round gold "?" badge, clear at any size (the framed button art is too big for a corner)
+	q.text = "?"
+	q.focus_mode = Control.FOCUS_NONE
+	q.add_theme_font_override("font", UI.body_font)
+	q.add_theme_font_size_override("font_size", 20)
+	for st in ["normal", "hover", "pressed"]:
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color("f2c14e") if st != "pressed" else Color("d9a632")
+		sb.border_color = Color("2b1d2a")
+		sb.set_border_width_all(3)
+		sb.set_corner_radius_all(15)
+		sb.content_margin_bottom = 2
+		q.add_theme_stylebox_override(st, sb)
+		q.add_theme_color_override("font_color" if st == "normal" else "font_%s_color" % st, Color("2b1d2a"))
+	q.pressed.connect(func(): main.sfx("tap"); open_box(title, names, page))
+	layer.add_child(q)
+	q.anchor_left = 1.0; q.anchor_right = 1.0; q.anchor_top = 0.0; q.anchor_bottom = 0.0
+	q.offset_left = -24; q.offset_right = 6; q.offset_top = -8; q.offset_bottom = 22   # on the frame's corner, clear of the name
+
+func open_box(title: String, names: Array, page := "home") -> void:
+	var d := _parse(PAGES[page][1])
+	_compact = true
+	_mode("first")
+	title_label.text = title
+	UI.clear(list)
+	body.visible = false
+	list.visible = true
+	for it in d["items"]:
+		if it[0] != null and it[0] in names:
+			list.add_child(_row(it[0], it[1]))
+	relayout()
+	visible = true
+	sc.scroll_vertical = 0
+	for i in 2:
+		await get_tree().process_frame
+		relayout()

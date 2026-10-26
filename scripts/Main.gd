@@ -111,6 +111,7 @@ func _ready() -> void:
 		show_home()
 	else:
 		show_title()
+	help.guide_on_start()   # the walk-through, unless it's been switched off
 
 # ---------------------------------------------------------------- updates
 # Content updates arrive by themselves: Boot.gd fetches them at start-up, and while the app is open the live
@@ -312,8 +313,31 @@ const SENSEI := {
 		"east": ["Abdi From The Corner Shop", "Auntie Hodan With The Dacas", "Uncle Farah, Phone-Case King", "Cousin Mo Who Owes You 20 Quid", "Ayeeyo's 9-Minute Voice Note",
 			"Deeqa From The Wedding Committee", "Hooyo's Friend Who Asks When You're Getting Married", "Abshir The Uber Driver", "Warsame Who Does 'Business'", "Xaliimo The Gossip",
 			"Macalin From Dugsi", "The Uncle Who Calls Everyone Doctor", "Guled The Unemployed Philosopher", "Your Cousin From Minnesota", "Auntie Fowsiya's Biryani",
-			"Ali Who's 'Basically A Lawyer'", "Sahra And Her Five Sisters", "The Shaah That's Far Too Sweet", "Cousin Who Snitched To Hooyo", "Uncle Who Says 'Back In Somalia...'"]},
+			"Ali Who's 'Basically A Lawyer'", "Sahra And Her Five Sisters", "The Shaah That's Far Too Sweet", "Cousin Who Snitched To Hooyo", "Uncle Who Says 'Back In Somalia...'",
+			"Abdifatah 'Ambuulo' Mohamed Abdullahi Farah", "Xaliimo Cabdiraxmaan Cali Faarax 'Dheere'", "Mohamed Mohamed Mohamed Mohamed (The Fourth)",
+			"Cabdiqaadir 'Shaah Badan' Xirsi Jaamac Guuleed", "Abdirahman Abdirashid Abdirizak Abdiwali", "Hodan Hibaaq Hamdi Haweeya Hassan",
+			"Ugaaso 'Bariis Iyo Moos' Cumar Warsame", "Ahmed 'Muufo' Cawil Diiriye Yuusuf", "Uncle Abdiwahab Abdikarim 'Two Phones' Abdillahi",
+			"Ayaan Asha Amina Aisha Abdi (The Whole Family)", "Faadumo 'Sambuus Queen' Maxamed Cismaan", "Sheikh Abdullahi 'Anjeero' Nuur Aadan"]},
 	"boss_final": {"proper": "Karen's Final Form", "east": "Hooyo, Final Boss"},
+	# Running Man (her favourite): half of every lineup (Battle.make_lineup), and their own banter when one of them is up
+	"boss_rm": {"proper": ["Kim Jong-kook, The Commander", "Sparta-kooks (Here For Your Name Tag)", "Lee Kwang-soo, Icon Of Betrayal",
+			"Kwang-soo The Giraffe (Betraying Again)", "Yoo Jae-suk, The Grasshopper", "Yoo-Mes Is Watching You", "Ji Suk-jin, Big Nose Hyung",
+			"Ji Suk-jin, Asleep In The Van", "Haha, The Haroro", "Mong Ji-hyo (Ace Mode: ON)", "Gary And Ji-hyo, The Monday Couple",
+			"Jeon So-min, Chaos Queen", "Yang Se-chan's Wild Card", "The PD Who Hid The Mission Card", "Water Bomb Penalty",
+			"The Flour Bomb Penalty", "Name Tag Elimination Round", "Capable Kim (Lifts You AND The Ledger)", "The Betrayers' Alliance",
+			"The Hint Envelope You'll Never Get", "Final Mission: Ring The Bell", "Kim Jong-kook's Protein Shake", "The 5 AM Wake-Up Mission"],
+		"east": ["Kim Jong-kook, The Commander (From Mogadishu)", "Lee Kwang-soo, Betrayer Of The Whole Qabiil", "Yoo Jae-suk, The Grasshopper, Wallahi",
+			"Sparta-kooks (Wants Your Name Tag, Walaal)", "Ji Suk-jin, Asleep In The Uber", "Mong Ji-hyo (Ace Mode: ON)", "Haha, The Haroro",
+			"Water Bomb Penalty", "Name Tag Elimination Round", "Gary And Ji-hyo, The Monday Couple", "The PD Who Hid The Mission Card",
+			"Jeon So-min, Chaos Queen", "Kwang-soo The Giraffe (Betraying Again)", "Final Mission: Ring The Bell", "The 5 AM Wake-Up Mission"]},
+	"rm_win": {"proper": ["Name tag RIPPED! You're out!", "Kim Jong-kook would be proud.", "Ring the bell, that's a win!", "Commander-level answer."],
+		"east": ["Name tag RIPPED, walaal! You're out!", "Kim Jong-kook would be proud, wallahi.", "Ring the bell, mashallah!", "Sparta-kooks couldn't stop that one, sxb."]},
+	"rm_hurt": {"proper": ["Not my name tag!", "Kwang-soo, you BETRAYED me!", "Water bomb, NOOO!", "That's a flour bomb to the face!"],
+		"east": ["Not my name tag, HOOYOOO!", "Kwang-soo betrayed me, wallahi!", "Water bomb, waa maxay?!", "Flour bomb in my FACE!"]},
+	"rm_taunt": {"proper": ["Kwang-soo-level betrayal of that answer.", "Even Ji Suk-jin got that, and he was asleep.", "Your name tag's hanging by a thread!", "Water bomb penalty for you!", "Yoo-Mes saw that. Everyone saw that."],
+		"east": ["Kwang-soo-level betrayal, ceeb!", "Ji Suk-jin got that one asleep, nacas.", "Name tag's hanging by a thread, ukun!", "Water bomb penalty, walaal!"]},
+	"rm_low": {"proper": ["I'll give you the hint envelope, I swear!", "Don't rip my name tag! Please!", "I'll be on your team next round!"],
+		"east": ["Have the hint envelope, just go, walaal!", "Not the name tag, I've got kids!", "I'll join your team, wallahi!"]},
 	# the big pop-up and name tag after an answer (green = right, red = wrong, so the words can just be silly)
 	"shout_right": {"proper": ["NICE!", "ATE THAT!", "BIG BRAIN!", "SHEESH!", "CLEAN!", "BOOM!", "HAYE!"],
 		"east": ["WALLAHI!", "MASHALLAH!", "HAYE!", "LIGHT WORK!", "PENG!", "SAY LESS!", "HAMBALYO!", "SUBHANALLAH!"]},
@@ -848,6 +872,7 @@ func show_home() -> void:
 	saverow.add_child(UI.button("Restore", "02A", _ask_restore, true, 22))
 	sv.add_child(saverow)
 	hero.add_child(speech)
+	help.add_corner(speech, "SENSEI & YOUR PROGRESS", ["Study plan", "Notebook", "Exam-ready", "Lv / XP bar", "Reset", "Backup / Restore"])
 	v.add_child(hero)
 	var grid := GridContainer.new()
 	grid.columns = 2   # small cards, so all eight fit on the screen upright and sideways
@@ -856,7 +881,9 @@ func show_home() -> void:
 	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	grid.name = "cards"
 	for a in AREAS:
-		grid.add_child(_card(a, nm))
+		var card := _card(a, nm)
+		help.add_corner(card, str(a["name"]).to_upper(), [a["name"]])   # a small ? explains just this card
+		grid.add_child(card)
 	# the cards share the space left and fit without scrolling; they only scroll if a very small screen can't hold them
 	var gs := UI.scroll(grid)
 	right.add_child(gs)
