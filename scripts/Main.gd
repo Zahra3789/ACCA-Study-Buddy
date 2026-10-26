@@ -111,32 +111,11 @@ func _ready() -> void:
 		show_home()
 	else:
 		show_title()
-	_check_for_update()
 
 # ---------------------------------------------------------------- updates
-# Content updates arrive by themselves (Boot.gd). Only when the APK itself must change (icon, app name,
-# permissions, engine) does the "live" release carry a higher apk.txt than this build's
-# application/config/version; then title and home show a button that downloads the new APK. Offline: nothing.
+# Content updates arrive by themselves: Boot.gd fetches them at start-up, and while the app is open the live
+# updater below fetches and applies them (no buttons, nothing to download by hand).
 const BuildInfo = preload("res://scripts/build_info.gd")
-var update_info: Dictionary = {}
-
-func _check_for_update() -> void:
-	var http := HTTPRequest.new()
-	http.timeout = 15.0
-	add_child(http)
-	http.request_completed.connect(func(result: int, code: int, _headers, body: PackedByteArray):
-		http.queue_free()
-		if result != HTTPRequest.RESULT_SUCCESS or code != 200:
-			return
-		var latest := body.get_string_from_utf8().strip_edges()
-		if not _newer(latest, str(ProjectSettings.get_setting("application/config/version", "0"))):
-			return
-		update_info = {"tag": "v" + latest, "url": BuildInfo.UPDATE_URL + "/ACCA_Study_Buddy.apk"}
-		if cur_screen == "title":
-			show_title()
-		elif cur_screen == "home":
-			show_home())
-	http.request(BuildInfo.UPDATE_URL + "/apk.txt?t=%d" % Time.get_unix_time_from_system())
 
 # The moving banner: Zuru journeying on through day and night (Journey.gd), h px tall and full width.
 func journey(h: int) -> Control:
@@ -162,24 +141,6 @@ func version_text() -> String:
 	if FileAccess.file_exists("user://update/content.pck") and FileAccess.file_exists("user://update/version.txt"):
 		n = maxi(n, int(FileAccess.get_file_as_string("user://update/version.txt").strip_edges()))
 	return "App v%s · update %d" % [ProjectSettings.get_setting("application/config/version", "?"), n]
-
-# "2.10" is newer than "2.9": compare each dotted part as a number.
-func _newer(latest: String, current: String) -> bool:
-	var a := latest.split(".")
-	var b := current.split(".")
-	for i in maxi(a.size(), b.size()):
-		var x := int(a[i]) if i < a.size() else 0
-		var y := int(b[i]) if i < b.size() else 0
-		if x != y:
-			return x > y
-	return false
-
-func _update_button(v: Control) -> void:
-	if update_info.is_empty():
-		return
-	v.add_child(UI.button("⬇ Update %s ready - tap to download" % update_info["tag"], "03A", func():
-		sfx("tap")
-		OS.shell_open(update_info["url"]), false, 24))
 
 # The phone decides: wider than tall -> landscape layouts on a 1280 x 720 base, otherwise portrait on 720 x 1280.
 # The stretch aspect is "expand", so the base only sets the scale: the screen's extra length or width is
@@ -348,7 +309,6 @@ func toggle_sensei() -> void:
 	Game.settings["sensei"] = "proper" if east() else "east"
 	Game.save_settings()
 	draw_toggles()
-	toast("Sensei's gone East London, wallahi." if east() else "Sensei is back to proper.")
 	match cur_screen:   # whatever Sensei is saying right now switches too
 		"home": show_home()
 		"title": show_title()
@@ -378,6 +338,8 @@ func _build_overlays() -> void:
 func _process(delta: float) -> void:
 	_glide(delta)
 	_live_update_tick(delta)
+	if not is_inside_tree():   # an update just took over: this screen is on its way out
+		return
 	_keyboard_lift(delta)
 	if cur_screen in ["battle", "lesson", "mtq", "exam"]:
 		study_sec += delta
@@ -478,16 +440,23 @@ func _notification(what: int) -> void:
 
 # ---------------------------------------------------------------- updates while the app is open
 # Boot.gd fetches content updates when the app starts. While it stays open, this looks again every few minutes
-# (and whenever she comes back to it), downloads a newer pack quietly in the background, then shows a gold bar:
-# tap it and the progress is saved and the app reloads through Boot with the new version - no closing needed.
+# (and whenever she comes back to it) and downloads a newer pack quietly in the background. Then, as soon as she is
+# on a calm screen (never mid-battle, lesson, case or mock), it saves her progress and reloads through Boot with the
+# new version by itself - no buttons, no closing the app.
 const LIVE_EVERY := 300.0
+const LIVE_SAFE := ["title", "home", "book", "menu"]
 var _live_t := 30.0
 var _live_http: HTTPRequest
 var _live_ver := 0
-var _live_bar: Control
+var _live_ready := false
 
 func _live_update_tick(delta: float) -> void:
-	if BuildInfo.UPDATE_URL == "" or DisplayServer.get_name() == "headless" or OS.has_feature("editor") or _live_bar != null or _live_http != null:
+	if _live_ready:
+		if cur_screen in LIVE_SAFE and not help.visible and not calc.visible:
+			_live_ready = false
+			_live_apply()
+		return
+	if BuildInfo.UPDATE_URL == "" or DisplayServer.get_name() == "headless" or OS.has_feature("editor") or _live_http != null:
 		return
 	_live_t -= delta
 	if _live_t > 0.0:
@@ -530,12 +499,7 @@ func _live_on_pack(result: int, code: int, _h: PackedStringArray, _b: PackedByte
 	if f:
 		f.store_string(str(_live_ver))
 		f.close()
-	_live_bar = UI.button("⬇ Update %d ready - tap to update now" % _live_ver, "03A", _live_apply, false, 24)
-	_live_bar.position = Vector2(20, H - 96)
-	_live_bar.size = Vector2(W - 40, 72)
-	_live_bar.z_index = 45
-	add_child(_live_bar)
-	sfx("page")
+	_live_ready = true   # applied by _live_update_tick on the next calm screen
 
 func _live_apply() -> void:
 	Game.save_game()
@@ -664,7 +628,6 @@ func show_title() -> void:
 	var v := column(s, jh - 46, 26, 24, 14, [Color("141a33"), Color("3b2a52"), Color("2a1e2e")])
 	v.alignment = BoxContainer.ALIGNMENT_BEGIN
 	v.add_child(UI.banner("SAMURAI LEDGER"))
-	_update_button(v)
 	# held sideways: Zuru and Sensei on the left, the exam list on the right
 	var left := v
 	var right := v
@@ -676,7 +639,7 @@ func show_title() -> void:
 		right = UI.vbox(8); right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		cols.add_child(left); cols.add_child(right)
 	var span := 616 if landscape else W   # width the decorations frame Zuru across
-	var dy := (-50 if landscape else 0) + ((64 + (8 if landscape else 14)) if update_info else 0)   # below the update button when shown
+	var dy := -50 if landscape else 0
 	if festive():
 		var tp := "res://assets/xmas/tree.png"
 		var gp := "res://assets/xmas/present.png"
@@ -817,7 +780,6 @@ func show_home() -> void:
 		cols.add_child(ls); cols.add_child(right)
 		v = left
 	v.add_child(UI.banner("SAMURAI LEDGER"))
-	_update_button(v)
 	var hero := UI.vbox(6)
 	var speech := UI.box("BGbox_04A", true, Vector4(36, 30, 36, 26))
 	speech.size_flags_horizontal = Control.SIZE_EXPAND_FILL
