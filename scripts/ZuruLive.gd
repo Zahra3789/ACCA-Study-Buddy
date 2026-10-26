@@ -175,5 +175,6 @@ func _play(a: String) -> void:
 func act(mood: String) -> void:
 	match mood:
 		"happy": _play("quick")
+		"slash": _play("slash")
 		"sad": _play("hurt")
 		_: _idle()

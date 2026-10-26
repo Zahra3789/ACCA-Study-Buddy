@@ -30,6 +30,10 @@ $head = Must $head '<canvas id="journey" width="720" height="150"' '<canvas id="
 $app = [regex]::Replace($app, "welcome_title: \{ proper: \[[^\]]*\]", "welcome_title: { proper: ['Welcome to the dojo, Zuru.', 'Welcome back to the dojo, Zuru.', 'Good to see you, Zuru. Welcome to the dojo.', 'Zuru! The dojo has been waiting for you.']")
 $app = [regex]::Replace($app, "welcome_home: \{ proper: \[[^\]]*\]", "welcome_home: { proper: ['Welcome back, Zuru!', 'Good to see you, Zuru - ready to study?', `"Hello again, Zuru. Let's get to work.`", 'Welcome back, Zuru. One chapter at a time.']")
 if (-not $app.Contains("Hello again, Zuru")) { throw "greetings not replaced" }
+# --- East London Sensei on right and wrong answers: the same lines as the app (sensei_east.txt: old, new, old, new)
+$east = [IO.File]::ReadAllLines((Join-Path $here 'sensei_east.txt'), $utf8)
+$app = Must $app $east[0] $east[1] 'East London right-answer lines'
+$app = Must $app $east[2] $east[3] 'East London wrong-answer lines'
 # --- no Sensei line on the chapter page (as in the app): it took a row of the panel and pushed the lessons over it
 $before = $app.Length
 $app = [regex]::Replace($app, '(<div class="stars">\$\{st\}</div></div>`)\s*\+ `<div class="senseiLine"[^\n]*', '$1;')

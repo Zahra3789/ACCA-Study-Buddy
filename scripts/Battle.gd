@@ -134,7 +134,8 @@ func _build() -> void:
 	ypv.add_child(you_hp_txt)
 	field.add_child(yp)
 	hud = UI.label("", 28, UI.GOLD, true)
-	hud.add_theme_font_override("font", UI.title_o_font)
+	hud.add_theme_color_override("font_outline_color", Color("2b1d2a"))   # the clear body font, outlined, so it reads over the field
+	hud.add_theme_constant_override("outline_size", 6)
 	hud.position = Vector2(0, 556); hud.size = Vector2(720, 40)
 	hud.visible = false
 	field.add_child(hud)
@@ -158,8 +159,8 @@ func _build() -> void:
 	lower.add_child(m)
 	var v := UI.vbox(8)
 	m.add_child(v)
-	speaker = UI.banner("", "BannerSmall_02C", 26)
-	speaker.custom_minimum_size = Vector2(300, 52)
+	speaker = UI.banner("", "BannerSmall_02C", 30)
+	speaker.custom_minimum_size = Vector2(360, 72)   # one ribbon, big enough for the name to sit on its yellow face
 	speaker.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	v.add_child(speaker)
 	dlg = UI.box("BGbox_04A", true, Vector4(36, 32, 36, 30))
@@ -358,6 +359,57 @@ func _anim(tr: Control, kind: String) -> void:
 		"faint":
 			tw.tween_property(tr, "modulate", Color(1, 1, 1, 0.3), 0.6)
 			tw.parallel().tween_property(tr, "position:y", p.y + 30, 0.6)
+		"dash":   # a right answer: she darts across the field, cuts, and springs back to her spot
+			tw.tween_property(tr, "position", YOU_AT + Vector2(230, -120), 0.14).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+			tw.tween_interval(0.24)
+			tw.tween_property(tr, "position", YOU_AT, 0.26).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		"pounce":   # a wrong answer: the monster leaps at her, then hops back to its platform
+			tw.tween_property(tr, "position", FOE_AT + Vector2(-230, 170), 0.14).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+			tw.tween_interval(0.14)
+			tw.tween_property(tr, "position", FOE_AT, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+# ---------------------------------------------------------------- banter
+# Now and then a one-liner pops up over the fighters: Zuru bragging after a hit, the monster whimpering when it's
+# hurt, taunting after a wrong answer, begging when it's down. A short laugh between questions (Sensei's lines in
+# Main.SENSEI: quip_win, quip_hurt, quip_taunt, quip_low - proper or East London).
+const YOU_AT := Vector2(100, 352)
+const FOE_AT := Vector2(470, 90)
+var _bubble: PanelContainer
+
+func _quip(from_you: bool, text: String) -> void:
+	if _bubble and is_instance_valid(_bubble):
+		_bubble.queue_free()
+	var p := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color("fff4d6"); sb.set_border_width_all(4); sb.border_color = Color("2b1d2a"); sb.set_corner_radius_all(14)
+	sb.content_margin_left = 16; sb.content_margin_right = 16; sb.content_margin_top = 8; sb.content_margin_bottom = 10
+	p.add_theme_stylebox_override("panel", sb)
+	var l := UI.label(text, 24, UI.DARK if from_you else UI.RED, true)
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.custom_minimum_size.x = 260
+	p.add_child(l)
+	p.z_index = 24
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	field.add_child(p)
+	_bubble = p
+	p.reset_size()
+	p.position = Vector2(24, 300) if from_you else Vector2(720 - p.size.x - 24, 300)   # beside Zuru / under the monster (clear of the top buttons)
+	p.pivot_offset = p.size / 2
+	p.scale = Vector2(0.4, 0.4)
+	var tw := create_tween()
+	tw.tween_property(p, "scale", Vector2.ONE, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_interval(2.2)
+	tw.tween_property(p, "modulate:a", 0.0, 0.3)
+	tw.tween_callback(p.queue_free)
+
+# After a hit: the monster begs when it's down; otherwise sometimes Zuru brags or the monster yelps.
+func _banter_hit() -> void:
+	if fx.knocked:
+		_quip(false, main.S("quip_low"))
+	elif randf() < 0.45:
+		_quip(true, main.S("quip_win"))
+	elif randf() < 0.5:
+		_quip(false, main.S("quip_hurt"))
 
 func _dmg(text: String, pos: Vector2) -> void:
 	var l := UI.label(text, 40, UI.GOLD)
@@ -633,7 +685,7 @@ func run_battle(sess: Dictionary) -> void:
 		if r["ok"]:
 			combo += 1
 			var dmg := 2 if (combo >= 3 and sess.get("gauntlet", false)) else 1
-			_verdict(true); main.mood(you, "happy"); _anim(you, "lungeR")
+			_verdict(true); you.act("slash" if combo >= 3 else "happy"); _anim(you, "dash")   # a big slash on a combo
 			await get_tree().create_timer(0.18).timeout
 			fx.hit(combo)
 			if not fx.knocked:
@@ -652,6 +704,8 @@ func run_battle(sess: Dictionary) -> void:
 					fx.knockdown()
 			elif sess["mode"] in ["trial", "lesson"] and sess["qTotal"] and float(sess["qTotal"] - sess["correct"]) / sess["qTotal"] <= 0.25:
 				fx.knockdown()
+			if sess.get("bossHp", 1) > 0:   # (a defeated boss has already been sent flying)
+				_banter_hit()
 			_offer_guess(str(b.get("_key", "")))
 			await say([main.SL("correct", {"move": MOVES[randi() % MOVES.size()].to_upper()})] + pages(str(b.get("ex", ""))), "CORRECT", sess)
 			guess_btn.visible = false
@@ -664,10 +718,12 @@ func run_battle(sess: Dictionary) -> void:
 			combo = 0
 			main.sfx("miss"); _verdict(false); main.mood(you, "sad")
 			sess["you"] = max(0, sess["you"] - 1)
-			_anim(foe, "lungeL")
+			_anim(foe, "pounce")
 			await get_tree().create_timer(0.18).timeout
 			fx.hurt(sess["you"] > 0 and sess["you"] <= maxi(2, int(sess["youMax"] * 0.3)))
 			_anim(you, "hit"); _dmg("-1", Vector2(200, 330))
+			if randf() < 0.65:
+				_quip(false, main.S("quip_taunt"))
 			update_bars()
 			await say([main.SL("wrong", {"foe": sess["foe"], "ans": main.correct_text(b)})] + pages(str(b.get("ex", ""))), "WRONG", sess)
 			if sess.get("gauntlet", false) and sess["you"] <= 0:

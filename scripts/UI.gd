@@ -128,6 +128,9 @@ func banner_style(name: String) -> StyleBox:
 	if name.begins_with("BannerMedium"):   # the yellow face sits above a shaded lower edge: lift the title onto the face (same overall size)
 		s.content_margin_top = 28
 		s.content_margin_bottom = 52
+	elif name.begins_with("BannerSmall"):   # the name tags are only 48 px tall (yellow face on rows 9-29): slice to fit, name on the face
+		s.texture_margin_left = 24; s.texture_margin_right = 24; s.texture_margin_top = 16; s.texture_margin_bottom = 24
+		s.content_margin_left = 30; s.content_margin_right = 30; s.content_margin_top = 4; s.content_margin_bottom = 16
 	return s
 
 # ---------------------------------------------------------------- controls
