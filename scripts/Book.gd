@@ -200,26 +200,34 @@ func render_lesson() -> void:
 	var s: Control = main.screen("lesson")
 	var v: VBoxContainer = main.column(s, 58, 26, 24, 12, [Color("1f5d63"), Color("2a3f55"), Color("2a1e2e")])
 	v.add_child(UI.banner("LESSON %d" % (int(L["li"]) + 1)))
-	var steps := UI.hbox(8)
-	steps.alignment = BoxContainer.ALIGNMENT_CENTER
+	# Zuru in her own little window, then the step pills
+	var top := UI.hbox(14)
+	top.alignment = BoxContainer.ALIGNMENT_CENTER
+	top.add_child(load("res://scripts/ZuruLive.gd").make(150, 132, true))
+	var steps := HFlowContainer.new()   # the pills wrap onto a second row on a narrow phone
+	steps.alignment = FlowContainer.ALIGNMENT_CENTER
+	steps.add_theme_constant_override("h_separation", 8)
+	steps.add_theme_constant_override("v_separation", 8)
+	steps.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	steps.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	top.add_child(steps)
 	for ph in phases:
 		var pill := PanelContainer.new()
 		var sb := StyleBoxFlat.new()
 		sb.bg_color = Color("ffe39a") if ph[0] == L["phase"] else Color(1, 1, 1, 0.15)
 		sb.set_corner_radius_all(14); sb.content_margin_left = 14; sb.content_margin_right = 14; sb.content_margin_top = 4; sb.content_margin_bottom = 4
 		pill.add_theme_stylebox_override("panel", sb)
-		pill.add_child(UI.label(ph[1], 22, UI.DARK if ph[0] == L["phase"] else Color("fbe9d0")))
+		var pl := UI.label(ph[1], 22, UI.DARK if ph[0] == L["phase"] else Color("fbe9d0"))
+		pl.autowrap_mode = TextServer.AUTOWRAP_OFF
+		pill.add_child(pl)
 		steps.add_child(pill)
-	v.add_child(steps)
+	v.add_child(top)
 	var frame := UI.box("BGbox_04A", true, Vector4(40, 44, 40, 36))
 	frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var box := UI.vbox(10)
 	var sc := UI.scroll(box)
 	UI.content(frame).add_child(sc)
 	v.add_child(frame)
-	var zuru := UI.sprite(main.zuru_src("normal"), 84, 91)
-	zuru.position = Vector2(main.W - 48 - 84, 150) if main.landscape else Vector2(main.W - 26 - 84, 160)   # beside the step pills, clear of the page
-	s.add_child(zuru)
 	var nav := UI.hbox(12)
 	v.add_child(nav)
 	var tl := UI.title_label(l["title"], 38, UI.RED)

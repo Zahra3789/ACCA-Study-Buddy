@@ -31,7 +31,7 @@ func render() -> void:
 	info.add_child(UI.bar(1.0 - float(M["got"]) / float(m["marks"]), 300, 26))
 	info.add_child(UI.label("%s  -  your marks %d / %d" % [m["monster"], M["got"], int(m["marks"])] + (("  ·  " + main.S("mtq_intro")) if (int(M["tab"]) == 0 and int(M["got"]) == 0) else ""), 22, Color("fbe9d0")))
 	head.add_child(info)
-	var zuru := UI.sprite(main.zuru_src("normal"), 90, 98)
+	var zuru = load("res://scripts/ZuruLive.gd").make(130, 116, true)
 	zuru.name = "mtqYou"
 	head.add_child(zuru)
 	v.add_child(head)
@@ -145,7 +145,7 @@ func mark_task(ti: int) -> void:
 	M["got"] = int(M["got"]) + got
 	var half := got >= task_marks(t) / 2.0
 	main.sfx("hit" if half else "miss")
-	var zuru: TextureRect = main.screens["mtq"].find_child("mtqYou", true, false)
+	var zuru: Control = main.screens["mtq"].find_child("mtqYou", true, false)
 	main.mood(zuru, "happy" if half else "sad", 4.0)
 	var all_done := true
 	for i in m["tasks"].size():

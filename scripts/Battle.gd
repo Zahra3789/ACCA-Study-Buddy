@@ -29,7 +29,7 @@ var field: Control
 var sky: TextureRect
 var ground: ColorRect
 var foe: TextureRect
-var you: TextureRect
+var you: Control
 var foe_name: Label
 var foe_lv: Label
 var foe_hp: ProgressBar
@@ -105,7 +105,7 @@ func _build() -> void:
 	foe = UI.sprite(main.MONSTER, 240, 214)
 	foe.position = Vector2(470, 90)
 	field.add_child(foe)
-	you = UI.sprite(main.zuru_src("normal"), 168, 182)
+	you = load("res://scripts/ZuruLive.gd").make(168, 182)
 	you.position = Vector2(100, 352)
 	field.add_child(you)
 	# plates
@@ -255,7 +255,7 @@ func start_session(o: Dictionary) -> void:
 	foe_name.text = o["foe"]
 	foe_lv.text = str(o.get("foeLv", ""))
 	you_lv.text = "Lv %d" % Game.level()
-	you.texture = load(main.zuru_src("normal")) if ResourceLoader.exists(main.zuru_src("normal")) else you.texture
+	main.mood(you, "normal")
 	hud.visible = bool(o.get("gauntlet", false))
 	if hud.visible:
 		_hud()
@@ -317,7 +317,7 @@ func _verdict(ok: bool) -> void:
 	tw.tween_property(verdict, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK)
 	get_tree().create_timer(1.6).timeout.connect(func(): verdict.visible = false)
 
-func _anim(tr: TextureRect, kind: String) -> void:
+func _anim(tr: Control, kind: String) -> void:
 	var tw := create_tween()
 	var p := tr.position
 	match kind:

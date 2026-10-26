@@ -1331,7 +1331,13 @@ func apply_festive() -> void:
 			im.texture = load(zuru_src("normal"))
 
 # ---------------------------------------------------------------- Zuru's face on any sprite marked zuru
-func mood(tr: TextureRect, m: String, secs := 2.6) -> void:
+func mood(who: Control, m: String, secs := 2.6) -> void:
+	if who == null:
+		return
+	if who.has_method("act"):   # animated Zuru reacts with a move instead of a face swap
+		who.call("act", m)
+		return
+	var tr := who as TextureRect
 	if tr == null:
 		return
 	var p := zuru_src(m)
