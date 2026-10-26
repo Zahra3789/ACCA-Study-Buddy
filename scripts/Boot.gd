@@ -22,17 +22,14 @@ var remote_version := 0
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	DirAccess.make_dir_recursive_absolute(DIR)
-	# while it checks and downloads, Zuru runs on through the moving banner over the whole screen, with the title,
-	# the status and the progress bar on top of it (drawn by hud, which sits above the banner)
+	# while it checks and downloads, Zuru runs on through the moving banner, the status and progress bar under it
 	if ResourceLoader.exists("res://scripts/Journey.gd"):
+		var sz := get_viewport_rect().size
 		var j: Control = load("res://scripts/Journey.gd").new()
-		j.set_anchors_preset(Control.PRESET_FULL_RECT)
+		var hj := clampf(sz.y * 0.26, 300.0, 440.0)   # the same place and size as the opening splash in Main.gd, so they read as one screen
+		j.position = Vector2(0, sz.y / 2.0 - 80.0 - hj)
+		j.size = Vector2(sz.x, hj)
 		add_child(j)
-	hud = Control.new()
-	hud.set_anchors_preset(Control.PRESET_FULL_RECT)
-	hud.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hud.draw.connect(_draw_hud)
-	add_child(hud)
 	if BuildInfo.UPDATE_URL == "" or DisplayServer.get_name() == "headless" or OS.has_feature("editor"):
 		_start()   # no update server, or running from source / in tests: just play
 		return
@@ -124,24 +121,16 @@ func _process(_delta: float) -> void:
 	if http != null and http.get_body_size() > 0:
 		progress = float(http.get_downloaded_bytes()) / http.get_body_size()
 	queue_redraw()
-	if hud:
-		hud.queue_redraw()
-
-var hud: Control
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), Color("2a1e2e"))
-
-# The title and status in a dark strip a third of the way down, so they read over the scenery.
-func _draw_hud() -> void:
 	var sz := get_viewport_rect().size
+	draw_rect(Rect2(Vector2.ZERO, sz), Color("2a1e2e"))
 	var font: Font = UI.body_font if UI.body_font else ThemeDB.fallback_font
-	var y := sz.y * 0.3
-	hud.draw_rect(Rect2(0, y - 70, sz.x, 170), Color(0.1, 0.07, 0.12, 0.72))
-	hud.draw_string(font, Vector2(0, y - 10), "SAMURAI LEDGER", HORIZONTAL_ALIGNMENT_CENTER, sz.x, 52, Color("f2c14e"))
-	hud.draw_string(font, Vector2(0, y + 32), status, HORIZONTAL_ALIGNMENT_CENTER, sz.x, 26, Color(1, 1, 1, 0.9))
+	var y := sz.y / 2.0
+	draw_string(font, Vector2(0, y - 10), "SAMURAI LEDGER", HORIZONTAL_ALIGNMENT_CENTER, sz.x, 48, Color("f2c14e"))
+	draw_string(font, Vector2(0, y + 20), status, HORIZONTAL_ALIGNMENT_CENTER, sz.x, 24, Color(1, 1, 1, 0.8))
 	if progress >= 0.0:
-		var w := minf(420.0, sz.x - 80.0)
-		hud.draw_rect(Rect2((sz.x - w) / 2.0, y + 56, w, 16), Color(1, 1, 1, 0.2))
-		hud.draw_rect(Rect2((sz.x - w) / 2.0, y + 56, w * clampf(progress, 0.0, 1.0), 16), Color("f2c14e"))
-	hud.draw_string(font, Vector2(0, sz.y - 30), "content version %d" % installed_version(), HORIZONTAL_ALIGNMENT_CENTER, sz.x, 16, Color(1, 1, 1, 0.6))
+		var w := minf(400.0, sz.x - 80.0)
+		draw_rect(Rect2((sz.x - w) / 2.0, y + 50, w, 14), Color(1, 1, 1, 0.15))
+		draw_rect(Rect2((sz.x - w) / 2.0, y + 50, w * clampf(progress, 0.0, 1.0), 14), Color("f2c14e"))
+	draw_string(font, Vector2(0, sz.y - 30), "content version %d" % installed_version(), HORIZONTAL_ALIGNMENT_CENTER, sz.x, 14, Color(1, 1, 1, 0.4))

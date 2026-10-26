@@ -34,8 +34,8 @@ const CAMP := 16.5
 
 static var clock := 0.3       # 0 dawn .. 0.5 sunset .. 1 next dawn
 static var near := 0.0        # how far he has run
-static var state := "walk"    # walk / camp / train
-static var state_t := 0.0     # seconds left in the current state
+static var state := "stroll"  # walk (running) / camp / train / stroll; the app opens with her strolling, then she breaks into a run
+static var state_t := 3.5     # seconds left in the current state
 static var camp_x := 0.0      # where the campsite is (path coordinates); it scrolls away once he runs on
 static var camp_on := false
 static var rock_x := -1.0     # the next rock on the path (path coordinates), -1 = none
@@ -113,7 +113,7 @@ func _ready() -> void:
 	add_child(front)
 	zuru.animation_finished.connect(_on_anim_done)
 	var p := _camp_phase()
-	_play("run" if state == "walk" else ("relax" if p == "sit" else ("slash" if p == "chop" else "quick")))
+	_play("walk" if state == "stroll" else ("run" if state == "walk" else ("relax" if p == "sit" else ("slash" if p == "chop" else "quick"))))
 
 func _play(a: String) -> void:
 	if zuru.sprite_frames.has_animation(a) and (zuru.animation != a or not zuru.is_playing()):

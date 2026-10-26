@@ -137,37 +137,54 @@ func _splash() -> void:
 	var updated := int(Game.settings.get("last_update_seen", n)) != n
 	Game.settings["last_update_seen"] = n
 	Game.save_settings()
+	# The same layout as the loading screen before it (title, status, bar and version where Boot.gd draws them), so
+	# the two read as one screen: the moving banner at its own pixel size above, the details filling the space below,
+	# and the theme trimmings (ThemeDeco, z 39) showing over it.
 	var ov := Control.new()
 	ov.set_anchors_preset(Control.PRESET_FULL_RECT)
-	ov.z_index = 90
+	ov.z_index = 38
 	ov.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(ov)
-	var j := journey(int(H))
-	j.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var hj := int(clampf(H * 0.26, 300.0, 440.0))   # as tall as the Home banner, so the pixels stay crisp
+	var j := journey(hj)
+	j.anchor_right = 1.0
+	j.offset_top = H / 2.0 - 80.0 - hj
+	j.offset_bottom = H / 2.0 - 80.0
+	_sp = {"n": n, "p": 0.0, "status": ("Updated to update %d!" % n) if updated else "Entering the dojo...",
+		"tip": SPLASH_TIPS[randi() % SPLASH_TIPS.size()]}
+	ov.draw.connect(_draw_splash.bind(ov))
 	ov.add_child(j)
-	var strip := ColorRect.new()   # a dark band behind the title so it reads over the scenery
-	strip.color = Color(0.1, 0.07, 0.12, 0.55)
-	strip.anchor_right = 1.0
-	strip.offset_top = H * 0.12 - 24
-	strip.offset_bottom = H * 0.12 + 210
-	ov.add_child(strip)
-	var col := UI.vbox(14)
-	col.anchor_left = 0.5; col.anchor_right = 0.5
-	col.offset_left = -330; col.offset_right = 330
-	col.offset_top = H * 0.12
-	col.alignment = BoxContainer.ALIGNMENT_CENTER
-	col.add_child(UI.banner("SAMURAI LEDGER", "BannerMedium_02C", 46))
-	var sub := UI.banner(("UPDATED - NOW ON UPDATE %d" % n) if updated else "ENTERING THE DOJO...", "BannerSmall_02C", 28)
-	sub.custom_minimum_size = Vector2(560, 72)
-	sub.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	col.add_child(sub)
-	ov.add_child(col)
+	var tw0 := create_tween()
+	tw0.tween_method(func(v: float): _sp["p"] = v; ov.queue_redraw(), 0.0, 1.0, SPLASH_SECS)
 	await get_tree().create_timer(SPLASH_SECS).timeout
 	var tw := create_tween()
 	tw.tween_property(ov, "modulate:a", 0.0, 0.45)
 	await tw.finished
 	ov.queue_free()
 	Engine.remove_meta("sl_splashing")
+
+var _sp := {}
+const SPLASH_TIPS := ["Tap the small ? on any box to see what it does.", "Ten minutes of Daily Review a day keeps it all stuck.",
+	"Score 70% in Your turn to pass a lesson.", "Wrong answers wait at the Healer's Shrine until you get them right.",
+	"Backup on Home copies your progress to another phone.", "Boss Arena: how many bosses can you beat in a row?"]
+
+func _draw_splash(c: Control) -> void:
+	var font: Font = UI.body_font if UI.body_font else ThemeDB.fallback_font
+	var y := H / 2.0
+	c.draw_rect(Rect2(0, 0, W, H), Color("2a1e2e"))
+	c.draw_string(font, Vector2(0, y - 10), "SAMURAI LEDGER", HORIZONTAL_ALIGNMENT_CENTER, W, 48, Color("f2c14e"))
+	c.draw_string(font, Vector2(0, y + 20), _sp["status"], HORIZONTAL_ALIGNMENT_CENTER, W, 24, Color(1, 1, 1, 0.85))
+	var w := minf(400.0, W - 80.0)
+	c.draw_rect(Rect2((W - w) / 2.0, y + 50, w, 14), Color(1, 1, 1, 0.15))
+	c.draw_rect(Rect2((W - w) / 2.0, y + 50, w * float(_sp["p"]), 14), Color("f2c14e"))
+	# the space underneath: what's installed, the exam, and a tip
+	var lines := [["App v%s  ·  update %d" % [ProjectSettings.get_setting("application/config/version", "?"), _sp["n"]], 22, Color(1, 1, 1, 0.75)],
+		["ACCA Financial Accounting (FA)", 22, Color(1, 1, 1, 0.75)], ["", 12, Color.WHITE], ["Tip", 24, Color("f2c14e")], [_sp["tip"], 22, Color(1, 1, 1, 0.85)]]
+	var ly := y + 130.0
+	for l in lines:
+		c.draw_multiline_string(font, Vector2(30, ly), l[0], HORIZONTAL_ALIGNMENT_CENTER, W - 60, l[1], -1, l[2])
+		ly += (l[1] + 14.0) * maxf(1.0, ceilf(font.get_string_size(l[0], HORIZONTAL_ALIGNMENT_LEFT, -1, l[1]).x / (W - 60)))
+	c.draw_string(font, Vector2(0, H - 30), "content version %d" % _sp["n"], HORIZONTAL_ALIGNMENT_CENTER, W, 14, Color(1, 1, 1, 0.4))
 
 # ---------------------------------------------------------------- updates
 # Content updates arrive by themselves: Boot.gd fetches them at start-up, and while the app is open the live
