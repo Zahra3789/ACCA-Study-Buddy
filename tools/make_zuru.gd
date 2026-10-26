@@ -1,27 +1,40 @@
 extends SceneTree
-# Makes Zuru's sprites from the DojoChef samurai (FREE_Samurai 2D Pixel Art v1.2 - free for use in any game,
-# not for resale as an asset; see CREDITS.md; the raw sheets are not in this repo), and draws the app icon.
-#   Godot --headless --path . -s tools/make_zuru.gd -- [folder with samurai/idle.png, attack1.png, hurt.png]
-# Every mood is cut from the same 32x35 box so swapping faces never makes Zuru jump. The festive (_x) and
-# spooky (_h) variants are the same art for now.
+# Makes Zuru's sprites from MtPixls' Samurai Character Pack V5 (use in any game; not to be redistributed, so the
+# raw sheets and these outputs stay out of the public repo - see CREDITS.md), and draws the app icon.
+#   Godot --headless --path . -s tools/make_zuru.gd -- ["<pack>/Saperate Sprites" folder]
+# Her skin is recoloured to a warm brown. Every frame is re-cut so her body (not the flowing scarf or sword
+# trails) is centred at x = 100 with her feet on y = 96: she stays planted while the world moves, and the
+# battle moods (normal / happy / sad, plus the festive _x and spooky _h copies) come from one fixed box.
 
-const DEFAULT_SRC := "%USERPROFILE%/GameDev/DojoChef/art"
-const FRAME := 96
-const BOX := Rect2i(32, 46, 32, 35)
-const MOODS := {"": ["idle", 0], "_happy": ["attack1", 3], "_sad": ["hurt", 1]}
+const DEFAULT_SRC := "%USERPROFILE%/Downloads/Samurai Character_V5/Samurai Character_V5/Saperate Sprites"
+const SKIN := {"e8d5ad": "a8724c", "dab790": "8f5c3a", "bba984": "70452a"}   # artist's skin -> warm brown
+const OUT_W := 200
+const OUT_H := 112
+const FEET := 96
+# banner animations: [output name, source sheet, source frame width, source feet line]
+const ANIMS := [["run", "Run", 240, 96], ["walk", "Walk", 240, 96], ["jump", "Jump", 240, 96], ["roll", "Roll", 112, 80],
+	["quick", "Quick-draw Slash", 240, 96], ["slash", "Slash 1", 240, 96], ["item", "Item Use", 240, 96],
+	["relax", "Relax Idle", 240, 90], ["idle", "Unsheated Idle", 240, 96], ["hurt", "Hurt", 240, 96]]
+# battle moods: [suffix, animation, frame]; cut from the re-centred frames through MOOD_BOX (12:13, like the slots)
+const MOODS := {"": ["idle", 0], "_happy": ["quick", 9], "_sad": ["hurt", 3]}
+const MOOD_BOX := Rect2i(64, 30, 72, 78)   # tight round her body, so she fills the battle and lesson slots
 
 func _init() -> void:
 	var args := OS.get_cmdline_user_args()
 	var src: String = args[0] if args.size() > 0 else DEFAULT_SRC
 	var out := ProjectSettings.globalize_path("res://assets/characters/")
+	var sheets := {}
+	for a in ANIMS:
+		sheets[a[0]] = _recut(Image.load_from_file("%s/%s.png" % [src, a[1]]), a[2], a[3])
+		sheets[a[0]].save_png(out + "zuru_%s.png" % a[0])
 	for suffix in MOODS:
-		var sheet := Image.load_from_file("%s/samurai/%s.png" % [src, MOODS[suffix][0]])
-		var img := sheet.get_region(Rect2i(BOX.position + Vector2i(int(MOODS[suffix][1]) * FRAME, 0), BOX.size))
+		var sh: Image = sheets[MOODS[suffix][0]]
+		var f: int = MOODS[suffix][1]
+		var frame := sh.get_region(Rect2i(f * OUT_W, 0, OUT_W, OUT_H))
+		var img := Image.create(MOOD_BOX.size.x, MOOD_BOX.size.y, false, Image.FORMAT_RGBA8)
+		img.blit_rect(frame, MOOD_BOX, Vector2i.ZERO)
 		for variant in ["", "_x", "_h"]:
 			img.save_png(out + "samurai%s%s.png" % [variant, suffix])
-	# Whole animation sheets (96 px frames) for the walking banner on the title and home screens (Journey.gd).
-	for sheet in ["idle", "run", "attack1"]:
-		Image.load_from_file("%s/samurai/%s.png" % [src, sheet]).save_png(out + "zuru_%s.png" % sheet)
 	# App icon: an open pixel study book on teal (not the samurai, so it can't be mistaken for DojoChef).
 	# icon.png is the whole icon; the Android adaptive layers put the book inside the launcher's safe
 	# middle 264 px of 432 on a transparent foreground over a plain teal background.
@@ -31,6 +44,32 @@ func _init() -> void:
 	_layer(book, 0, 432, ICON_BG).save_png(ProjectSettings.globalize_path("res://assets/icon_background.png"))
 	print("Zuru sprites and icon written")
 	quit()
+
+# Re-cut a sheet of fw-wide frames into OUT_W x OUT_H frames: skin recoloured, body centred on x = OUT_W / 2,
+# feet moved from the source feet line to FEET. The body's centre ignores the blue scarf and pale sword trails.
+func _recut(src: Image, fw: int, src_feet: int) -> Image:
+	src.convert(Image.FORMAT_RGBA8)
+	var n := int(ceil(src.get_width() / float(fw)))
+	var out := Image.create(n * OUT_W, OUT_H, false, Image.FORMAT_RGBA8)
+	for f in n:
+		var w := mini(fw, src.get_width() - f * fw)
+		var fr := src.get_region(Rect2i(f * fw, 0, w, src.get_height()))
+		var sum := 0.0; var cnt := 0
+		for y in fr.get_height():
+			for x in fr.get_width():
+				var c := fr.get_pixel(x, y)
+				if c.a < 0.5:
+					continue
+				var h := c.to_html(false)
+				if SKIN.has(h):
+					fr.set_pixel(x, y, Color(SKIN[h], c.a))
+				var scarf := c.b > c.r + 0.08 and c.b > c.g
+				var trail := c.s < 0.12 and c.v > 0.6
+				if not scarf and not trail:
+					sum += x; cnt += 1
+		var cx := int(round(sum / cnt)) if cnt else w / 2
+		out.blend_rect(fr, Rect2i(Vector2i.ZERO, fr.get_size()), Vector2i(f * OUT_W + OUT_W / 2 - cx, FEET - src_feet))
+	return out
 
 const ICON_BG := Color("1f5d63")
 const INK := Color("2b1d2a")
