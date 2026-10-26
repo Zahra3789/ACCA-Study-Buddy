@@ -7,7 +7,8 @@
 | `assets/fonts/Silkscreen.ttf` (kept, unused) | Silkscreen — Jason Kottke (Google Fonts) | SIL OFL 1.1 (`assets/fonts/OFL-silkscreen.txt`) |
 | Monster sprite `assets/monster.png`, `assets/font.ttf` | **Ninja Adventure Asset Pack** — Pixel-boy | CC0 1.0 |
 | Dialogue panel / buttons `assets/ui/*` (fallback UI) | **Kenney UI Pack 2.0** — kenney.nl | CC0 1.0 |
-| Zuru the samurai (`assets/characters/*`), Christmas trees, presents, lights (`assets/xmas/*`) | drawn for this project by `tools/make_samurai.ps1` and `tools/make_xmas.ps1` | CC0 (original) |
+| Zuru the samurai (`assets/characters/*`) and app icon (`assets/icon.png`) | **FREE_Samurai 2D Pixel Art v1.2** (same art as the DojoChef game), cut by `tools/make_zuru.gd` | Free for use in any game, personal or commercial; not to be resold or redistributed as a standalone asset |
+| Christmas trees, presents, lights (`assets/xmas/*`) | drawn for this project by `tools/make_xmas.ps1` | CC0 (original) |
 | Sound effects `assets/sfx/*.wav` | synthesised for this project by `tools/make_sfx.ps1` | CC0 (original) |
 
 **Not in this repository:** the Franuka RPG UI pack (`assets/rpg/`) — its licence allows use inside a game

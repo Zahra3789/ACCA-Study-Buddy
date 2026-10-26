@@ -36,7 +36,8 @@ lesson ends in a practice battle, and the mocks are laid out like the real ACCA 
   `Planner.gd` plan / calendar / notebook / dates · `Calc.gd` calculator · `Snow.gd` festive snow.
 - `preview/` — the HTML prototype (`serve.ps1` to run locally on port 8126; `build-standalone.ps1` builds a
   single-file version). `preview/update_syllabus_map.ps1` refreshes the syllabus map from the lessons.
-- `tools/` — generators for the samurai sprites, Christmas art and sound effects.
+- `tools/` — `make_zuru.gd` (Zuru + app icon from the samurai pixel pack), generators for the Christmas art and sound
+  effects. `make_samurai.ps1` drew the original Zuru and is kept for reference.
 
 ## Growing it
 Everything lives in `scripts/Content.gd`: Exams → Chapters → `beats` (quiz questions), `lessons` (with `learn`,
