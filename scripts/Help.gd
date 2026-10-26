@@ -54,19 +54,144 @@ func setup(m: Node) -> void:
 	title_label = UI.title_label("HELP", 30, UI.RED)
 	v.add_child(title_label)
 	body = UI.rich("", 24, true)
-	var sc := UI.scroll(body)
+	list = UI.vbox(18)
+	var holder := UI.vbox(0)
+	holder.add_child(list)
+	holder.add_child(body)
+	sc = UI.scroll(holder)
 	sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	v.add_child(sc)
 	body.meta_clicked.connect(func(url): OS.shell_open(str(url)))
 	var row := UI.hbox(10)
-	row.add_child(UI.button("Credits & disclaimer", "05A", open_credits, true, 22))
+	credits_btn = UI.button("Credits & disclaimer", "05A", open_credits, true, 22)
+	row.add_child(credits_btn)
 	row.add_child(UI.button("Got it", "03A", close, false, 26))
 	v.add_child(row)
 	relayout()
 
+var list: VBoxContainer
+var sc: ScrollContainer
+var credits_btn: Button
+
+# ---------------------------------------------------------------- the page as rows: a picture, a name, one short line
+# The pages above are written as an intro, then "• [b]Name[/b] - what it does" lines. Each line becomes a row with the
+# same picture the game uses for that thing (the Home card icons), with a gap between rows so it never reads as a wall.
+const KEY_CARD := [["fight", "boss"], ["boss", "boss"], ["mock", "mock"], ["exam hall", "mock"], ["drill", "bank"], ["training", "bank"],
+		["scroll", "scrolls"], ["review", "review"], ["heal", "heal"], ["shrine", "heal"], ["mistake", "heal"], ["record", "rec"],
+		["syllabus", "rec"], ["weak", "rec"], ["exam-ready", "rec"], ["chapter", "book"], ["lesson", "book"]]
+const KEY_ICON := [["plan", "Icon_11"], ["date", "Icon_11"], ["notebook", "Icon_12"], ["backup", "Icon_10"], ["restore", "Icon_10"],
+		["reset", "Icon_10"], ["flag", "Icon_10"], ["xp", "Icon_05"], ["lv", "Icon_05"], ["star", "Icon_05"], ["mark", "Icon_05"],
+		["hp", "Icon_17"], ["next", "Icon_02"], ["back", "Icon_02"], ["prev", "Icon_02"], ["page", "Icon_02"], ["tab", "Icon_02"],
+		["answer", "Icon_09"], ["a / b", "Icon_09"], ["tap", "Icon_09"], ["type", "Icon_09"], ["box", "Icon_09"], ["start", "Icon_09"]]
+
+# The top-bar buttons, drawn as the real buttons in miniature: [label, button art, what it does]
+const TOP_KEYS := [["ESC", "04A", "Back one step"], ["SFX", "02A", "Sounds and music on / off"], ["THEME", "01A", "Christmas, Halloween or off"],
+		["E-LDN", "04A", "Sensei in East London or proper"], ["DATES", "03A", "Exam sessions and deadlines"],
+		["CALC", "06A", "Calculator (it can shrink to a bar)"], ["?", "03A", "This help"]]
+
+func _icon_for(name: String) -> String:
+	var n := name.to_lower()
+	for k in KEY_CARD:
+		if k[0] in n:
+			for a in main.AREAS:
+				if a["id"] == k[1]:
+					return a["icon"]
+	for k in KEY_ICON:
+		if k[0] in n:
+			return k[1]
+	return "Icon_07"
+
+func _parse(text: String) -> Dictionary:
+	var paras := text.split("\n\n")
+	var out := {"intro": paras[0], "items": []}
+	for i in range(1, paras.size()):
+		for line in paras[i].split("\n"):
+			if line.begins_with("• "):
+				var l := line.substr(2)
+				var cut := l.find(" - ")
+				var left := l.substr(0, cut) if cut > 0 else ""
+				if cut > 0 and left.begins_with("[b]") and left.ends_with("[/b]") and left.count("[b]") == 1:
+					out["items"].append([left.substr(3, left.length() - 7), l.substr(cut + 3)])
+				else:
+					out["items"].append(["", l])
+			elif line.strip_edges() != "":
+				out["items"].append([null, line])   # a plain line (a little heading or a note) stays where it was written
+	return out
+
+func _row(name: String, desc: String) -> Control:
+	var r := UI.hbox(16)
+	var ic := UI.icon(_icon_for(name + " " + desc.substr(0, 30)), 48.0)
+	ic.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	r.add_child(ic)
+	var col := UI.vbox(2)
+	if name != "":
+		col.add_child(UI.label(name, 26, UI.RED))
+	col.add_child(UI.rich(desc.substr(0, 1).to_upper() + desc.substr(1) if not desc.begins_with("[") else desc, 23, true))
+	r.add_child(col)
+	return r
+
+func _fill(p: Array, first_time: bool) -> void:
+	UI.clear(list)
+	body.visible = false
+	list.visible = true
+	var d := _parse(p[1])
+	list.add_child(UI.rich(d["intro"], 25, true))
+	for it in d["items"]:
+		list.add_child(UI.rich(it[1], 23, true) if it[0] == null else _row(it[0], it[1]))
+	if first_time:
+		list.add_child(UI.rich("[i]Tap [b]?[/b] at the top right any time to see this again.[/i]", 21, true))
+		return
+	list.add_child(UI.spacer(6))
+	list.add_child(UI.label("The buttons along the top", 26, UI.RED))
+	var g := GridContainer.new()
+	g.columns = 2
+	g.add_theme_constant_override("h_separation", 14)
+	g.add_theme_constant_override("v_separation", 12)
+	for k in TOP_KEYS:
+		var b := UI.button(k[0], k[1], Callable(), true, 17)
+		b.custom_minimum_size = Vector2(120, 44)
+		b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		b.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.focus_mode = Control.FOCUS_NONE
+		g.add_child(b)
+		g.add_child(UI.rich(k[2], 22, true))
+	list.add_child(g)
+	list.add_child(UI.rich("Swipe back from the screen's edge to go back, like [b]ESC[/b].", 22, true))
+
+# ---------------------------------------------------------------- first time on a screen: a short "what is this?" card
+# Shown once per page for everyone (we can't assume anyone knows how a part works), then only from the ? button.
+func maybe_intro() -> void:
+	await get_tree().create_timer(0.45).timeout   # let the screen set its mode (battle type, lesson step) first
+	if visible or not is_inside_tree() or main.calc.visible:
+		return
+	var p := _page()
+	var seen: Array = Game.settings.get("seen_help", [])
+	var key := "%s:%d" % [p[0], str(p[1]).hash()]   # pages can share a title (the Boss Arena lobby and its battles)
+	if key in seen or p[0] == "HELP":
+		return
+	seen.append(key)
+	Game.settings["seen_help"] = seen
+	Game.save_settings()
+	title_label.text = "FIRST TIME HERE?  " + p[0]
+	_compact = true
+	_fill(p, true)
+	credits_btn.visible = false
+	relayout()
+	visible = true
+	sc.scroll_vertical = 0
+	for i in 2:   # wrapped text only knows its height after a frame
+		await get_tree().process_frame
+		relayout()
+
+var _compact := false   # the first-time card: only as tall as what it says, in the middle of the screen
+
 func relayout() -> void:
-	panel.position = Vector2(20, 64)
-	panel.size = Vector2(main.W - 40, main.H - 84)
+	var full: float = main.H - 84.0
+	var h: float = full
+	if _compact:
+		h = minf(full, list.get_combined_minimum_size().y + 190.0)
+	panel.size = Vector2(main.W - 40, h)
+	panel.position = Vector2(20, 64 + (full - h) / 2.0)
 
 func _page() -> Array:
 	match main.cur_screen:
@@ -90,9 +215,12 @@ func _page() -> Array:
 func open() -> void:
 	var p := _page()
 	title_label.text = "HELP - " + p[0]
-	UI.set_rich(body, p[1] + TOP_BAR, 24)
+	_compact = false
+	_fill(p, false)
+	credits_btn.visible = true
 	relayout()
 	visible = true
+	sc.scroll_vertical = 0
 
 # Credits (Franuka's licence asks for a link back; the others are thanked too) and the disclaimer.
 # Set as raw BBCode rather than through UI.bb, which escapes [url] tags, so the links can be tapped.
@@ -100,6 +228,9 @@ const CREDITS := "[b]Not affiliated with ACCA.[/b] This is a free, personal stud
 
 func open_credits() -> void:
 	title_label.text = "CREDITS & DISCLAIMER"
+	_compact = false
+	list.visible = false
+	body.visible = true
 	body.text = "[font_size=24]" + CREDITS + "[/font_size]"
 	relayout()
 	visible = true

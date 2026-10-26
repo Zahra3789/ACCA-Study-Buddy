@@ -370,5 +370,51 @@ requestAnimationFrame(tick);
 applyFestive();
 // The start-up code names every big banner after the app; the Chapter Book's own banner says what it is.
 { const b = document.querySelector('#book .banner'); if (b) b.textContent = 'CHAPTER BOOK'; }
+
+// ---------------------------------------------------------------- Help as rows (as in the app): a picture, a name, one short line
+// Each "• [b]Name[/b] - what it does" line of a page becomes a row with the picture the game uses for that thing (the Home
+// card icons), with a gap between rows. The top-bar buttons are shown as the real buttons in miniature.
+const KEY_CARD = [['fight', 'boss'], ['boss', 'boss'], ['mock', 'mock'], ['exam hall', 'mock'], ['drill', 'bank'], ['training', 'bank'],
+  ['scroll', 'scrolls'], ['review', 'review'], ['heal', 'heal'], ['shrine', 'heal'], ['mistake', 'heal'], ['record', 'rec'],
+  ['syllabus', 'rec'], ['weak', 'rec'], ['exam-ready', 'rec'], ['chapter', 'book'], ['lesson', 'book']];
+const KEY_ICON = [['plan', 'Icon_11'], ['date', 'Icon_11'], ['notebook', 'Icon_12'], ['backup', 'Icon_10'], ['restore', 'Icon_10'],
+  ['reset', 'Icon_10'], ['flag', 'Icon_10'], ['xp', 'Icon_05'], ['lv', 'Icon_05'], ['star', 'Icon_05'], ['mark', 'Icon_05'],
+  ['hp', 'Icon_17'], ['next', 'Icon_02'], ['back', 'Icon_02'], ['prev', 'Icon_02'], ['page', 'Icon_02'], ['tab', 'Icon_02'],
+  ['answer', 'Icon_09'], ['a / b', 'Icon_09'], ['tap', 'Icon_09'], ['type', 'Icon_09'], ['box', 'Icon_09'], ['start', 'Icon_09']];
+const TOP_KEYS = [['escBtn', 'ESC', 'Back one step'], ['sfxBtn', 'SFX', 'Sounds and music on / off'], ['themeBtn', 'THEME', 'Christmas, Halloween or off'],
+  ['senseiBtn', 'E-LDN', 'Sensei in East London or proper'], ['datesBtn', 'DATES', 'Assessment dates and booking'],
+  ['calcBtn', 'CALC', 'Calculator (it can shrink to a bar)'], ['helpBtn', '?', 'This help']];
+function iconFor(text) { const n = text.toLowerCase();
+  for (const [k, id] of KEY_CARD) if (n.includes(k)) { const a = AREAS.find(x => x.id === id); if (a) return a.icon; }
+  for (const [k, ic] of KEY_ICON) if (n.includes(k)) return ic;
+  return 'Icon_07'; }
+function helpRows(text, firstTime) { const paras = text.split('\n\n'); let h = `<p class="hIntro">${bb(paras[0])}</p>`;
+  for (const para of paras.slice(1)) for (const line of para.split('\n')) {
+    if (line.startsWith('• ')) { const l = line.slice(2), cut = l.indexOf(' - '), left = cut > 0 ? l.slice(0, cut) : '';
+      let nm = '', d = l; if (cut > 0 && left.startsWith('[b]') && left.endsWith('[/b]') && left.split('[b]').length === 2) { nm = left.slice(3, -4); d = l.slice(cut + 3); }
+      if (!d.startsWith('[')) d = d.charAt(0).toUpperCase() + d.slice(1);
+      h += `<div class="hRow"><img src="${A('../assets/rpg/' + iconFor(nm + ' ' + d.slice(0, 30)) + '.png')}" alt=""><div>${nm ? `<b class="hName">${bb(nm)}</b>` : ''}<span>${bb(d)}</span></div></div>`; }
+    else if (line.trim()) h += `<p class="hNote">${bb(line)}</p>`; }
+  if (firstTime) return h + '<p class="hNote"><i>Tap <b>?</b> at the top right any time to see this again.</i></p>';
+  h += '<p class="hHead">The buttons along the top</p><div class="hKeys">';
+  for (const [id, label, what] of TOP_KEYS) { const src = $(id); if (!src) continue; const b = src.cloneNode(true); b.removeAttribute('id'); b.removeAttribute('onclick'); b.textContent = label;
+    h += b.outerHTML + `<span>${bb(what)}</span>`; }
+  return h + '</div><p class="hNote">Swipe back from the screen\'s edge to go back, like <b>ESC</b>.</p>'; }
+const helpCredits = $('helpRow').querySelector('.btn');
+openHelp = function () { const [t, b] = helpPage(); $('help').classList.remove('first'); helpCredits.style.display = '';
+  $('helpTitle').textContent = 'HELP - ' + t; $('helpBody').innerHTML = helpRows(b, false); $('help').classList.remove('hidden'); $('helpBody').scrollTop = 0; };
+const _openCredits = openCredits;
+openCredits = function () { $('help').classList.remove('first'); helpCredits.style.display = ''; _openCredits(); };
+// First visit to each part: a short "what is this?" card, once (we can't assume anyone knows how a part works).
+function maybeIntro() { setTimeout(() => {   // after the screen has set its mode (battle type, lesson step)
+  if (!$('help').classList.contains('hidden') || ($('calc') && !$('calc').classList.contains('hidden'))) return;
+  const [t, b] = helpPage(); if (t === 'HELP') return;
+  const key = t + ':' + b.length, seen = settings.seenHelp || []; if (seen.includes(key)) return;
+  settings.seenHelp = [...seen, key]; saveSettings();
+  $('helpTitle').textContent = 'FIRST TIME HERE?  ' + t; $('helpBody').innerHTML = helpRows(b, true); helpCredits.style.display = 'none';
+  $('help').classList.add('first'); $('help').classList.remove('hidden'); $('helpBody').scrollTop = 0; }, 450); }
+const _show = show;
+show = function (id) { _show(id); maybeIntro(); };
+maybeIntro();
 })();
 </script>

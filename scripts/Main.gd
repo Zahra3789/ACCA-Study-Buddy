@@ -603,6 +603,8 @@ func show_screen(name: String) -> void:
 	if name != "exam":
 		exam.stop_timer()
 	apply_festive()
+	if help:
+		help.maybe_intro()   # the first visit to each part explains it
 
 func screen(name: String) -> Control:
 	var s: Control = screens[name]
