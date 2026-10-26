@@ -728,9 +728,12 @@ func show_home() -> void:
 		var cols := UI.hbox(20)
 		cols.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		v.add_child(cols)
-		var left := UI.vbox(10); left.custom_minimum_size.x = 540
+		var left := UI.vbox(10)
+		var ls := UI.scroll(left)   # Sensei's side scrolls on its own, so the page fits the screen and the cards fit beside it
+		ls.custom_minimum_size.x = 540
+		ls.size_flags_horizontal = Control.SIZE_FILL
 		right = UI.vbox(0); right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		cols.add_child(left); cols.add_child(right)
+		cols.add_child(ls); cols.add_child(right)
 		v = left
 	v.add_child(UI.banner("SAMURAI LEDGER"))
 	_update_button(v)
@@ -768,31 +771,36 @@ func show_home() -> void:
 	hero.add_child(speech)
 	v.add_child(hero)
 	var grid := GridContainer.new()
-	grid.columns = 2
+	grid.columns = 2   # small cards, so all eight fit on the screen upright and sideways
 	grid.add_theme_constant_override("h_separation", 12)
 	grid.add_theme_constant_override("v_separation", 12)
 	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	grid.name = "cards"
 	for a in AREAS:
 		grid.add_child(_card(a, nm))
-	# the cards scroll, so the bottom row is never cut off when Sensei has a lot to say
+	# the cards share the space left and fit without scrolling; they only scroll if a very small screen can't hold them
 	var gs := UI.scroll(grid)
 	right.add_child(gs)
 	show_screen("home")
 
 func _card(a: Dictionary, nm: int) -> Control:
-	var p := UI.box(a["box"], a["dark"], Vector4(38, 36, 38, 32))
+	# Compact so all eight fit on one screen: icon beside the name, then the status.
+	var p := UI.small_box(a["box"], a["dark"], Vector4(22, 18, 22, 16))
 	p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	p.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var dark: bool = a["dark"]
 	var col := UI.LIGHT if not dark else UI.DARK
 	var cv := UI.content(p)
-	cv.alignment = BoxContainer.ALIGNMENT_BEGIN
-	var ic := CenterContainer.new(); ic.add_child(UI.icon(a["icon"], 30)); cv.add_child(ic)
+	cv.alignment = BoxContainer.ALIGNMENT_CENTER
+	cv.add_theme_constant_override("separation", 4)
+	var tr := UI.hbox(8)
+	tr.alignment = BoxContainer.ALIGNMENT_CENTER
+	tr.add_child(UI.icon(a["icon"], 28))
 	var t := UI.label(a["name"], 26, col, true)
 	t.add_theme_font_size_override("font_size", 26)
-	cv.add_child(t)
-	cv.add_child(UI.label(a["sub"], 24, col, true))
+	t.autowrap_mode = TextServer.AUTOWRAP_OFF   # beside the icon a wrapping label would squeeze to one letter wide
+	tr.add_child(t)
+	cv.add_child(tr)
 	var stat := ""
 	match a["id"]:
 		"review":
@@ -810,17 +818,14 @@ func _card(a: Dictionary, nm: int) -> Control:
 		"mock":
 			var fb := [Game.best(exam_id + "/full/1"), Game.best(exam_id + "/full/2"), Game.best(exam_id + "/full/3")]
 			var b: int = fb.max(); var ps := fb.filter(func(x): return x >= 50).size()
-			stat = ("Full mocks: %d / 3 passed - best %d%%" % [ps, b]) if b else "3 full mocks - pass mark 50%"
+			stat = ("%d / 3 mocks passed · best %d%%" % [ps, b]) if b else "3 mocks · pass mark 50%"
 		"rec":
 			var tried := 0
 			for c in EXAM["chapters"]:
 				if Game.accuracy("%s/%d" % [exam_id, int(c["id"])]) >= 0:
 					tried += 1
-			stat = "%d/%d topics tried\nSyllabus map" % [tried, EXAM["chapters"].size()]
-	var st := UI.label(stat, 24, col, true)
-	st.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	st.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-	cv.add_child(st)
+			stat = "%d / %d topics tried" % [tried, EXAM["chapters"].size()]
+	cv.add_child(UI.label(stat, 22, col, true))
 	var btn := Button.new(); btn.flat = true; btn.set_anchors_preset(Control.PRESET_FULL_RECT)
 	btn.pressed.connect(func():
 		sfx("tap")

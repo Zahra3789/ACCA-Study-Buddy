@@ -71,6 +71,26 @@ func box_style(name: String, inset := Vector4(36, 40, 36, 36)) -> StyleBox:
 	s.draw_center = true
 	return s
 
+# The same framed box drawn at half size (crisp pixel art, half as thick), for small cards that must fit many to a screen.
+var _half := {}
+func small_box(style_name: String, dark := true, inset := Vector4(20, 18, 20, 16)) -> PanelContainer:
+	var p := box(style_name, dark, inset)
+	var t := tex(style_name)
+	if t != null:
+		if not _half.has(style_name):
+			var img := t.get_image()
+			if img.is_compressed():
+				img.decompress()
+			img.resize(img.get_width() / 2, img.get_height() / 2, Image.INTERPOLATE_NEAREST)
+			_half[style_name] = ImageTexture.create_from_image(img)
+		var s := StyleBoxTexture.new()
+		s.texture = _half[style_name]
+		s.texture_margin_left = 24; s.texture_margin_top = 24; s.texture_margin_right = 24; s.texture_margin_bottom = 24
+		s.content_margin_left = inset.x; s.content_margin_top = inset.y; s.content_margin_right = inset.z; s.content_margin_bottom = inset.w
+		s.draw_center = true
+		p.add_theme_stylebox_override("panel", s)
+	return p
+
 # Buttons: slice 15 (top/bottom) and 24 (sides)
 func button_style(code: String, state: String) -> StyleBox:
 	var t := tex("Button_%s_%s" % [code, state])
