@@ -1,11 +1,12 @@
-param([string]$Out = "C:\Users\zurup\Downloads\SM Study Buddy - new art.html")
+# Her file as the other chat made it is the input (not kept in the repo: it carries the licensed art).
+param([string]$Src = "$env:USERPROFILE\Downloads\SM Study Buddy.html", [string]$Out = "$env:USERPROFILE\Downloads\SM Study Buddy - new art.html")
 # Builds the sister's CIMA HTML with the Samurai Ledger art: same content, Zuru renamed Sisi, plain-English greetings
 # when E-LDN is off, the real Japan scenery banner, animated Sisi, theme hats and trimmings, readable titles.
 $ErrorActionPreference = 'Stop'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
-$proj = "C:\Users\zurup\GameDev\ACCA-Study-Buddy"
+$proj = Split-Path -Parent (Split-Path -Parent $here)   # the project folder (this is tools\sister_html)
 $utf8 = New-Object Text.UTF8Encoding $false
-$lines = [IO.File]::ReadAllLines((Join-Path $here 'original.html'), $utf8)
+$lines = [IO.File]::ReadAllLines($Src, $utf8)
 
 function Section($a, $b) { return ($lines[$a..$b] -join "`n") }
 $assetsStart = [Array]::IndexOf($lines, 'const ASSETS = {')
@@ -57,6 +58,5 @@ $app = Must $app '</body>' ($patch + "`n</body>") 'body end'
 
 $html = $head + "`n" + $exams + "`n" + $assets + "`n" + $add.ToString() + "`n" + $app
 [IO.File]::WriteAllText($Out, $html, $utf8)
-[IO.File]::WriteAllText((Join-Path $here 'new.html'), $html, $utf8)
 "Wrote $Out  ({0:N1} MB)" -f ((Get-Item $Out).Length / 1MB)
 "Zuru left: " + ([regex]::Matches($head + $exams + $app, 'Zuru').Count)
