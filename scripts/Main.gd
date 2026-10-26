@@ -10,8 +10,10 @@ extends Control
 #   Calc.gd     the calculator overlay
 # Game.gd (autoload) saves progress; UI.gd (autoload) is the theme; Content.gd (autoload) is the content.
 
-const W := 720
-const H := 1280
+# Logical screen size: 720 x 1280 held upright, 1280 x 720 held sideways (see _apply_orientation).
+var W := 720
+var H := 1280
+var landscape := false
 const SAMURAI := "res://assets/characters/samurai.png"
 const MONSTER := "res://assets/monster.png"
 const SCENES := [[Color("0f1a3a"), Color("8fd3ff"), Color("5fc07a")], [Color("3b2a52"), Color("e8a0bf"), Color("c98a2e")], [Color("16324f"), Color("79c7c5"), Color("6b8e23")], [Color("141a33"), Color("9fb4e8"), Color("d9a07a")]]
@@ -66,6 +68,8 @@ var calc: Node
 # ---------------------------------------------------------------- setup
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	_apply_orientation(false)
+	get_tree().root.size_changed.connect(func(): _apply_orientation(true))
 	exam_id = Game.exam_id
 	_select_exam_data(exam_id)
 	stage = Control.new()
@@ -93,6 +97,35 @@ func _ready() -> void:
 	_load_sfx()
 	_init_tts()
 	show_title()
+
+# The phone decides: wider than tall -> 1280 x 720 landscape layouts, otherwise 720 x 1280 portrait.
+func _apply_orientation(rebuild: bool) -> void:
+	var win := DisplayServer.window_get_size()
+	var wide := win.x > win.y
+	if wide == landscape and rebuild:
+		return
+	landscape = wide
+	W = 1280 if wide else 720
+	H = 720 if wide else 1280
+	UI.compact = wide
+	get_tree().root.content_scale_size = Vector2i(W, H)
+	if rebuild:
+		relayout()
+
+func relayout() -> void:
+	top_bar.get_child(0).size = Vector2(W - 20, 44)
+	lights.size = Vector2(W / 3.0, 8)
+	battle.relayout()
+	calc.relayout()
+	match cur_screen:
+		"title": show_title()
+		"home": show_home()
+		"book": book.show_book()
+		"lesson": book.render_lesson()
+		"mtq": mtq.render()
+		"exam":
+			if not exam.X.get("done", false):
+				exam.render()
 
 func _select_exam_data(id: String) -> void:
 	var list: Array = Content.EXAMS
@@ -271,6 +304,10 @@ func screen(name: String) -> Control:
 
 # A full-screen column with the standard padding (58 top for the top bar).
 func column(s: Control, top := 58, side := 26, bottom := 20, sep := 14, bg: Array = []) -> VBoxContainer:
+	if landscape:
+		side = maxi(side, 48)
+		bottom = mini(bottom, 12)
+		sep = mini(sep, 8)
 	if bg.size() == 3:
 		s.add_child(UI.gradient_bg(bg[0], bg[1], bg[2]))
 	var m := MarginContainer.new()
@@ -316,30 +353,42 @@ func show_title() -> void:
 	var v := column(s, 58, 26, 24, 14, [Color("141a33"), Color("3b2a52"), Color("2a1e2e")])
 	v.alignment = BoxContainer.ALIGNMENT_BEGIN
 	v.add_child(UI.banner("ACCA STUDY BUDDY"))
+	# held sideways: Zuru and Sensei on the left, the exam list on the right
+	var left := v
+	var right := v
+	if landscape:
+		var cols := UI.hbox(24)
+		cols.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		v.add_child(cols)
+		left = UI.vbox(10); left.custom_minimum_size.x = 520
+		right = UI.vbox(8); right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cols.add_child(left); cols.add_child(right)
 	var hero_row := CenterContainer.new()
 	var hero := UI.sprite(zuru_src("normal"), 192, 208)
 	hero.add_to_group("zuru")
 	hero_row.add_child(hero)
-	v.add_child(hero_row)
+	left.add_child(hero_row)
+	var span := 616 if landscape else W   # width the decorations frame Zuru across
+	var dy := -50 if landscape else 0
 	if festive():
 		var tp := "res://assets/xmas/tree.png"
 		var gp := "res://assets/xmas/present.png"
-		for pos in [Vector2(60, 200), Vector2(W - 60 - 112, 200)]:
+		for pos in [Vector2(60, 200 + dy), Vector2(span - 60 - 112, 200 + dy)]:
 			var t := UI.sprite(tp, 112, 168)
 			t.position = pos
 			s.add_child(t)
-		for pos in [Vector2(40, 330), Vector2(150, 338), Vector2(W - 46 - 44, 330)]:
+		for pos in [Vector2(40, 330 + dy), Vector2(150, 338 + dy), Vector2(span - 46 - 44, 330 + dy)]:
 			var g := UI.sprite(gp, 44, 44)
 			g.position = pos
 			s.add_child(g)
 	elif spooky():
 		var pp := "res://assets/xmas/pumpkin.png"
-		for pos in [Vector2(56, 262), Vector2(W - 56 - 128, 262)]:
+		for pos in [Vector2(56, 262 + dy), Vector2(span - 56 - 128, 262 + dy)]:
 			var p := UI.sprite(pp, 128, 104)
 			p.position = pos
 			s.add_child(p)
 		var small := UI.sprite(pp, 72, 58)
-		small.position = Vector2(180, 318)
+		small.position = Vector2(180, 318 + dy)
 		s.add_child(small)
 	var passed := 0
 	var today = planner.today()
@@ -361,7 +410,7 @@ func show_title() -> void:
 		greet += " Which one are we training for today?"
 	var say := UI.box("BGbox_04A", true, Vector4(36, 30, 36, 26))
 	UI.content(say).add_child(UI.rich("[b]Sensei Otter:[/b] " + greet, 24, true, true))
-	v.add_child(say)
+	left.add_child(say)
 	var list := UI.vbox(8)
 	list.add_child(UI.button("Exam dates - set your sitting dates", "03A", planner.show_dates))
 	var grp := ""
@@ -374,8 +423,8 @@ func show_title() -> void:
 		list.add_child(_exam_row(x))
 	var sc := UI.scroll(list)
 	sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	v.add_child(sc)
-	v.add_child(UI.label("Zuru's dojo - choose an exam to enter" + (" - happy holidays!" if festive() else (" - happy Halloween!" if spooky() else "")), 22, Color("fbe9d0"), true))
+	right.add_child(sc)
+	right.add_child(UI.label("Zuru's dojo - choose an exam to enter" + (" - happy holidays!" if festive() else (" - happy Halloween!" if spooky() else "")), 22, Color("fbe9d0"), true))
 	show_screen("title")
 
 func _exam_row(x: Dictionary) -> Control:
@@ -445,11 +494,22 @@ func _exam_row(x: Dictionary) -> Control:
 func show_home() -> void:
 	var s := screen("home")
 	var v := column(s, 58, 26, 14, 10, [Color("3b2a52"), Color("5a3a6e"), Color("2a1e2e")])
+	var right := v
+	if landscape:   # held sideways: banner, Zuru and Sensei on the left, the area cards on the right
+		var cols := UI.hbox(20)
+		cols.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		v.add_child(cols)
+		var left := UI.vbox(10); left.custom_minimum_size.x = 540
+		right = UI.vbox(0); right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cols.add_child(left); cols.add_child(right)
+		v = left
 	v.add_child(UI.banner("ACCA STUDY BUDDY"))
-	var hero := UI.hbox(12)
-	var z := UI.sprite(zuru_src("normal"), 144, 156)
+	var hero: BoxContainer = UI.vbox(6) if landscape else UI.hbox(12)   # sideways: Zuru above Sensei, not beside
+	var z := UI.sprite(zuru_src("normal"), 108 if landscape else 144, 117 if landscape else 156)
 	z.add_to_group("zuru")
 	z.size_flags_vertical = Control.SIZE_SHRINK_END
+	if landscape:
+		z.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	hero.add_child(z)
 	var speech := UI.box("BGbox_04A", true, Vector4(36, 30, 36, 26))
 	speech.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -483,7 +543,9 @@ func show_home() -> void:
 	grid.name = "cards"
 	for a in AREAS:
 		grid.add_child(_card(a, nm))
-	v.add_child(grid)
+	# the cards scroll, so the bottom row is never cut off when Sensei has a lot to say
+	var gs := UI.scroll(grid)
+	right.add_child(gs)
 	show_screen("home")
 
 func _card(a: Dictionary, nm: int) -> Control:

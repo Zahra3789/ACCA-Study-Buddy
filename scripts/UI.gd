@@ -23,6 +23,7 @@ var digit_font: Font
 var title_font: Font
 var title_o_font: Font
 var has_pack := false
+var compact := false   # set by Main when the phone is held sideways: slimmer banners
 var _tex_cache: Dictionary = {}
 
 func _ready() -> void:
@@ -138,7 +139,7 @@ func button(text: String, code := "05A", on_pressed: Callable = Callable(), ligh
 		b.add_theme_color_override("font_outline_color", Color("2b1d2a"))
 		b.add_theme_constant_override("outline_size", 3)
 	b.custom_minimum_size.y = 64
-	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	b.autowrap_mode = TextServer.AUTOWRAP_OFF if text.length() <= 14 else TextServer.AUTOWRAP_WORD_SMART
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if on_pressed.is_valid():
 		b.pressed.connect(on_pressed)
@@ -147,7 +148,7 @@ func button(text: String, code := "05A", on_pressed: Callable = Callable(), ligh
 func banner(text: String, name := "BannerMedium_02C", size := 40) -> PanelContainer:
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", banner_style(name))
-	p.custom_minimum_size = Vector2(660, 96)
+	p.custom_minimum_size = Vector2(480, 80) if compact else Vector2(660, 96)
 	var l := Label.new()
 	l.text = text
 	l.add_theme_font_override("font", title_o_font)
@@ -215,7 +216,8 @@ func label(text: String, size := 24, color := DARK, center := false) -> Label:
 	l.text = text
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
-	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# short words never wrap: in a tight row WORD_SMART would otherwise split "Lv 21" or "Learn" letter by letter
+	l.autowrap_mode = TextServer.AUTOWRAP_OFF if (text != "" and text.length() <= 14) else TextServer.AUTOWRAP_WORD_SMART
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if center:
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -437,6 +439,7 @@ func gradient_bg(top: Color, mid: Color, bottom: Color) -> TextureRect:
 	tr.stretch_mode = TextureRect.STRETCH_SCALE
 	tr.set_anchors_preset(Control.PRESET_FULL_RECT)
 	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tr.z_index = -2   # backgrounds sit behind the theme snow/leaves (z -1); boxes and text stay above both
 	return tr
 
 func icon(name: String, size := 30.0) -> TextureRect:

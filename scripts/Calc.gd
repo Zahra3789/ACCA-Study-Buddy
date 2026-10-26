@@ -15,6 +15,8 @@ var dragging := false
 var drag_off := Vector2.ZERO
 var resizing := false
 var panel: PanelContainer
+var body: BoxContainer
+var grip: Label
 
 func setup(m: Node) -> void:
 	main = m
@@ -34,13 +36,21 @@ func setup(m: Node) -> void:
 	title.add_child(tl)
 	title.add_child(UI.button("Close", "04A", func(): toggle(false), true, 22))
 	v.add_child(title)
+	# sum, result and tape stacked above the keys upright; side by side when the phone is sideways
+	body = BoxContainer.new()
+	body.add_theme_constant_override("separation", 12)
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	v.add_child(body)
+	var info := UI.vbox(10)
+	info.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_child(info)
 	expr_edit = UI.line_edit("Type a sum, e.g. (120000-20000)/5", false, 30)
 	expr_edit.text_changed.connect(func(_t): _live())
 	expr_edit.text_submitted.connect(func(_t): _equals())
-	v.add_child(expr_edit)
+	info.add_child(expr_edit)
 	result_label = UI.label("= 0", 36, UI.DARK)
 	result_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	v.add_child(result_label)
+	info.add_child(result_label)
 	tape = UI.rich("", 22, true)
 	tape.fit_content = false
 	tape.scroll_active = true
@@ -51,8 +61,9 @@ func setup(m: Node) -> void:
 	tp.add_theme_stylebox_override("panel", sb)
 	tp.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	tp.add_child(tape)
-	v.add_child(tp)
+	info.add_child(tp)
 	var keys := GridContainer.new()
+	keys.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	keys.columns = 5
 	keys.add_theme_constant_override("h_separation", 6)
 	keys.add_theme_constant_override("v_separation", 6)
@@ -62,13 +73,14 @@ func setup(m: Node) -> void:
 		var b := UI.button(kk, code, func(): _key(kk), true, 26)
 		b.custom_minimum_size = Vector2(0, 56)
 		keys.add_child(b)
-	v.add_child(keys)
-	var grip := UI.label("◢", 40, UI.GOLD)
+	body.add_child(keys)
+	grip = UI.label("◢", 40, UI.GOLD)
 	grip.size_flags_horizontal = Control.SIZE_SHRINK_END
 	grip.mouse_filter = Control.MOUSE_FILTER_STOP
 	grip.gui_input.connect(_grip_input)
 	v.add_child(grip)
 	_load_layout()
+	relayout()
 
 func toggle(open: bool) -> void:
 	visible = open
@@ -90,7 +102,7 @@ func _title_input(e: InputEvent) -> void:
 			_save_layout()
 	elif e is InputEventMouseMotion and dragging:
 		var p := get_global_mouse_position() - drag_off
-		panel.position = Vector2(clamp(p.x, 0, 720 - panel.size.x), clamp(p.y, 0, 1280 - panel.size.y))
+		panel.position = Vector2(clamp(p.x, 0, main.W - panel.size.x), clamp(p.y, 0, main.H - panel.size.y))
 
 func _grip_input(e: InputEvent) -> void:
 	if e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT:
@@ -99,7 +111,20 @@ func _grip_input(e: InputEvent) -> void:
 			_save_layout()
 	elif e is InputEventMouseMotion and resizing:
 		var m := get_global_mouse_position()
-		panel.size = Vector2(clamp(m.x - panel.position.x + 20, 440, 720 - panel.position.x), clamp(m.y - panel.position.y + 20, 660, 1280 - panel.position.y))
+		panel.size = Vector2(clamp(m.x - panel.position.x + 20, 440, main.W - panel.position.x), clamp(m.y - panel.position.y + 20, 600, main.H - panel.position.y))
+
+# After the phone rotates: keys beside the tape when sideways, and keep the panel on screen.
+func relayout() -> void:
+	body.vertical = not main.landscape
+	grip.visible = not main.landscape   # sideways the panel is sized to fit; no room or need to resize it
+	if main.landscape:
+		panel.size = Vector2(1000, 640)
+		panel.position = Vector2((main.W - 1000) / 2.0, 64)
+	elif panel.size.x > main.W - 20:
+		panel.size = Vector2(660, 780)
+		panel.position = Vector2(30, 58)
+	panel.size = Vector2(minf(panel.size.x, main.W - 20), minf(panel.size.y, main.H - 64))
+	panel.position = Vector2(clampf(panel.position.x, 0, main.W - panel.size.x), clampf(panel.position.y, 58, maxf(58, main.H - panel.size.y)))
 
 func _save_layout() -> void:
 	var f := FileAccess.open("user://calc_layout.json", FileAccess.WRITE)

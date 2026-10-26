@@ -42,13 +42,33 @@ var dlg_extra: VBoxContainer
 var more: Label
 var cmds: VBoxContainer
 var cmds_scroll: ScrollContainer
+var sky_fill: ColorRect      # sideways only: sky above the scaled-down field
+var lower: Control
+var lower_margin: MarginContainer
 
 func setup(m: Node) -> void:
 	main = m
 	_build()
+	relayout()
+
+# Upright: field on top (720 x 600), dialogue and moves below. Sideways: the field scaled into the left
+# 640 px, sitting on the bottom edge with sky filled in above it, and dialogue and moves on the right.
+func relayout() -> void:
+	var k := 640.0 / 720.0 if main.landscape else 1.0
+	field.scale = Vector2(k, k)
+	field.position = Vector2(0, main.H - 600.0 * k) if main.landscape else Vector2.ZERO
+	sky_fill.visible = main.landscape
+	sky_fill.size = Vector2(640, field.position.y + 2)
+	lower.position = Vector2(640, 0) if main.landscape else Vector2(0, 600)
+	lower.size = Vector2(640, 720) if main.landscape else Vector2(720, 680)
+	lower_margin.add_theme_constant_override("margin_top", 60 if main.landscape else 8)
 
 func _build() -> void:
 	var scr: Control = main.screens["battle"]
+	sky_fill = ColorRect.new()
+	sky_fill.z_index = -2
+	sky_fill.color = Color("0f1a3a")
+	scr.add_child(sky_fill)
 	field = Control.new()
 	field.position = Vector2(0, 0)
 	field.size = Vector2(720, 600)
@@ -59,6 +79,7 @@ func _build() -> void:
 	sky.position = Vector2(0, 0); sky.size = Vector2(720, 372)
 	field.add_child(sky)
 	ground = ColorRect.new()
+	ground.z_index = -2   # like the sky: theme snow falls in front of the scenery, behind the plates
 	ground.position = Vector2(0, 372); ground.size = Vector2(720, 228)
 	ground.color = Color("5fc07a")
 	field.add_child(ground)
@@ -110,10 +131,11 @@ func _build() -> void:
 	verdict.rotation_degrees = -6
 	field.add_child(verdict)
 	# lower half: speaker, dialogue, commands
-	var lower := Control.new()
+	lower = Control.new()
 	lower.position = Vector2(0, 600); lower.size = Vector2(720, 680)
 	var lbg := ColorRect.new(); lbg.color = Color("2a1e2e"); lbg.set_anchors_preset(Control.PRESET_FULL_RECT); lower.add_child(lbg)
-	var m := MarginContainer.new()
+	lower_margin = MarginContainer.new()
+	var m := lower_margin
 	m.set_anchors_preset(Control.PRESET_FULL_RECT)
 	m.add_theme_constant_override("margin_left", 16); m.add_theme_constant_override("margin_right", 16); m.add_theme_constant_override("margin_top", 8); m.add_theme_constant_override("margin_bottom", 16)
 	lower.add_child(m)
@@ -223,6 +245,7 @@ func _scene(c: Array) -> void:
 	gt.gradient = g; gt.fill_from = Vector2(0, 0); gt.fill_to = Vector2(0, 1); gt.width = 8; gt.height = 128
 	sky.texture = gt
 	ground.color = c[2]
+	sky_fill.color = c[0]
 
 func _set_hue(tr: TextureRect, deg: float) -> void:
 	if deg == 0.0:

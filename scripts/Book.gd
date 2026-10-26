@@ -19,7 +19,9 @@ func show_book() -> void:
 	v.add_child(UI.banner("CHAPTER BOOK"))
 	var chs: Array = main.EXAM["chapters"]
 	var tabs_n := int(ceil(chs.size() / float(PER_SPREAD)))
-	v.add_child(UI.rich("[b]%d / %d[/b] stars collected.  Tap a chapter." % [main.total_stars(), chs.size() * 3], 26, false, true))
+	var stars := UI.rich("[b]%d / %d[/b] stars collected.  Tap a chapter." % [main.total_stars(), chs.size() * 3], 26, false, true)
+	if not main.landscape:   # sideways it sits above the chapter detail instead, to leave the book its height
+		v.add_child(stars)
 	var wrap := Control.new()
 	wrap.custom_minimum_size = Vector2(668, 450)
 	var book_img := "res://assets/rpg/Spellbook.png"
@@ -58,12 +60,26 @@ func show_book() -> void:
 		tabs.add_child(tab)
 	wrap.add_child(tabs)
 	var wc := CenterContainer.new(); wc.add_child(wrap)
-	v.add_child(wc)
+	var side := v
+	var home_at := v
+	if main.landscape:   # held sideways: the book (Home under it) on the left, the chapter detail beside it
+		var cols := UI.hbox(16)
+		cols.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		v.add_child(cols)
+		home_at = UI.vbox(6)
+		home_at.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		home_at.add_child(wc)
+		cols.add_child(home_at)
+		side = UI.vbox(8)
+		side.add_child(stars)
+		cols.add_child(side)
+	else:
+		v.add_child(wc)
 	var detail := UI.box("BGbox_03A", true, Vector4(44, 44, 44, 40))
 	detail.name = "detail"
 	detail.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	v.add_child(detail)
-	v.add_child(UI.button("Home", "05A", main.show_home))
+	side.add_child(detail)
+	home_at.add_child(UI.button("Home", "05A", main.show_home))
 	main.show_screen("book")
 	chapter_detail(book_sel)
 
@@ -199,7 +215,7 @@ func render_lesson() -> void:
 	UI.content(frame).add_child(sc)
 	v.add_child(frame)
 	var zuru := UI.sprite(main.zuru_src("normal"), 84, 91)
-	zuru.position = Vector2(720 - 26 - 44 - 84, 232)
+	zuru.position = Vector2(main.W - 48 - 44 - 84, 198) if main.landscape else Vector2(720 - 26 - 44 - 84, 232)
 	s.add_child(zuru)
 	var nav := UI.hbox(12)
 	v.add_child(nav)
