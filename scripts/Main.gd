@@ -106,7 +106,11 @@ func _ready() -> void:
 	help.setup(self)
 	_load_sfx()
 	_init_tts()
-	show_title()
+	bank_kind = str(Game.settings.get("bank_kind", ""))
+	if Game.settings.get("entered", false):   # been in before: straight to that exam's home (ESC goes to the list)
+		show_home()
+	else:
+		show_title()
 	_check_for_update()
 
 # ---------------------------------------------------------------- updates
@@ -216,10 +220,13 @@ func _select_exam_data(id: String) -> void:
 	SYL = EXAM.get("syllabus", [])
 
 func select_exam(id: String) -> void:
+	var switching := id != exam_id
 	_select_exam_data(id)
+	Game.remember("entered", true)   # next launch opens straight on this exam's home
 	Game.save_game()
-	book.book_tab = 0
-	book.book_sel = 1
+	if switching:   # a different exam starts at its first chapter; the same one keeps your place
+		book.book_tab = 0
+		book.book_sel = 1
 	show_home()
 
 func _build_top_bar() -> void:
@@ -844,7 +851,10 @@ func _ask_restore() -> void:
 	cards.add_child(p)
 
 # ---------------------------------------------------------------- training grounds, records, syllabus
-var bank_kind := ""
+var bank_kind := "":   # the Training Grounds question-type filter, remembered between launches
+	set(v):
+		bank_kind = v
+		Game.remember("bank_kind", v)
 func show_bank() -> void:
 	var v := menu("TRAINING GROUNDS", "BGbox_02B", false)
 	var pin := menu_pinned()

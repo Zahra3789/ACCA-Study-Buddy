@@ -12,6 +12,7 @@
 | Zuru the samurai (`assets/characters/*`, **not in this repository**) | **FREE_Samurai 2D Pixel Art v1.2** (same art as the DojoChef game), cut by `tools/make_zuru.gd` | Free for use in any game, personal or commercial; not to be resold or redistributed as a standalone asset |
 | Moving banner scenery (`assets/scenery/*`, **not in this repository**) | **Tiny Pixel Japan Parallax Background** — LyniaDesign (lyniadesign.itch.io) | Free for any game, commercial or not; may not be resold or redistributed, even modified |
 | Banner props: branches and wood chips (`assets/fx/branch.png`, `wood_chips.png`) | **Ninja Adventure Asset Pack** — Pixel-boy | CC0 1.0 |
+| Banner campfire (`assets/fx/campfire.png`) | **Campfire pixel art animated** — ArlanTR (opengameart.org) | CC0 1.0 |
 | App icon - the open study book (`assets/icon*.png`) | drawn for this project by `tools/make_zuru.gd` | CC0 (original) |
 | Christmas trees, presents, lights (`assets/xmas/*`) | drawn for this project by `tools/make_xmas.ps1` | CC0 (original) |
 | Sound effects `assets/sfx/*.wav` | synthesised for this project by `tools/make_sfx.ps1` | CC0 (original) |

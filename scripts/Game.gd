@@ -150,6 +150,12 @@ func note(kind: String, v = null) -> void:
 	save_game()
 
 # ---------------------------------------------------------------- settings / reset / backup
+# Choices the app should keep between launches (book page, chosen chapter, training filter, opening screen).
+func remember(key: String, value) -> void:
+	if settings.get(key) != value:
+		settings[key] = value
+		save_game()
+
 func save_settings() -> void:
 	save_game()
 

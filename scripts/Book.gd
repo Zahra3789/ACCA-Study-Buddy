@@ -4,12 +4,20 @@ extends Node
 
 const PER_SPREAD := 4
 var main: Node
-var book_tab := 0
-var book_sel := 1
+var book_tab := 0:   # the Chapter Book page and chapter you were on, remembered between launches
+	set(v):
+		book_tab = v
+		Game.remember("book_tab", v)
+var book_sel := 1:
+	set(v):
+		book_sel = v
+		Game.remember("book_sel", v)
 var L: Dictionary = {}   # {chId, li, phase, i}
 
 func setup(m: Node) -> void:
 	main = m
+	book_tab = int(Game.settings.get("book_tab", 0))
+	book_sel = int(Game.settings.get("book_sel", 1))
 
 # ---------------------------------------------------------------- the book
 func show_book() -> void:
