@@ -19,6 +19,9 @@ func _init() -> void:
 		var img := sheet.get_region(Rect2i(BOX.position + Vector2i(int(MOODS[suffix][1]) * FRAME, 0), BOX.size))
 		for variant in ["", "_x", "_h"]:
 			img.save_png(out + "samurai%s%s.png" % [variant, suffix])
+	# Whole animation sheets (96 px frames) for the walking banner on the title and home screens (Journey.gd).
+	for sheet in ["idle", "run", "attack1"]:
+		Image.load_from_file("%s/samurai/%s.png" % [src, sheet]).save_png(out + "zuru_%s.png" % sheet)
 	# App icon: an open pixel study book on teal (not the samurai, so it can't be mistaken for DojoChef).
 	# icon.png is the whole icon; the Android adaptive layers put the book inside the launcher's safe
 	# middle 264 px of 432 on a transparent foreground over a plain teal background.

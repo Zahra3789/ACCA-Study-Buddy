@@ -130,6 +130,13 @@ func _check_for_update() -> void:
 			show_home())
 	http.request(BuildInfo.UPDATE_URL + "/apk.txt?t=%d" % Time.get_unix_time_from_system())
 
+# The moving banner: Zuru journeying on through day and night (Journey.gd), h px tall and full width.
+func journey(h: int) -> Control:
+	var j: Control = preload("res://scripts/Journey.gd").new()
+	j.custom_minimum_size = Vector2(0, h)
+	j.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return j
+
 # "App v2.5 · update 3": the APK's version, then the content update it is running - worked out like
 # Boot.installed_version(), because Boot cached the APK's build_info.gd before any pack was loaded.
 func version_text() -> String:
@@ -516,11 +523,7 @@ func show_title() -> void:
 		left = UI.vbox(10); left.custom_minimum_size.x = 520
 		right = UI.vbox(8); right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		cols.add_child(left); cols.add_child(right)
-	var hero_row := CenterContainer.new()
-	var hero := UI.sprite(zuru_src("normal"), 192, 208)
-	hero.add_to_group("zuru")
-	hero_row.add_child(hero)
-	left.add_child(hero_row)
+	left.add_child(journey(240 if not landscape else 220))
 	var span := 616 if landscape else W   # width the decorations frame Zuru across
 	var dy := (-50 if landscape else 0) + ((64 + (8 if landscape else 14)) if update_info else 0)   # below the update button when shown
 	if festive():
@@ -659,13 +662,8 @@ func show_home() -> void:
 		v = left
 	v.add_child(UI.banner("SAMURAI LEDGER"))
 	_update_button(v)
-	var hero: BoxContainer = UI.vbox(6) if landscape else UI.hbox(12)   # sideways: Zuru above Sensei, not beside
-	var z := UI.sprite(zuru_src("normal"), 108 if landscape else 144, 117 if landscape else 156)
-	z.add_to_group("zuru")
-	z.size_flags_vertical = Control.SIZE_SHRINK_END
-	if landscape:
-		z.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	hero.add_child(z)
+	v.add_child(journey(170 if landscape else 200))
+	var hero := UI.vbox(6)
 	var speech := UI.box("BGbox_04A", true, Vector4(36, 30, 36, 26))
 	speech.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var sv := UI.content(speech)
