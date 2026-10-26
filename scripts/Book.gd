@@ -153,7 +153,7 @@ func chapter_detail(id: int) -> void:
 	info.add_child(sr)
 	head.add_child(info)
 	dv.add_child(head)
-	dv.add_child(UI.rich("[b]Sensei:[/b] " + main.S("chapter_pick", {"monster": c["monster"]}), 22))
+	dv.add_child(UI.typed("[b]Sensei:[/b] " + main.S("chapter_pick", {"monster": c["monster"]}), 22))
 	var path := UI.vbox(8)
 	for i in les.size():
 		var l: Dictionary = les[i]
@@ -232,7 +232,7 @@ func render_lesson() -> void:
 		"example": aside_key = "lesson_example"
 	var aside = main.S(aside_key)
 	if aside != "":
-		var al := UI.rich("[b]Sensei:[/b] " + aside, 22)
+		var al := UI.typed("[b]Sensei:[/b] " + aside, 22)
 		al.add_theme_color_override("default_color", UI.BROWN)
 		box.add_child(al)
 	var pi := 0
@@ -259,7 +259,7 @@ func render_lesson() -> void:
 	match phase:
 		"learn":
 			var p: Dictionary = l["learn"][i]
-			box.add_child(UI.rich(str(p.get("text", "")), 26))
+			box.add_child(UI.typed(str(p.get("text", "")), 26))
 			if p.has("table"):
 				box.add_child(UI.table(p["table"]))
 			box.add_child(UI.label("Page %d of %d" % [i + 1, l["learn"].size()], 20, UI.BROWN))
@@ -283,7 +283,7 @@ func render_lesson() -> void:
 			head.add_theme_stylebox_override("panel", hs)
 			head.add_child(UI.label("🍋 " + str(a.get("title", "Zuru's Lemonade Stand")), 26, UI.GREEN))
 			box.add_child(head)
-			box.add_child(UI.rich(str(p.get("text", "")), 26))
+			box.add_child(UI.typed(str(p.get("text", "")), 26))
 			if p.has("table"):
 				box.add_child(UI.table(p["table"]))
 			box.add_child(UI.label("Scene %d of %d" % [i + 1, a["pages"].size()], 20, UI.BROWN))
@@ -302,7 +302,7 @@ func render_lesson() -> void:
 		"example":
 			var ex: Dictionary = l["example"]
 			box.add_child(UI.rich("[b]%s[/b] - step %d of %d" % [ex["title"], i + 1, ex["steps"].size()], 26))
-			box.add_child(UI.rich(str(ex["steps"][i]), 26))
+			box.add_child(UI.typed(str(ex["steps"][i]), 26))
 			box.add_child(UI.table(ex["table"], i + 1))
 			var n_steps: int = ex["steps"].size()
 			nav.add_child(UI.button("Back", "04A", func():

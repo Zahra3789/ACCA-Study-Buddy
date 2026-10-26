@@ -278,17 +278,20 @@ func draw_toggles() -> void:
 # ---------------------------------------------------------------- Sensei's voice: proper, or East London (cheeky, a bit dark, never cruel)
 # Only Sensei's chatter changes; lessons, questions and explanations stay as written. Mirrors SENSEI in preview/index.html.
 const SENSEI := {
-	"welcome_title": {"proper": "Welcome to the dojo, Zuru.", "east": "Wallahi, you're back. Welcome to the dojo, Zuru - wipe your feet, fam."},
-	"welcome_home": {"proper": "Welcome back, Zuru!", "east": "Oi, Zuru! Back again, innit. Say less - let's go."},
+	# greetings: Somali (Salaam / Asalaamu calaykum, Iska warran, Sidee tahay, Soo dhowow), picked at random
+	"welcome_title": {"proper": ["Welcome to the dojo, Zuru.", "Salaam, Zuru. Welcome to the dojo.", "Asalaamu calaykum, Zuru. Soo dhowow - welcome to the dojo.", "Iska warran, Zuru? Welcome back to the dojo."],
+		"east": ["Salaam, Zuru! Wallahi, you're back. Soo dhowow - wipe your feet, walaal.", "Asalaamu calaykum, walaal. Sidee tahay? The dojo missed you, innit.", "Iska warran, Zuru! Back at the dojo, say less.", "Salaam, walaal. Soo dhowow, Zuru - kettle's on, shaah's brewing."]},
+	"welcome_home": {"proper": ["Welcome back, Zuru!", "Salaam, Zuru! Sidee tahay?", "Asalaamu calaykum, Zuru - ready to study?", "Iska warran, Zuru? Let's get to work."],
+		"east": ["Haye, Zuru! Back again, innit. Say less - let's go.", "Salaam, walaal! Sidee tahay? Let's get these marks.", "Iska warran, Zuru! Ready? Say less.", "Asalaamu calaykum, walaal. Sidee tahay? Let's study."]},
 	"appear": {"proper": "A wild [b]{foe}[/b] appeared! Topic: {topic}.", "east": "Oi oi - [b]{foe}[/b] has rolled up wanting beef about {topic}. Allow it? Nah. Clap it."},
 	"correct": {"proper": ["[b]Correct![/b] Zuru used [b]{move}[/b]! It's super effective!"],
-		"east": ["[b]Wallahi, that's it![/b] [b]{move}[/b] - clean.", "[b]Say less.[/b] {move}! The monster's got bare problems now.", "[b]Mashallah![/b] {move}! The auditor's shook.", "[b]Big up yourself.[/b] {move}. Debit the monster, credit your ego, styll.", "[b]That's calm.[/b] {move}! Nobody got hurt. Well - nobody important."]},
+		"east": ["[b]Wallahi, that's it![/b] [b]{move}[/b] - clean.", "[b]Say less.[/b] {move}! The monster's got bare problems now.", "[b]Mashallah![/b] {move}! The auditor's shook.", "[b]Big up yourself.[/b] {move}. Debit the monster, credit your ego, styll.", "[b]That's calm.[/b] {move}! Nobody got hurt. Well - nobody important.", "[b]Haye, walaal![/b] {move} - clean as anything.", "[b]Hambalyo![/b] {move}! Mashallah, look at you go."]},
 	"wrong": {"proper": ["[b]Wrong.[/b] {foe} blocked it and struck back! The answer was [b]{ans}[/b]."],
-		"east": ["[b]Nah, bruv.[/b] {foe} saw that coming from Whitechapel. It was [b]{ans}[/b].", "[b]Peak.[/b] That answer's gone straight to irrecoverable debts. It was [b]{ans}[/b].", "[b]Wallahi, allow it.[/b] {foe} clapped you right back. It was [b]{ans}[/b].", "[b]That's long.[/b] Still, nobody died - the ledger just cried a bit. It was [b]{ans}[/b].", "[b]Suspense account, that answer.[/b] Unexplained, and about to be cleared: it was [b]{ans}[/b]."]},
-	"won": {"proper": "{foe} fainted! You landed [b]{n} / {total}[/b] hits ([b]{pct}%[/b]).", "east": "Say less - {foe}'s gone home crying to its mum. [b]{n} / {total}[/b] hits ([b]{pct}%[/b])."},
+		"east": ["[b]Nah, bruv.[/b] {foe} saw that coming from Whitechapel. It was [b]{ans}[/b].", "[b]Peak.[/b] That answer's gone straight to irrecoverable debts. It was [b]{ans}[/b].", "[b]Wallahi, allow it.[/b] {foe} clapped you right back. It was [b]{ans}[/b].", "[b]That's long.[/b] Still, nobody died - the ledger just cried a bit. It was [b]{ans}[/b].", "[b]Suspense account, that answer.[/b] Unexplained, and about to be cleared: it was [b]{ans}[/b].", "[b]Waryaa, focus![/b] {foe} caught you slipping. It was [b]{ans}[/b]."]},
+	"won": {"proper": "{foe} fainted! You landed [b]{n} / {total}[/b] hits ([b]{pct}%[/b]).", "east": "Hambalyo! {foe}'s gone home crying to its hooyo. [b]{n} / {total}[/b] hits ([b]{pct}%[/b])."},
 	"lost": {"proper": "{foe} is still standing... [b]{n} / {total}[/b] hits ([b]{pct}%[/b]). Aim for 70% to defeat it.", "east": "{foe}'s still standing - wallahi, the cheek. [b]{n} / {total}[/b] hits ([b]{pct}%[/b]). 70% or it's back to the shoebox, fam."},
 	"session_done": {"proper": "Session complete: [b]{n} / {total}[/b] right ([b]{pct}%[/b]).", "east": "Done, innit: [b]{n} / {total}[/b] right ([b]{pct}%[/b]). The dummy's seen worse. Barely."},
-	"lesson_pass": {"proper": "[b]Lesson passed![/b] ", "east": "[b]Lesson done, you absolute don.[/b] "},
+	"lesson_pass": {"proper": "[b]Lesson passed![/b] ", "east": "[b]Hambalyo - lesson done, you absolute don.[/b] "},
 	"lesson_fail": {"proper": "Not passed yet. Have another look at the lesson, then try again - you need 70%.", "east": "Not yet, fam. Go back through the lesson and come back swinging - 70%, you get me."},
 	"xp": {"proper": "+{xp} XP.  You are [b]Lv {lv}[/b].", "east": "+{xp} XP. [b]Lv {lv}[/b]. Mashallah."},
 	"shrine_hint": {"proper": " Anything you missed is waiting at the Healer's Shrine.", "east": " Whatever you flopped is sulking at the Healer's Shrine."},
@@ -301,11 +304,11 @@ const SENSEI := {
 	"fell": {"proper": "[b]Zuru fell![/b] {foe} wins this time - but {bosses} went down first.", "east": "[b]Zuru's on the deck![/b] {foe} took this one - but {bosses} went down first, so who's the real loser? (Still you. A bit. Allow it.)"},
 	"exam_hint": {"proper": "Pass mark 50%. {timeup}Every wrong answer is now waiting at the Healer's Shrine.", "east": "Pass mark 50%. {timeup}The examiner feeds on tears; the Shrine feeds on your wrong answers. Say less - off you go."},
 	"reset_done": {"proper": "A fresh start, Zuru! All progress has been reset.", "east": "Wiped, wallahi. Like it never happened. Dark, but clean."},
-	"lesson_open": {"proper": ["Let's take it from the top."], "east": ["Right, listen up, fam. From the top.", "Wallahi, this one matters - eyes open.", "Say less, let's get into it."]},
+	"lesson_open": {"proper": ["Let's take it from the top."], "east": ["Right, listen up, fam. From the top.", "Wallahi, this one matters - eyes open.", "Say less, let's get into it.", "Haye walaal - from the top."]},
 	"lesson_page": {"proper": ["", "", "Keep going."], "east": ["Still with me? Good.", "Keep going - you're doing bits.", "This bit comes up in the exam, styll.", "", "Allow the phone, this is the important part."]},
 	"lesson_apply": {"proper": ["Now see it at the lemonade stand."], "east": ["Now watch Zuru do it with lemons, innit.", "Lemonade stand time. Real life, fam.", "Same thing, but with yuzu. You get me."]},
 	"lesson_example": {"proper": ["Watch the numbers build up step by step."], "east": ["Numbers time. Follow the steps - no skipping.", "Watch this. Step by step, no long ting."]},
-	"lesson_turn": {"proper": ["Your turn."], "east": ["Your turn, fam. Don't flop it.", "Right - prove it. Wallahi I believe in you. Mostly.", "Go on then. Make the monster regret turning up."]},
+	"lesson_turn": {"proper": ["Your turn."], "east": ["Your turn, fam. Don't flop it.", "Right - prove it. Wallahi I believe in you. Mostly.", "Go on then, walaal. Make the monster regret turning up."]},
 	"chapter_pick": {"proper": "{monster} guards this chapter. Pick a lesson.", "east": "{monster}'s guarding this one. Pick a lesson and let's clap it."},
 	"mtq_intro": {"proper": "15 marks, part marks for every box. Take your time.", "east": "Section B, fam. 15 marks, part marks for every box. No pressure. Bit of pressure."},
 }
@@ -569,7 +572,7 @@ func show_title() -> void:
 	else:
 		greet += " Which one are we training for today?"
 	var say := UI.box("BGbox_04A", true, Vector4(36, 30, 36, 26))
-	UI.content(say).add_child(UI.rich("[b]Sensei Otter:[/b] " + greet, 24, true, true))
+	UI.content(say).add_child(UI.typed("[b]Sensei Otter:[/b] " + greet, 24, true, true))
 	left.add_child(say)
 	var list := UI.vbox(8)
 	list.add_child(UI.button("Exam dates - set your sitting dates", "03A", planner.show_dates))
@@ -676,7 +679,7 @@ func show_home() -> void:
 	toprow.add_child(UI.button("📓 Notebook", "06A", planner.show_notebook, true, 24))
 	sv.add_child(toprow)
 	var nm := by_keys(Game.mistakes.keys()).size()
-	var say := UI.rich("[b]Sensei Otter:[/b] " + planner.plan_summary() + ((" %d wound%s to heal at the Shrine." % [nm, "" if nm == 1 else "s"]) if nm else ""), 24)
+	var say := UI.typed("[b]Sensei Otter:[/b] " + planner.plan_summary() + ((" %d wound%s to heal at the Shrine." % [nm, "" if nm == 1 else "s"]) if nm else ""), 24)
 	say.name = "homeSay"
 	sv.add_child(say)
 	var rd := readiness()
@@ -777,6 +780,7 @@ func home_say(text: String) -> void:
 	var r: RichTextLabel = screens["home"].find_child("homeSay", true, false)
 	if r:
 		UI.set_rich(r, "[b]Sensei Otter:[/b] " + text, 24)
+		UI.type_in(r)
 
 func _ask_reset() -> void:
 	var cards: GridContainer = screens["home"].find_child("cards", true, false)
