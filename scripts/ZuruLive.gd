@@ -48,10 +48,20 @@ static func frames() -> SpriteFrames:
 	return _frames
 
 # ---------------------------------------------------------------- theme hats
-# Where her head is in each frame of a sheet: the top of her dark hair near the middle of the frame. A theme
-# hat (Santa at Christmas, a witch's hat at Halloween) sits there, so it stays on through every move.
+# Where the hat goes in each frame of a sheet, worked out from her FACE rather than her hair (her ponytail swings):
+# find the top of her hair near the middle, then the topmost row of skin just under it - her forehead. The hat's
+# brim sits 2 px below the forehead top, centred 1 px behind the middle of her face (she faces right), so a theme
+# hat (Santa at Christmas, a witch's hat at Halloween) stays on her head through every move.
+const SKIN := [Color("a8724c"), Color("8f5c3a"), Color("70452a")]   # her skin colours (tools/make_zuru.gd)
 static var _heads := {}
 
+static func _skin(c: Color) -> bool:
+	for s in SKIN:
+		if absf(c.r - s.r) < 0.06 and absf(c.g - s.g) < 0.06 and absf(c.b - s.b) < 0.06:
+			return true
+	return false
+
+# The middle of the hat's brim, in frame pixels.
 static func head(sheet: String, f: int) -> Vector2:
 	if not _heads.has(sheet):
 		var found := []
@@ -62,21 +72,34 @@ static func head(sheet: String, f: int) -> Vector2:
 				im.decompress()
 			im.convert(Image.FORMAT_RGBA8)
 			for fr in im.get_width() / FW:
-				var at := Vector2(101, 43)
+				var ox: int = fr * FW
+				var hair := Vector2i(101, 43)
 				var done := false
 				for y in FH:
-					for x in range(fr * FW + 70, fr * FW + 130):
+					for x in range(ox + 70, ox + 130):
 						var c := im.get_pixel(x, y)
 						if c.a > 0.5 and c.get_luminance() < 0.3:
-							at = Vector2(x - fr * FW, y)
+							hair = Vector2i(x - ox, y)
 							done = true
 							break
 					if done:
 						break
-				found.append(at)
+				var top := -1
+				var sx := 0.0
+				var n := 0
+				for y in range(hair.y, mini(FH, hair.y + 26)):
+					if top >= 0 and y > top + 3:
+						break
+					for x in range(maxi(0, hair.x - 16), mini(FW, hair.x + 16)):
+						if _skin(im.get_pixel(ox + x, y)):
+							if top < 0:
+								top = y
+							sx += x
+							n += 1
+				found.append(Vector2(sx / n - 1.0, top + 2.0) if n else Vector2(hair.x + 1, hair.y + 5))
 		_heads[sheet] = found
 	var list: Array = _heads[sheet]
-	return list[f] if f < list.size() else Vector2(101, 43)
+	return list[f] if f < list.size() else Vector2(101, 48)
 
 # The hat for the theme that is on, or null.
 static func hat_tex() -> Texture2D:
@@ -92,8 +115,7 @@ static func place_hat(hat: Sprite2D, s: AnimatedSprite2D, sheet: String, origin:
 	if t == null:
 		return
 	hat.texture = t
-	var h := head(sheet, s.frame)
-	hat.position = origin + h + Vector2(1, 5 - t.get_height() / 2.0)   # brim just above her eyes
+	hat.position = origin + head(sheet, s.frame) - Vector2(0, t.get_height() / 2.0)   # brim on her forehead
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE

@@ -22,6 +22,13 @@ var remote_version := 0
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	DirAccess.make_dir_recursive_absolute(DIR)
+	# while it checks and downloads, Zuru runs on through the moving banner, the status and progress bar under it
+	if ResourceLoader.exists("res://scripts/Journey.gd"):
+		var sz := get_viewport_rect().size
+		var j: Control = load("res://scripts/Journey.gd").new()
+		j.position = Vector2(0, sz.y / 2.0 - 300.0)
+		j.size = Vector2(sz.x, 240.0)
+		add_child(j)
 	if BuildInfo.UPDATE_URL == "" or DisplayServer.get_name() == "headless" or OS.has_feature("editor"):
 		_start()   # no update server, or running from source / in tests: just play
 		return
@@ -69,10 +76,32 @@ func _on_pack(result: int, code: int, _headers: PackedStringArray, _body: Packed
 
 # Load the newest pack we have (if it's newer than the APK's own content) and play.
 func _start() -> void:
+	var again := Engine.has_meta("sl_game_ran")   # set by Main: we are back here from its "Update ready" bar
 	if FileAccess.file_exists(PACK) and installed_version() > BuildInfo.BUILD:
 		if ProjectSettings.load_resource_pack(PACK, true):
 			_swap_autoloads()
+	if again:
+		_refresh_scripts()
+		var scene = ResourceLoader.load(MAIN_SCENE, "", ResourceLoader.CACHE_MODE_IGNORE)
+		if scene is PackedScene:
+			get_tree().change_scene_to_packed.call_deferred(scene)
+			return
 	get_tree().change_scene_to_file.call_deferred(MAIN_SCENE)
+
+# Mid-session the game's scripts are already cached from the old version, and preload() / load() would hand those
+# back. Read each one afresh from the new pack and let it take over its path, so everything loaded from now on is
+# the new code. Twice, so scripts that preload others pick up the new versions of those too.
+func _refresh_scripts() -> void:
+	var names: PackedStringArray = ResourceLoader.list_directory("res://scripts") if ResourceLoader.has_method("list_directory") else DirAccess.get_files_at("res://scripts")
+	for pass_no in 2:
+		for f in names:
+			f = f.trim_suffix(".remap").trim_suffix(".import")
+			if not f.ends_with(".gd") or f == "Boot.gd":   # not this script: it is the one running
+				continue
+			var path := "res://scripts/" + f
+			var s = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
+			if s is Script:
+				s.take_over_path(path)
 
 # Game, Content and UI started before this scene, from the APK's copies. A CACHE_MODE_IGNORE load re-reads
 # the pack's code into the same Script object (REPLACE keeps the old code - tested on an export), but the
@@ -95,9 +124,9 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
 	var sz := get_viewport_rect().size
 	draw_rect(Rect2(Vector2.ZERO, sz), Color("2a1e2e"))
-	var font := ThemeDB.fallback_font
+	var font: Font = UI.body_font if UI.body_font else ThemeDB.fallback_font
 	var y := sz.y / 2.0
-	draw_string(font, Vector2(0, y - 40), "SAMURAI LEDGER", HORIZONTAL_ALIGNMENT_CENTER, sz.x, 48, Color("f2c14e"))
+	draw_string(font, Vector2(0, y - 10), "SAMURAI LEDGER", HORIZONTAL_ALIGNMENT_CENTER, sz.x, 48, Color("f2c14e"))
 	draw_string(font, Vector2(0, y + 20), status, HORIZONTAL_ALIGNMENT_CENTER, sz.x, 24, Color(1, 1, 1, 0.8))
 	if progress >= 0.0:
 		var w := minf(400.0, sz.x - 80.0)

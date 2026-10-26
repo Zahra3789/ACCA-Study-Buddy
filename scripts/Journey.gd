@@ -42,6 +42,7 @@ static var rock_x := -1.0     # the next rock on the path (path coordinates), -1
 static var next_rock := 6.0   # seconds of running before the next rock rolls in
 static var rock_move := ""    # the move for the coming rock (never the same twice running)
 static var bubble := ""
+static var last_stop := ""  # the last daytime stop, so the next one is different
 
 var speed := 0.0
 var chops := 0
@@ -85,8 +86,10 @@ func _ready() -> void:
 	frames.remove_animation("default")
 	# [name, sheet, frames per second, loops]: run, quick-draw slash (training, dash), big slash (chopping),
 	# use item (sparks that light the fire), relax (calm by the fire), jump (rocks)
+	# + idle (standing in her stance, taking in the view) and walk (a slow stroll)
 	for anim in [["run", "zuru_run", 16.0, true], ["quick", "zuru_quick", 18.0, false], ["slash", "zuru_slash", 32.0, false],
-			["item", "zuru_item", 18.0, false], ["relax", "zuru_relax", 6.0, true], ["jump", "zuru_jump", 24.0, false]]:
+			["item", "zuru_item", 18.0, false], ["relax", "zuru_relax", 6.0, true], ["jump", "zuru_jump", 24.0, false],
+			["idle", "zuru_idle", 8.0, true], ["walk", "zuru_walk", 10.0, true]]:
 		var path := "res://assets/characters/%s.png" % anim[1]
 		if not ResourceLoader.exists(path):
 			continue
@@ -122,10 +125,16 @@ func _on_anim_done() -> void:
 		chops = mini(chops + 1, 3)
 		if chops == 3:
 			bubble = "That'll do."
-	var again := "quick" if state == "train" else ("slash" if _camp_phase() == "chop" else "")
+	# drills mix quick-draws and big slashes; a trick is the item move again; chopping is slash after slash
+	var again := ""
+	match state:
+		"train": again = "slash" if zuru.animation == "quick" else "quick"
+		"trick": again = "item"
+		"camp": again = "slash" if _camp_phase() == "chop" else ""
 	if again != "":
-		get_tree().create_timer(0.2).timeout.connect(func():
-			if is_instance_valid(zuru) and (state == "train" or _camp_phase() == "chop"):
+		var was := state
+		get_tree().create_timer(0.4 if state == "trick" else 0.2).timeout.connect(func():
+			if is_instance_valid(zuru) and state == was and (state != "camp" or _camp_phase() == "chop"):
 				zuru.play(again))
 
 # ---------------------------------------------------------------- what Zuru is doing
@@ -148,7 +157,7 @@ func _camp_phase() -> String:
 func _next_state() -> void:
 	if state != "walk":
 		state = "walk"
-		state_t = rng.randf_range(18.0, 28.0)
+		state_t = rng.randf_range(12.0, 20.0)
 		bubble = ""
 		_play("run")
 		return
@@ -160,10 +169,27 @@ func _next_state() -> void:
 		_puff(camp_x + 4.0 * _k(), _ground())
 		bubble = "Firewood!"
 		_play("run")   # she slows to a stop, then starts chopping
-	else:
-		state = "train"; state_t = 6.0
-		bubble = ["Hyah!", "Again!", "Focus. Strike."][rng.randi() % 3]
-		_play("quick")
+	else:   # by day: a different stop from last time - sword drills, a pause to take in the view, an item trick, a stroll
+		var opts := ["train", "pause", "trick", "stroll"].filter(func(o): return o != last_stop)
+		state = opts[rng.randi() % opts.size()]
+		last_stop = state
+		match state:
+			"train":
+				state_t = 6.0
+				bubble = ["Hyah!", "Again!", "Focus. Strike."][rng.randi() % 3]
+				_play("quick")
+			"pause":
+				state_t = 4.5
+				bubble = ["What a view.", "Breathe in...", "Hmm. Accruals.", "One more chapter."][rng.randi() % 4]
+				_play("idle")
+			"trick":
+				state_t = 4.5
+				bubble = ["Watch this!", "Ta-da!"][rng.randi() % 2]
+				_play("item")
+			"stroll":
+				state_t = 7.0
+				bubble = ""
+				_play("walk")
 
 func _zx() -> float:
 	return size.x * 0.32
@@ -205,8 +231,10 @@ func _process(delta: float) -> void:
 	if state_t <= 0.0:
 		_next_state()
 	var s := _k() * SCALE   # big enough to stand out against the blossom trees
-	var target := STRIDE * s if state == "walk" else 0.0
+	var target := STRIDE * s if state == "walk" else (STRIDE * s * 0.45 if state == "stroll" else 0.0)   # a stroll is under half running pace
 	speed = move_toward(speed, target, delta * STRIDE * s * 2.5)
+	if state == "stroll" and zuru.animation != "walk":
+		_play("walk")
 	if state == "walk" and zuru.animation != "run":
 		_play("run")
 	near += speed * delta
@@ -215,7 +243,7 @@ func _process(delta: float) -> void:
 		next_rock -= delta
 		if rock_x < 0.0 and next_rock <= 0.0 and move_t < 0.0:
 			rock_x = near + size.x + 20.0
-			next_rock = rng.randf_range(6.0, 11.0)
+			next_rock = rng.randf_range(9.0, 15.0)   # rocks now and then - not all jumping
 			var moves := ["jump", "double", "dash"].filter(func(m): return m != rock_move)
 			rock_move = moves[rng.randi() % moves.size()]
 	var k := _k()

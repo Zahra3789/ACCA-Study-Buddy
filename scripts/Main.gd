@@ -72,6 +72,7 @@ var menu_title := ""   # which menu() screen is showing, so Help can explain it
 
 # ---------------------------------------------------------------- setup
 func _ready() -> void:
+	Engine.set_meta("sl_game_ran", true)   # Boot reads this to know an update is being applied mid-session
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	get_tree().quit_on_go_back = false   # Android back / edge swipe steps back instead of closing (_on_back)
 	_apply_orientation(false)
@@ -376,6 +377,7 @@ func _build_overlays() -> void:
 
 func _process(delta: float) -> void:
 	_glide(delta)
+	_live_update_tick(delta)
 	_keyboard_lift(delta)
 	if cur_screen in ["battle", "lesson", "mtq", "exam"]:
 		study_sec += delta
@@ -471,6 +473,79 @@ var _back_ms := -100000
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
 		_on_back()
+	elif what == NOTIFICATION_APPLICATION_RESUMED or what == NOTIFICATION_APPLICATION_FOCUS_IN:
+		_live_t = minf(_live_t, 2.0)   # back in the app: look for an update straight away
+
+# ---------------------------------------------------------------- updates while the app is open
+# Boot.gd fetches content updates when the app starts. While it stays open, this looks again every few minutes
+# (and whenever she comes back to it), downloads a newer pack quietly in the background, then shows a gold bar:
+# tap it and the progress is saved and the app reloads through Boot with the new version - no closing needed.
+const LIVE_EVERY := 300.0
+var _live_t := 30.0
+var _live_http: HTTPRequest
+var _live_ver := 0
+var _live_bar: Control
+
+func _live_update_tick(delta: float) -> void:
+	if BuildInfo.UPDATE_URL == "" or DisplayServer.get_name() == "headless" or OS.has_feature("editor") or _live_bar != null or _live_http != null:
+		return
+	_live_t -= delta
+	if _live_t > 0.0:
+		return
+	_live_t = LIVE_EVERY
+	_live_http = HTTPRequest.new()
+	_live_http.timeout = 10.0
+	add_child(_live_http)
+	_live_http.request_completed.connect(_live_on_version)
+	if _live_http.request(BuildInfo.UPDATE_URL + "/version.txt?t=%d" % Time.get_unix_time_from_system()) != OK:
+		_live_done()
+
+func _live_done() -> void:
+	if _live_http:
+		_live_http.queue_free()
+	_live_http = null
+
+func _live_on_version(result: int, code: int, _h: PackedStringArray, body: PackedByteArray) -> void:
+	if result != HTTPRequest.RESULT_SUCCESS or code != 200:
+		_live_done()
+		return
+	_live_ver = int(body.get_string_from_utf8().strip_edges())
+	if _live_ver <= BuildInfo.BUILD:   # BuildInfo is the running version (Boot loaded the newest pack before this scene)
+		_live_done()
+		return
+	_live_http.request_completed.disconnect(_live_on_version)
+	_live_http.request_completed.connect(_live_on_pack)
+	_live_http.timeout = 0.0
+	_live_http.download_file = "user://update/download.tmp"
+	if _live_http.request(BuildInfo.UPDATE_URL + "/content.pck?v=%d" % _live_ver) != OK:
+		_live_done()
+
+func _live_on_pack(result: int, code: int, _h: PackedStringArray, _b: PackedByteArray) -> void:
+	_live_done()
+	if result != HTTPRequest.RESULT_SUCCESS or code != 200:
+		return
+	DirAccess.remove_absolute("user://update/content.pck")
+	DirAccess.rename_absolute("user://update/download.tmp", "user://update/content.pck")
+	var f := FileAccess.open("user://update/version.txt", FileAccess.WRITE)
+	if f:
+		f.store_string(str(_live_ver))
+		f.close()
+	_live_bar = UI.button("⬇ Update %d ready - tap to update now" % _live_ver, "03A", _live_apply, false, 24)
+	_live_bar.position = Vector2(20, H - 96)
+	_live_bar.size = Vector2(W - 40, 72)
+	_live_bar.z_index = 45
+	add_child(_live_bar)
+	sfx("page")
+
+func _live_apply() -> void:
+	Game.save_game()
+	# Boot loads the new pack and opens the game again. Read afresh, so it is this version's Boot (which knows how to
+	# swap code mid-session), not the copy cached from when the app first started.
+	var boot = ResourceLoader.load("res://Boot.tscn", "", ResourceLoader.CACHE_MODE_IGNORE_DEEP)
+	if boot is PackedScene:
+		get_tree().change_scene_to_packed(boot)
+	else:
+		get_tree().change_scene_to_file("res://Boot.tscn")
 
 func _on_back() -> void:
 	if help.visible or calc.visible:
@@ -650,7 +725,8 @@ func show_title() -> void:
 		if x["grp"] != grp:
 			grp = x["grp"]
 			var gl := UI.label(grp, 30, UI.GOLD, true)
-			gl.add_theme_font_override("font", UI.title_o_font)
+			gl.add_theme_color_override("font_outline_color", Color("2b1d2a"))
+			gl.add_theme_constant_override("outline_size", 6)
 			list.add_child(gl)
 		list.add_child(_exam_row(x))
 	var sc := UI.scroll(list)

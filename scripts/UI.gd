@@ -29,7 +29,7 @@ var _tex_cache: Dictionary = {}
 func _ready() -> void:
 	body_font = _load_font(BODY_FONT, "res://assets/font.ttf")
 	digit_font = _load_font(DIGIT_FONT, BODY_FONT)
-	title_font = _load_font(TITLE_FONT, BODY_FONT)
+	title_font = body_font   # the RPG title font read badly; headings and name tags use the body font (title_o_font stays for battle shouts)
 	title_o_font = _load_font(TITLE_O_FONT, TITLE_FONT)
 	has_pack = ResourceLoader.exists(RPG + "BGbox_01A.png")
 	var th := Theme.new()
@@ -177,7 +177,7 @@ func banner(text: String, name := "BannerMedium_02C", size := 40) -> PanelContai
 		l.add_theme_font_override("font", title_font)
 		l.add_theme_color_override("font_color", DARK)
 	else:   # big title banners: white with a thick dark outline so it stands off the yellow
-		l.add_theme_font_override("font", title_o_font)
+		l.add_theme_font_override("font", body_font)   # clear letters; the thick outline below keeps it standing off the yellow
 		l.add_theme_color_override("font_color", LIGHT)
 		l.add_theme_color_override("font_outline_color", Color("2b1d2a"))
 		l.add_theme_constant_override("outline_size", 8)

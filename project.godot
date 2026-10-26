@@ -11,7 +11,7 @@ config/description="A samurai study game for the ACCA FA exam: battle a monster 
 run/main_scene="res://Boot.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
 config/icon="res://assets/icon.png"
-config/version="2.7"
+config/version="2.8"
 config/quit_on_go_back=false
 
 [audio]
