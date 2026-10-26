@@ -17,6 +17,11 @@ var resizing := false
 var panel: PanelContainer
 var body: BoxContainer
 var grip: Label
+var title_label: Label
+var mini_btn: Button
+var mini := false        # shrunk to a small bar (title, answer, buttons) so the question shows
+var full_size := Vector2(660, 720)
+var keys_grid: GridContainer
 
 func setup(m: Node) -> void:
 	main = m
@@ -26,15 +31,24 @@ func setup(m: Node) -> void:
 	z_index = 41
 	panel = UI.box("BGbox_05A", true, Vector4(40, 40, 40, 36))
 	panel.position = Vector2(30, 58)
-	panel.size = Vector2(660, 780)
+	panel.size = Vector2(660, 720)
 	add_child(panel)
 	var v := UI.content(panel)
 	var title := UI.hbox(8)
-	var tl := UI.title_label("CALCULATOR  (drag me)", 26, UI.RED)
-	tl.mouse_filter = Control.MOUSE_FILTER_STOP
-	tl.gui_input.connect(_title_input)
-	title.add_child(tl)
-	title.add_child(UI.button("Close", "04A", func(): toggle(false), true, 22))
+	title_label = UI.title_label("CALCULATOR  (drag me)", 26, UI.RED)
+	title_label.mouse_filter = Control.MOUSE_FILTER_STOP
+	title_label.autowrap_mode = TextServer.AUTOWRAP_OFF   # one line, even in the small bar
+	title_label.clip_text = true
+	title_label.gui_input.connect(_title_input)
+	title.add_child(title_label)
+	mini_btn = UI.button("_", "03A", func(): set_mini(not mini), false, 24)
+	mini_btn.size_flags_horizontal = Control.SIZE_SHRINK_END
+	mini_btn.custom_minimum_size = Vector2(64, 56)
+	title.add_child(mini_btn)
+	var close := UI.button("Close", "04A", func(): toggle(false), true, 22)
+	close.size_flags_horizontal = Control.SIZE_SHRINK_END
+	close.custom_minimum_size = Vector2(110, 56)
+	title.add_child(close)
 	v.add_child(title)
 	# sum, result and tape stacked above the keys upright; side by side when the phone is sideways
 	body = BoxContainer.new()
@@ -71,8 +85,8 @@ func setup(m: Node) -> void:
 	for k in ["7", "8", "9", "/", "C", "4", "5", "6", "*", "←", "1", "2", "3", "-", "(", "0", ".", "%", "+", ")", "√", "x²", "1/x", "Ans", "=", "M+", "M-", "MR", "Use", "Copy"]:
 		var kk: String = k
 		var code := "03A" if kk == "=" else ("06A" if kk in ["C", "←"] else ("02A" if kk in ["Use", "Copy"] else "05A"))
-		var b := UI.button(kk, code, func(): _key(kk), true, 26)
-		b.custom_minimum_size = Vector2(0, 56)
+		var b := UI.button(kk, code, func(): _key(kk), true, 24)
+		b.custom_minimum_size = Vector2(0, 46)   # small enough that the whole calculator can be sized down
 		keys.add_child(b)
 	body.add_child(keys)
 	grip = UI.label("◢", 40, UI.GOLD)
@@ -91,7 +105,8 @@ func toggle(open: bool) -> void:
 		var f := get_viewport().gui_get_focus_owner()
 		if f is LineEdit and f != expr_edit:
 			target = f
-		expr_edit.grab_focus()
+		if not mini:
+			expr_edit.grab_focus()
 	else:
 		_save_layout()
 
@@ -112,25 +127,47 @@ func _grip_input(e: InputEvent) -> void:
 			_save_layout()
 	elif e is InputEventMouseMotion and resizing:
 		var m := get_global_mouse_position()
-		panel.size = Vector2(clamp(m.x - panel.position.x + 20, 440, main.W - panel.position.x), clamp(m.y - panel.position.y + 20, 600, main.H - panel.position.y))
+		panel.size = Vector2(clamp(m.x - panel.position.x + 20, 400, main.W - panel.position.x), clamp(m.y - panel.position.y + 20, 480, main.H - panel.position.y))
+
+# _ shrinks the calculator to a small bar showing the answer, so the question underneath can be read;
+# ▢ opens it full again. The bar can still be dragged out of the way by its title.
+func set_mini(on: bool) -> void:
+	if on and not mini and not main.landscape:
+		full_size = panel.size
+	mini = on
+	mini_btn.text = "▢" if mini else "_"
+	_title_text()
+	relayout()
+	_save_layout()
+
+func _title_text() -> void:
+	title_label.text = ("CALC  " + result_label.text) if mini else "CALCULATOR  (drag me)"
 
 # After the phone rotates: keys beside the tape when sideways, and keep the panel on screen.
 func relayout() -> void:
 	body.vertical = not main.landscape
-	grip.visible = not main.landscape   # sideways the panel is sized to fit; no room or need to resize it
-	if main.landscape:
+	body.visible = not mini
+	_title_text()
+	grip.visible = not main.landscape and not mini   # sideways the panel is sized to fit; no room or need to resize it
+	if mini:
+		panel.size = Vector2(minf(main.W - 20, 480), 1)   # as short as its contents allow
+	elif main.landscape:
 		panel.size = Vector2(1000, 640)
 		panel.position = Vector2((main.W - 1000) / 2.0, 64)
-	elif panel.size.x > main.W - 20:
-		panel.size = Vector2(660, 780)
-		panel.position = Vector2(30, 58)
+	else:
+		if full_size.x > main.W - 20:
+			full_size = Vector2(660, 720)
+			panel.position = Vector2(30, 58)
+		panel.size = full_size
 	panel.size = Vector2(minf(panel.size.x, main.W - 20), minf(panel.size.y, main.H - 64))
 	panel.position = Vector2(clampf(panel.position.x, 0, main.W - panel.size.x), clampf(panel.position.y, 58, maxf(58, main.H - panel.size.y)))
 
 func _save_layout() -> void:
+	if not mini and not main.landscape:
+		full_size = panel.size
 	var f := FileAccess.open("user://calc_layout.json", FileAccess.WRITE)
 	if f:
-		f.store_string(JSON.stringify({"x": panel.position.x, "y": panel.position.y, "w": panel.size.x, "h": panel.size.y}))
+		f.store_string(JSON.stringify({"x": panel.position.x, "y": panel.position.y, "w": full_size.x, "h": full_size.y, "mini": mini}))
 		f.close()
 
 func _load_layout() -> void:
@@ -142,7 +179,10 @@ func _load_layout() -> void:
 		f.close()
 		if typeof(d) == TYPE_DICTIONARY:
 			panel.position = Vector2(float(d.get("x", 30)), float(d.get("y", 58)))
-			panel.size = Vector2(float(d.get("w", 660)), float(d.get("h", 780)))
+			full_size = Vector2(float(d.get("w", 660)), float(d.get("h", 720)))
+			panel.size = full_size
+			mini = bool(d.get("mini", false))
+			mini_btn.text = "▢" if mini else "_"
 
 func _key(k: String) -> void:
 	match k:
@@ -173,6 +213,8 @@ func _value() -> float:
 func _live() -> void:
 	var v = evaluate(expr_edit.text)
 	result_label.text = ("= " + _fmt(v)) if v != null else ("= ?" if expr_edit.text.strip_edges() != "" else "= 0")
+	if mini:
+		_title_text()
 
 func _equals() -> void:
 	var v = evaluate(expr_edit.text)
