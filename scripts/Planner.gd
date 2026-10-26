@@ -98,7 +98,7 @@ func build_plan():
 func plan_summary() -> String:
 	var B = build_plan()
 	if B == null:
-		return main.S("welcome_home") + " No study plan yet - tap [b]Study plan[/b] to set your start and exam dates."
+		return "No study plan yet - tap [b]Study plan[/b] to set your start and exam dates."
 	if B["over"]:
 		return "Exam day - go and get it, Zuru!"
 	if not B["started"]:

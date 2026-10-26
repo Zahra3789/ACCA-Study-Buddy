@@ -381,6 +381,9 @@ func pages(text: String) -> Array:
 			out.append(cur.strip_edges())
 	return out
 
+# Lines are text, or a Sensei line (main.SL) worked out as it is shown, so it follows the E-LDN button.
+var _line = null   # the line on screen now
+
 func say(list: Array, who: String, sess: Dictionary, extra: Control = null) -> void:
 	for i in list.size():
 		if not valid(sess):
@@ -389,15 +392,27 @@ func say(list: Array, who: String, sess: Dictionary, extra: Control = null) -> v
 		UI.clear(cmds)
 		UI.clear(dlg_extra)
 		more.visible = false
-		await type_text(str(list[i]))
+		_line = list[i]
+		await type_text(_line.call() if _line is Callable else str(_line))
 		if not valid(sess):
 			return
 		if extra != null and i == list.size() - 1:
 			dlg_extra.add_child(extra)
 		more.visible = true
 		await tapped
+	_line = null
 	more.visible = false
 	UI.clear(dlg_extra)
+
+# E-LDN switched mid-battle: Sensei's line on screen is said again the new way.
+func retranslate() -> void:
+	if not (_line is Callable):
+		return
+	skip = true
+	await get_tree().process_frame
+	if _line is Callable:
+		UI.set_rich(dlg_text, _line.call(), 26)
+		dlg_text.visible_characters = -1
 
 func drcr(text: String) -> String:
 	var re := RegEx.new()
@@ -566,7 +581,7 @@ func _grid() -> GridContainer:
 
 # ---------------------------------------------------------------- the battle loop
 func run_battle(sess: Dictionary) -> void:
-	if sess.get("intro", "") != "":
+	if sess.get("intro") is Callable or str(sess.get("intro", "")) != "":
 		await say([sess["intro"]], "BATTLE", sess)
 	while valid(sess) and (sess.get("gauntlet", false) or sess["idx"] < sess["beats"].size()):
 		if sess.get("gauntlet", false):
@@ -616,7 +631,7 @@ func run_battle(sess: Dictionary) -> void:
 			elif sess["mode"] in ["trial", "lesson"] and sess["qTotal"] and float(sess["qTotal"] - sess["correct"]) / sess["qTotal"] <= 0.25:
 				fx.knockdown()
 			_offer_guess(str(b.get("_key", "")))
-			await say([main.S("correct", {"move": MOVES[randi() % MOVES.size()].to_upper()})] + pages(str(b.get("ex", ""))), "CORRECT", sess)
+			await say([main.SL("correct", {"move": MOVES[randi() % MOVES.size()].to_upper()})] + pages(str(b.get("ex", ""))), "CORRECT", sess)
 			guess_btn.visible = false
 			if sess.get("gauntlet", false) and sess["bossHp"] <= 0:
 				sess["idx"] += 1
@@ -632,7 +647,7 @@ func run_battle(sess: Dictionary) -> void:
 			fx.hurt(sess["you"] > 0 and sess["you"] <= maxi(2, int(sess["youMax"] * 0.3)))
 			_anim(you, "hit"); _dmg("-1", Vector2(200, 330))
 			update_bars()
-			await say([main.S("wrong", {"foe": sess["foe"], "ans": main.correct_text(b)})] + pages(str(b.get("ex", ""))), "WRONG", sess)
+			await say([main.SL("wrong", {"foe": sess["foe"], "ans": main.correct_text(b)})] + pages(str(b.get("ex", ""))), "WRONG", sess)
 			if sess.get("gauntlet", false) and sess["you"] <= 0:
 				sess["idx"] += 1
 				await finish_gauntlet(sess, "fell")
@@ -671,7 +686,7 @@ func finish(sess: Dictionary) -> void:
 		fx.voice("lose")
 	var lines := []
 	var vars := {"foe": sess["foe"], "n": sess["correct"], "total": total, "pct": pct}
-	lines.append(main.S(("won" if won else "lost") if not drill else "session_done", vars))
+	lines.append(main.SL(("won" if won else "lost") if not drill else "session_done", vars))
 	if sess["mode"] == "trial":
 		var now = main.stars(pct)
 		if now > before:
@@ -682,10 +697,10 @@ func finish(sess: Dictionary) -> void:
 	if sess["mode"] == "lesson":
 		if won:
 			Game.pass_lesson(key)
-			lines.append(main.S("lesson_pass") + (("Lesson %d is unlocked." % (int(sess["li"]) + 2)) if has_next else ("All lessons done - the Section B boss awaits!" if c.has("mtq") else "All lessons in this chapter done!")))
+			lines.append(main.SL("lesson_pass", {}, ("Lesson %d is unlocked." % (int(sess["li"]) + 2)) if has_next else ("All lessons done - the Section B boss awaits!" if c.has("mtq") else "All lessons in this chapter done!")))
 		else:
-			lines.append(main.S("lesson_fail"))
-	lines.append(main.S("xp", {"xp": sess["correct"] * 10, "lv": Game.level()}) + (main.S("shrine_hint") if (pct < 70 and total) else ""))
+			lines.append(main.SL("lesson_fail"))
+	lines.append(main.SL("xp", {"xp": sess["correct"] * 10, "lv": Game.level()}, "", "shrine_hint" if (pct < 70 and total) else ""))
 	await say(lines, "SENSEI OTTER", sess)
 	if not valid(sess):
 		return
@@ -712,7 +727,7 @@ func finish(sess: Dictionary) -> void:
 func start_chapter(id: int) -> void:
 	var c = main.get_ch(id)
 	var beats: Array = main.shuffled(main.questions(id)).slice(0, 15)
-	start_session({"mode": "trial", "chId": id, "beats": beats, "key": "%s/%d" % [main.exam_id, id], "foe": c["monster"], "foeLv": "Ch %d" % id, "hue": id * 47, "scene": main.SCENES[id % main.SCENES.size()], "intro": main.S("appear", {"foe": c["monster"], "topic": c["title"]})})
+	start_session({"mode": "trial", "chId": id, "beats": beats, "key": "%s/%d" % [main.exam_id, id], "foe": c["monster"], "foeLv": "Ch %d" % id, "hue": id * 47, "scene": main.SCENES[id % main.SCENES.size()], "intro": main.SL("appear", {"foe": c["monster"], "topic": c["title"]})})
 
 func start_lesson_practice(ch_id: int, li: int) -> void:
 	var c = main.get_ch(ch_id)
@@ -720,10 +735,10 @@ func start_lesson_practice(ch_id: int, li: int) -> void:
 	var beats := []
 	for i in l["practice"].size():
 		beats.append(main.tag_lesson(c, l, i))
-	start_session({"mode": "lesson", "chId": ch_id, "li": li, "beats": beats, "key": "%s/%d/%s" % [main.exam_id, ch_id, l["id"]], "foe": c["monster"], "foeLv": "L%d" % (li + 1), "hue": ch_id * 47, "scene": main.SCENES[(ch_id + li) % main.SCENES.size()], "intro": main.S("practice_intro", {"n": li + 1, "title": l["title"], "q": l["practice"].size()})})
+	start_session({"mode": "lesson", "chId": ch_id, "li": li, "beats": beats, "key": "%s/%d/%s" % [main.exam_id, ch_id, l["id"]], "foe": c["monster"], "foeLv": "L%d" % (li + 1), "hue": ch_id * 47, "scene": main.SCENES[(ch_id + li) % main.SCENES.size()], "intro": main.SL("practice_intro", {"n": li + 1, "title": l["title"], "q": l["practice"].size()})})
 
 func start_bank(id: int) -> void:
-	start_session({"mode": "bank", "beats": main.shuffled(main.questions(id, main.bank_kind)), "key": "", "foe": "Training Dummy", "foeLv": "All" if id == -1 else "Ch %d" % id, "hue": 160, "scene": main.AREA_SCENE["bank"], "intro": main.S("training_intro", {"topic": "all topics" if id == -1 else main.get_ch(id)["title"]})})
+	start_session({"mode": "bank", "beats": main.shuffled(main.questions(id, main.bank_kind)), "key": "", "foe": "Training Dummy", "foeLv": "All" if id == -1 else "Ch %d" % id, "hue": 160, "scene": main.AREA_SCENE["bank"], "intro": main.SL("training_intro", {"topic": "all topics" if id == -1 else main.get_ch(id)["title"]})})
 
 # Daily Review: everything due today (questions only - Sensei's Scrolls have their own screen), up to 25.
 func start_review() -> void:
@@ -744,7 +759,7 @@ func _guessed() -> void:
 	guess_btn.disabled = true
 
 func start_mistakes() -> void:
-	start_session({"mode": "mistakes", "beats": main.shuffled(main.by_keys(Game.mistakes.keys())), "key": "", "foe": "Wound Spirit", "foeLv": "Heal", "hue": 260, "scene": main.AREA_SCENE["mistakes"], "intro": main.S("shrine_intro")})
+	start_session({"mode": "mistakes", "beats": main.shuffled(main.by_keys(Game.mistakes.keys())), "key": "", "foe": "Wound Spirit", "foeLv": "Heal", "hue": 260, "scene": main.AREA_SCENE["mistakes"], "intro": main.SL("shrine_intro")})
 
 # ---------------------------------------------------------------- Boss Arena: laps of 32 bosses
 func make_lineup() -> Array:
@@ -809,7 +824,7 @@ func next_boss(sess: Dictionary) -> bool:
 	sess["you"] = min(int(sess["youMax"]), int(sess["you"]) + HEAL)
 	update_bars(); _hud()
 	fx.set_danger(int(sess["you"]) <= maxi(2, int(sess["youMax"] * 0.3)))
-	await say([main.S("boss_down", {"foe": beaten["name"], "n": sess["bossesDown"], "es": "" if sess["bossesDown"] == 1 else "es", "heal": HEAL})], "VICTORY", sess)
+	await say([main.SL("boss_down", {"foe": beaten["name"], "n": sess["bossesDown"], "es": "" if sess["bossesDown"] == 1 else "es", "heal": HEAL})], "VICTORY", sess)
 	if not valid(sess):
 		return true
 	sess["bossNo"] += 1
@@ -834,9 +849,9 @@ func finish_gauntlet(sess: Dictionary, how: String) -> void:
 	Game.note("bosses", n)
 	var bosses := "[b]%d[/b] boss%s" % [n, "" if n == 1 else "es"]
 	var lines := []
-	lines.append(main.S("cleared" if how == "cleared" else ("left" if how == "left" else "fell"), {"bosses": bosses, "laps": (" over %d laps" % int(sess["lap"])) if int(sess["lap"]) > 1 else "", "foe": sess["foe"]}))
+	lines.append(main.SL("cleared" if how == "cleared" else ("left" if how == "left" else "fell"), {"bosses": bosses, "laps": (" over %d laps" % int(sess["lap"])) if int(sess["lap"]) > 1 else "", "foe": sess["foe"]}))
 	lines.append("Answers: [b]%d / %d[/b] right." % [sess["correct"], asked] + ("  [b]New record![/b]" if n > before else (("  Best run: %d." % before) if before else "")))
-	lines.append(main.S("xp", {"xp": sess["correct"] * 10, "lv": Game.level()}) + (main.S("shrine_hint") if sess["correct"] < asked else ""))
+	lines.append(main.SL("xp", {"xp": sess["correct"] * 10, "lv": Game.level()}, "", "shrine_hint" if sess["correct"] < asked else ""))
 	await say(lines, "VICTORY" if how == "cleared" else "SENSEI OTTER", sess)
 	if not valid(sess):
 		return

@@ -336,14 +336,22 @@ func S(key: String, vars: Dictionary = {}) -> String:
 		t = t.replace("{" + k + "}", str(vars[k]))
 	return t
 
+# The same line, worked out only when it is shown - so lines already queued in a battle follow the E-LDN
+# button even if it is switched halfway through. tail is plain text added on; tail_key is another Sensei line.
+func SL(key: String, vars: Dictionary = {}, tail := "", tail_key := "") -> Callable:
+	return func() -> String:
+		return S(key, vars) + tail + (S(tail_key) if tail_key != "" else "")
+
 func toggle_sensei() -> void:
 	Game.settings["sensei"] = "proper" if east() else "east"
 	Game.save_settings()
 	draw_toggles()
-	if cur_screen == "home":
-		show_home()
-	elif cur_screen == "title":
-		show_title()
+	toast("Sensei's gone East London, wallahi." if east() else "Sensei is back to proper.")
+	match cur_screen:   # whatever Sensei is saying right now switches too
+		"home": show_home()
+		"title": show_title()
+		"mtq": mtq.render()
+		"battle": battle.retranslate()
 
 func _build_overlays() -> void:
 	# Christmas: string of lights under the top buttons + snow over everything (drawn in Snow.gd)
@@ -740,7 +748,7 @@ func show_home() -> void:
 	toprow.add_child(UI.button("📓 Notebook", "06A", planner.show_notebook, true, 24))
 	sv.add_child(toprow)
 	var nm := by_keys(Game.mistakes.keys()).size()
-	var say := UI.typed("[b]Sensei Otter:[/b] " + planner.plan_summary() + ((" %d wound%s to heal at the Shrine." % [nm, "" if nm == 1 else "s"]) if nm else ""), 24)
+	var say := UI.typed("[b]Sensei Otter:[/b] " + S("welcome_home") + " " + planner.plan_summary() + ((" %d wound%s to heal at the Shrine." % [nm, "" if nm == 1 else "s"]) if nm else ""), 24)
 	say.name = "homeSay"
 	sv.add_child(say)
 	var rd := readiness()
