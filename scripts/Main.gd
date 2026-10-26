@@ -8,6 +8,7 @@ extends Control
 #   Exam.gd     Exam Hall: CBE-style mocks and full 100-mark mocks
 #   Planner.gd  Study plan, calendar, Notebook, exam dates, key dates
 #   Calc.gd     the calculator overlay
+#   Help.gd     the "?" overlay: what this screen is for and what its buttons do
 # Game.gd (autoload) saves progress; UI.gd (autoload) is the theme; Content.gd (autoload) is the content.
 
 # Logical screen size: 720 x 1280 held upright, 1280 x 720 held sideways (see _apply_orientation).
@@ -64,6 +65,8 @@ var mtq: Node
 var exam: Node
 var planner: Node
 var calc: Node
+var help: Node
+var menu_title := ""   # which menu() screen is showing, so Help can explain it
 
 # ---------------------------------------------------------------- setup
 func _ready() -> void:
@@ -94,9 +97,62 @@ func _ready() -> void:
 	_build_top_bar()
 	add_child(calc)
 	calc.setup(self)
+	help = preload("res://scripts/Help.gd").new()
+	add_child(help)
+	help.setup(self)
 	_load_sfx()
 	_init_tts()
 	show_title()
+	_check_for_update()
+
+# ---------------------------------------------------------------- updates
+# Once per launch: ask GitHub for the latest release. If its tag (v2.5) is newer than this build's
+# application/config/version, title and home show a button that downloads the new APK. Offline: nothing.
+const RELEASES_API := "https://api.github.com/repos/Zahra3789/ACCA-Study-Buddy/releases/latest"
+var update_info: Dictionary = {}
+
+func _check_for_update() -> void:
+	var http := HTTPRequest.new()
+	http.timeout = 15.0
+	add_child(http)
+	http.request_completed.connect(func(result: int, code: int, _headers, body: PackedByteArray):
+		http.queue_free()
+		if result != HTTPRequest.RESULT_SUCCESS or code != 200:
+			return
+		var rel = JSON.parse_string(body.get_string_from_utf8())
+		if typeof(rel) != TYPE_DICTIONARY:
+			return
+		var tag := str(rel.get("tag_name", ""))
+		if not _newer(tag.trim_prefix("v"), str(ProjectSettings.get_setting("application/config/version", "0"))):
+			return
+		var url := str(rel.get("html_url", ""))
+		for a in rel.get("assets", []):
+			if str(a.get("name", "")).ends_with(".apk"):
+				url = str(a.get("browser_download_url", url))
+		update_info = {"tag": tag, "url": url}
+		if cur_screen == "title":
+			show_title()
+		elif cur_screen == "home":
+			show_home())
+	http.request(RELEASES_API, ["User-Agent: ACCA-Study-Buddy", "Accept: application/vnd.github+json"])
+
+# "2.10" is newer than "2.9": compare each dotted part as a number.
+func _newer(latest: String, current: String) -> bool:
+	var a := latest.split(".")
+	var b := current.split(".")
+	for i in maxi(a.size(), b.size()):
+		var x := int(a[i]) if i < a.size() else 0
+		var y := int(b[i]) if i < b.size() else 0
+		if x != y:
+			return x > y
+	return false
+
+func _update_button(v: Control) -> void:
+	if update_info.is_empty():
+		return
+	v.add_child(UI.button("⬇ Update %s ready - tap to download" % update_info["tag"], "03A", func():
+		sfx("tap")
+		OS.shell_open(update_info["url"]), false, 24))
 
 # The phone decides: wider than tall -> 1280 x 720 landscape layouts, otherwise 720 x 1280 portrait.
 func _apply_orientation(rebuild: bool) -> void:
@@ -117,6 +173,7 @@ func relayout() -> void:
 	lights.size = Vector2(W / 3.0, 8)
 	battle.relayout()
 	calc.relayout()
+	help.relayout()
 	match cur_screen:
 		"title": show_title()
 		"home": show_home()
@@ -162,6 +219,10 @@ func _build_top_bar() -> void:
 	sensei_btn = _top_button(row, "E-LDN OFF", "04A", toggle_sensei)
 	_top_button(row, "DATES", "03A", planner.show_key_dates)
 	_top_button(row, "CALC", "06A", func(): calc.toggle(true))
+	var hb := _top_button(row, "?", "03A", func(): sfx("tap"); help.open())
+	hb.size_flags_horizontal = Control.SIZE_FILL
+	hb.custom_minimum_size.x = 56
+	hb.add_theme_font_size_override("font_size", 24)
 	draw_toggles()
 
 var theme_btn: Button
@@ -278,6 +339,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		escape_screen()
 
 func escape_screen() -> void:
+	if help.visible:
+		help.close()
+		return
 	if calc.visible:
 		calc.toggle(false)
 		return
@@ -323,6 +387,7 @@ func column(s: Control, top := 58, side := 26, bottom := 20, sep := 14, bg: Arra
 
 # Menu screen: banner, framed scrolling panel, Home button. Returns the panel's content box.
 func menu(title: String, box_name := "BGbox_01B", dark := false) -> VBoxContainer:
+	menu_title = title
 	var s := screen("menu")
 	var v := column(s, 58, 26, 24, 16, [Color("24314f"), Color("283a5a"), Color("2a1e2e")])
 	v.add_child(UI.banner(title))
@@ -353,6 +418,7 @@ func show_title() -> void:
 	var v := column(s, 58, 26, 24, 14, [Color("141a33"), Color("3b2a52"), Color("2a1e2e")])
 	v.alignment = BoxContainer.ALIGNMENT_BEGIN
 	v.add_child(UI.banner("ACCA STUDY BUDDY"))
+	_update_button(v)
 	# held sideways: Zuru and Sensei on the left, the exam list on the right
 	var left := v
 	var right := v
@@ -369,7 +435,7 @@ func show_title() -> void:
 	hero_row.add_child(hero)
 	left.add_child(hero_row)
 	var span := 616 if landscape else W   # width the decorations frame Zuru across
-	var dy := -50 if landscape else 0
+	var dy := (-50 if landscape else 0) + ((64 + (8 if landscape else 14)) if update_info else 0)   # below the update button when shown
 	if festive():
 		var tp := "res://assets/xmas/tree.png"
 		var gp := "res://assets/xmas/present.png"
@@ -504,6 +570,7 @@ func show_home() -> void:
 		cols.add_child(left); cols.add_child(right)
 		v = left
 	v.add_child(UI.banner("ACCA STUDY BUDDY"))
+	_update_button(v)
 	var hero: BoxContainer = UI.vbox(6) if landscape else UI.hbox(12)   # sideways: Zuru above Sensei, not beside
 	var z := UI.sprite(zuru_src("normal"), 108 if landscape else 144, 117 if landscape else 156)
 	z.add_to_group("zuru")

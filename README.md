@@ -16,7 +16,10 @@ lesson ends in a practice battle, and the mocks are laid out like the real ACCA 
   get wrong, anywhere, until you clear it), **Hall of Records**.
 - **Study Planner** (daily targets packed into the hours you have, re-planned from today, calendar), **Notebook**
   (what you did each day), exam sitting dates with countdowns, a key-dates guide, an in-game calculator, voice
-  (device text-to-speech), sound effects, backup/restore codes, and a festive mode (snow, lights, Santa-hat Zuru).
+  (device text-to-speech), sound effects, backup/restore codes, and Christmas / Halloween themes.
+- **Help** (the ? button) explains the screen you are on and what its buttons do; works upright or sideways.
+- **Update check**: on start the app asks GitHub for the latest release and offers to download a newer APK
+  (`application/config/version` in project.godot must match `version/name` in export_presets.cfg).
 
 ## Run it
 1. Open **Godot 4.x** (4.3 or later; 4.7 works).
@@ -36,7 +39,7 @@ lesson ends in a practice battle, and the mocks are laid out like the real ACCA 
   `Planner.gd` plan / calendar / notebook / dates · `Calc.gd` calculator · `Snow.gd` festive snow.
 - `preview/` — the HTML prototype (`serve.ps1` to run locally on port 8126; `build-standalone.ps1` builds a
   single-file version). `preview/update_syllabus_map.ps1` refreshes the syllabus map from the lessons.
-- `tools/` — `make_zuru.gd` (Zuru + app icon from the samurai pixel pack), generators for the Christmas art and sound
+- `tools/` — `make_zuru.gd` (Zuru from the samurai pixel pack, and draws the study-book app icon), generators for the Christmas art and sound
   effects. `make_samurai.ps1` drew the original Zuru and is kept for reference.
 
 ## Growing it

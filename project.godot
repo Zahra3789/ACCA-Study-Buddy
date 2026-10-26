@@ -11,6 +11,7 @@ config/description="Study ACCA / FIA exams by battling a monster for each topic.
 run/main_scene="res://Main.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
 config/icon="res://assets/icon.png"
+config/version="2.4"
 
 [audio]
 

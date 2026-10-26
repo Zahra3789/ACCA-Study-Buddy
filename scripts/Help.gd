@@ -1,0 +1,88 @@
+extends Control
+# The "?" button: a panel saying what the current screen is for and what each of its buttons does.
+# Picks its page from main.cur_screen, plus the menu title, battle mode, lesson step or mock state.
+
+var main: Node
+var title_label: Label
+var body: RichTextLabel
+var panel: PanelContainer
+
+const TOP_BAR := "\n\n[b]The buttons along the top[/b] (on every screen)\n• [b]ESC[/b] - go back one step (to Home, or from Home to the exam list).\n• [b]VOICE[/b] - your phone reads questions and Sensei's lines aloud.\n• [b]SFX[/b] - sound effects on or off.\n• [b]THEME[/b] - Christmas, then Halloween, then off.\n• [b]E-LDN[/b] - Sensei talks proper, or East London.\n• [b]DATES[/b] - ACCA exam sessions, entry deadlines and results dates.\n• [b]CALC[/b] - a calculator. [b]Use[/b] puts its answer into the answer box you last tapped.\n• [b]?[/b] - this help."
+
+const PAGES := {
+	"title": ["EXAM LIST", "This is the dojo gate. Each card is one ACCA exam.\n\n• Tap [b]Financial Accounting[/b] (▶ ENTER) to study FA.\n• [b]PASSED[/b] exams are done; [b]TO TAKE[/b] exams have no content yet.\n• [b]Exam dates[/b] - set when you sit each exam. The countdown then shows on its card, and the study plan uses it."],
+	"home": ["HOME", "Your base for this exam. Sensei Otter tells you today's targets from your study plan.\n\n• [b]Study plan[/b] - enter your exam date and hours; Sensei splits the chapters across the days.\n• [b]Notebook[/b] - what you did each day.\n• [b]Lv / XP bar[/b] - every right answer is +10 XP.\n• [b]Reset[/b] - wipes ALL progress (asks first).\n• [b]Backup / Restore[/b] - a code that copies your progress to another phone or browser.\n\n[b]The six cards[/b]\n• [b]Chapter Book[/b] - learn each chapter, lesson by lesson. Start here.\n• [b]Boss Arena[/b] - an endless run of chapter bosses. Tests everything.\n• [b]Training Grounds[/b] - practise questions by chapter or question type.\n• [b]Healer's Shrine[/b] - every question you got wrong, until you get it right.\n• [b]Exam Hall[/b] - timed mocks laid out like the real exam.\n• [b]Hall of Records[/b] - your strongest and weakest topics, and the syllabus map."],
+	"book": ["CHAPTER BOOK", "Every chapter of the FA syllabus, guarded by a monster.\n\n• Tap a [b]chapter[/b] on the book's pages to see it on the right.\n• The [b]coloured tabs[/b] on the book's edge turn to more chapters.\n• Tap a [b]Lesson[/b] to study it. Pass a lesson's practice battle (70%) to unlock the next one. A 🔒 lesson is still locked.\n• [b]Stars[/b]: 50% = ★, 70% = ★★, 90% = ★★★.\n• After the last lesson, some chapters have a [b]Section B[/b] 15-mark case."],
+	"lesson_learn": ["LESSON - LEARN", "Read the topic. Sensei explains it in short pages.\n\n• [b]Next[/b] - next page, then on to the next step.\n• [b]Back[/b] - previous page or step.\n• The pills at the top show the steps: [b]Learn → Apply it → Worked example → Your turn[/b]."],
+	"lesson_apply": ["LESSON - APPLY IT", "The same idea at Zuru's Lemonade Stand: one story that grows from a shoebox of receipts to a group, using the same numbers through the chapters.\n\n• [b]Next[/b] / [b]Back[/b] move through it."],
+	"lesson_example": ["LESSON - WORKED EXAMPLE", "Watch the numbers built up step by step, like an exam answer.\n\n• [b]Next[/b] / [b]Back[/b] move through it."],
+	"lesson_turn": ["LESSON - YOUR TURN", "Time to prove it: a short practice battle on this lesson.\n\n• Start the battle and score [b]70%[/b] to pass the lesson and unlock the next one.\n• Anything you get wrong goes to the Healer's Shrine."],
+	"battle": ["BATTLE", "Each right answer hits the monster; each wrong one hits Zuru.\n\n• Tap the [b]dialogue box[/b] (or ▼) to move the story on.\n• [b]A / B / C / D[/b] - tap your answer.\n• [b]Multiple response[/b] - tap every answer you think is right, then [b]Confirm[/b].\n• [b]Number entry[/b] - type the number, then [b]Strike![/b].\n• [b]Pick list[/b] - choose from each drop-down, then [b]Strike![/b].\n• [b]Sort[/b] - put every item in a column, then confirm.\n• [b]Run away[/b] - leave the battle (no score).\n\nScore [b]70%[/b] to defeat the monster. Wrong answers wait at the Healer's Shrine."],
+	"battle_boss": ["BOSS ARENA", "One boss after another, from every chapter.\n\n• Each boss has a few HP; each right answer is a hit.\n• Zuru loses 1 HP per wrong answer and heals a little when a boss falls.\n• Beat the whole lap of bosses to start another lap. How far can you get?\n• [b]Run away[/b] ends the run and records how many bosses you beat."],
+	"battle_drill": ["TRAINING", "Practice with no pressure: answer as many as you like.\n\n• Answer each question the same way as in battles.\n• [b]Finish session[/b] - stop whenever you want and see your score.\n• In the Healer's Shrine, each question you now get right is healed (removed from your list)."],
+	"mtq": ["SECTION B CASE", "A 15-mark case like Section B of the real exam: a scenario, then tasks with part marks for every box.\n\n• [b]Scenario[/b] tab - the story and figures. Read it first.\n• [b]Task[/b] tabs - each task's questions. Fill in every box, then mark it.\n• [b]Start Task[/b] - go to the first task.\n• [b]Chapter Book[/b] - back to the chapters."],
+	"exam": ["MOCK EXAM", "A timed mock laid out like the real ACCA computer exam. No feedback until the end, just like the real thing.\n\n• Answer, then [b]Next ▶[/b]. [b]◀ Prev[/b] goes back.\n• [b]⚐ Flag[/b] - mark a question to come back to.\n• [b]Navigator[/b] - see every question (answered, flagged, empty) and jump to any of them.\n• [b]End exam[/b] - finish and get your mark (asks first). When the clock hits zero it ends by itself.\n• Pass mark is [b]50%[/b]. Wrong answers go to the Healer's Shrine."],
+	"exam_done": ["MOCK RESULT", "Your mark, by section, with every question reviewed: what you gave and the right answer.\n\n• Scroll down to review each question.\n• Wrong answers are now waiting at the Healer's Shrine."],
+	"EXAM HALL": ["EXAM HALL", "Mocks in the real exam format. Original questions, not ACCA papers.\n\n• [b]Full Mock 1-3[/b] - the real thing: 35 Section A questions + two 15-mark Section B cases, 100 marks, 2 hours.\n• [b]Mock 1-5[/b] - Section A only: 35 questions in 84 minutes.\n• [b]Mini mock[/b] - a 15-question warm-up.\n• Your best score shows on each button. Pass mark is 50%."],
+	"TRAINING GROUNDS": ["TRAINING GROUNDS", "Drill questions until they stick.\n\n• The buttons at the top pick a [b]question type[/b] (All, Tap answers, Type-in numbers...).\n• Then tap [b]All topics[/b] or one [b]chapter[/b]. The % is how often you've been right on it."],
+	"HALL OF RECORDS": ["HALL OF RECORDS", "How you're doing, topic by topic.\n\n• [b]Syllabus map[/b] - every ACCA FA learning outcome and whether you've covered it.\n• [b]Drill my weakest topic[/b] - straight into practice on your lowest-scoring chapter.\n• The bars show your accuracy per chapter, weakest first."],
+	"SYLLABUS MAP": ["SYLLABUS MAP", "Every learning outcome in the ACCA FA syllabus, grouped by area (A, B, C...).\n\n• Tap an area to open it.\n• Each outcome shows which chapter teaches it and whether you've studied it yet."],
+	"BOSS ARENA": ["BOSS ARENA", "An endless gauntlet of chapter bosses, mixing every topic so you can't coast.\n\n• [b]Fight![/b] - start a run.\n• Each boss takes a few hits; you have 10 HP and heal a little after each boss.\n• Clear the whole lineup to start another lap."],
+	"STUDY PLAN": ["STUDY PLAN", "Tell Sensei your dates and hours, and he plans every day up to the exam.\n\n• Fill in [b]start date[/b], [b]exam date[/b] (YYYY-MM-DD), and how many [b]hours[/b] you can study on weekdays and weekends.\n• Save it: Home then shows today's targets, and the calendar shows the whole plan.\n• It re-plans from today if you fall behind or get ahead."],
+	"NOTEBOOK": ["NOTEBOOK", "A diary of what you did each day: lessons, battles, mocks and time studied. Filled in automatically."],
+	"EXAM DATES": ["EXAM DATES", "Set the date you'll sit each exam (YYYY-MM-DD).\n\n• The countdown appears on the exam list and Home.\n• The study plan uses your FA date."],
+	"KEY DATES": ["KEY DATES", "How booking works: on-demand exams (BT, MA, FA, LW) can be booked any day; session exams run four times a year, with entry deadlines and results dates shown here."],
+}
+
+func setup(m: Node) -> void:
+	main = m
+	visible = false
+	set_anchors_preset(Control.PRESET_FULL_RECT)
+	z_index = 42
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.55)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.gui_input.connect(func(e: InputEvent):
+		if e is InputEventMouseButton and e.pressed:
+			close())
+	add_child(dim)
+	panel = UI.box("BGbox_04A", true, Vector4(40, 40, 40, 36))
+	add_child(panel)
+	var v := UI.content(panel)
+	title_label = UI.title_label("HELP", 30, UI.RED)
+	v.add_child(title_label)
+	body = UI.rich("", 24, true)
+	var sc := UI.scroll(body)
+	sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	v.add_child(sc)
+	v.add_child(UI.button("Got it", "03A", close, false, 26))
+	relayout()
+
+func relayout() -> void:
+	panel.position = Vector2(20, 64)
+	panel.size = Vector2(main.W - 40, main.H - 84)
+
+func _page() -> Array:
+	match main.cur_screen:
+		"menu":
+			return PAGES.get(main.menu_title, ["HELP", "Scroll the panel to see everything here. [b]Home[/b] takes you back."])
+		"lesson":
+			return PAGES.get("lesson_" + str(main.book.L.get("phase", "learn")), PAGES["lesson_learn"])
+		"battle":
+			var mode := str(main.battle.s.get("mode", ""))
+			if mode == "boss":
+				return PAGES["battle_boss"]
+			return PAGES["battle_drill"] if mode in ["bank", "mistakes"] else PAGES["battle"]
+		"exam":
+			return PAGES["exam_done"] if main.exam.X.get("done", false) else PAGES["exam"]
+	return PAGES.get(main.cur_screen, PAGES["home"])
+
+func open() -> void:
+	var p := _page()
+	title_label.text = "HELP - " + p[0]
+	UI.set_rich(body, p[1] + TOP_BAR, 24)
+	relayout()
+	visible = true
+
+func close() -> void:
+	visible = false
