@@ -234,6 +234,8 @@ func _snapshot(text: String) -> void:
 # Dated auto-saves, newest first ("2026-10-26", ...).
 func snapshots() -> Array:
 	var out := []
+	if not DirAccess.dir_exists_absolute(SNAP_DIR):
+		return out
 	for f in DirAccess.get_files_at(SNAP_DIR):
 		if f.ends_with(".json"):
 			out.append(f.get_basename())

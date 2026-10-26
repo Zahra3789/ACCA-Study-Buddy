@@ -199,7 +199,33 @@ func type_in(r: RichTextLabel) -> RichTextLabel:
 	r.visible_ratio = 0.0
 	var tw := create_tween()
 	tw.tween_property(r, "visible_ratio", 1.0, clampf(n / 70.0, 0.3, 2.5))
+	r.set_meta("typing", tw)
 	return r
+
+# Shows in full any text under root that is still typing. Returns true if there was some (so a tap only skips).
+func finish_typing(root: Node) -> bool:
+	var skipped := false
+	for n in root.find_children("*", "RichTextLabel", true, false):
+		if n.visible_ratio < 1.0:
+			var tw = n.get_meta("typing", null)
+			if tw is Tween and tw.is_valid():
+				tw.kill()
+			n.visible_ratio = 1.0
+			skipped = true
+	return skipped
+
+# Calls on_tap when root is tapped (not swiped), so a page can be tapped through while it still scrolls.
+func on_tap(root: Control, on_tap: Callable) -> void:
+	for n in [root] + root.find_children("*", "Control", true, false):
+		if not (n is BaseButton) and n.mouse_filter == Control.MOUSE_FILTER_STOP:
+			n.mouse_filter = Control.MOUSE_FILTER_PASS
+	root.gui_input.connect(func(e: InputEvent):
+		if e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT:
+			if e.pressed:
+				root.set_meta("tap_at", e.global_position)
+			elif root.has_meta("tap_at") and e.global_position.distance_to(root.get_meta("tap_at")) < 24:
+				root.remove_meta("tap_at")
+				on_tap.call())
 
 func set_rich(r: RichTextLabel, text: String, size := 28, center := false) -> void:
 	r.text = ("[center]" if center else "") + bb(text, size) + ("[/center]" if center else "")

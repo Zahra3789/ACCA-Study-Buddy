@@ -211,10 +211,6 @@ func render_lesson() -> void:
 		pill.add_child(UI.label(ph[1], 22, UI.DARK if ph[0] == L["phase"] else Color("fbe9d0")))
 		steps.add_child(pill)
 	v.add_child(steps)
-	var sp := UI.banner("SENSEI OTTER", "BannerSmall_02C", 24)
-	sp.custom_minimum_size = Vector2(280, 48)
-	sp.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	v.add_child(sp)
 	var frame := UI.box("BGbox_04A", true, Vector4(40, 44, 40, 36))
 	frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var box := UI.vbox(10)
@@ -222,13 +218,13 @@ func render_lesson() -> void:
 	UI.content(frame).add_child(sc)
 	v.add_child(frame)
 	var zuru := UI.sprite(main.zuru_src("normal"), 84, 91)
-	zuru.position = Vector2(main.W - 48 - 44 - 84, 198) if main.landscape else Vector2(main.W - 26 - 44 - 84, 232)
+	zuru.position = Vector2(main.W - 48 - 84, 150) if main.landscape else Vector2(main.W - 26 - 84, 160)   # beside the step pills, clear of the page
 	s.add_child(zuru)
 	var nav := UI.hbox(12)
 	v.add_child(nav)
-	var tl := UI.title_label(l["title"], 30, UI.RED)
+	var tl := UI.title_label(l["title"], 38, UI.RED)
 	box.add_child(tl)
-	box.add_child(UI.label("Syllabus: " + str(l.get("outcome", c["title"])), 20, UI.BROWN))
+	box.add_child(UI.label("Syllabus: " + str(l.get("outcome", c["title"])), 24, UI.BROWN))
 	var phase: String = L["phase"]
 	var i := int(L["i"])
 	# No Sensei lines in lessons - only the lesson text types in, so there is one thing to read.
@@ -253,24 +249,26 @@ func render_lesson() -> void:
 			"apply": last = l["apply"]["pages"].size() - 1
 			"example": last = l["example"]["steps"].size() - 1
 		go.call(pp, last)
+	var on_next := Callable()   # what tapping the page does once its text has finished typing
 	match phase:
 		"learn":
 			var p: Dictionary = l["learn"][i]
-			box.add_child(UI.typed(str(p.get("text", "")), 26))
+			box.add_child(UI.typed(str(p.get("text", "")), 40))
 			if p.has("table"):
 				box.add_child(UI.table(p["table"]))
-			box.add_child(UI.label("Page %d of %d" % [i + 1, l["learn"].size()], 20, UI.BROWN))
+			box.add_child(UI.label("Page %d of %d" % [i + 1, l["learn"].size()], 22, UI.BROWN))
 			var n_learn: int = l["learn"].size()
 			nav.add_child(UI.button("Back", "04A", func():
 				if i > 0:
 					go.call("learn", i - 1)
 				else:
 					prev.call()))
-			nav.add_child(UI.button("Next", "03A", func():
+			on_next = func():
 				if i + 1 < n_learn:
 					go.call("learn", i + 1)
 				else:
-					next.call()))
+					next.call()
+			nav.add_child(UI.button("Next", "03A", on_next))
 			main.speak(str(p.get("text", "")))
 		"apply":
 			var a: Dictionary = l["apply"]
@@ -278,28 +276,29 @@ func render_lesson() -> void:
 			var head := PanelContainer.new()
 			var hs := StyleBoxFlat.new(); hs.bg_color = Color(0.1, 0.5, 0.3, 0.12); hs.border_width_left = 6; hs.border_color = UI.GREEN; hs.set_corner_radius_all(4); hs.content_margin_left = 12; hs.content_margin_right = 12; hs.content_margin_top = 6; hs.content_margin_bottom = 6
 			head.add_theme_stylebox_override("panel", hs)
-			head.add_child(UI.label("🍋 " + str(a.get("title", "Zuru's Lemonade Stand")), 26, UI.GREEN))
+			head.add_child(UI.label("🍋 " + str(a.get("title", "Zuru's Lemonade Stand")), 30, UI.GREEN))
 			box.add_child(head)
-			box.add_child(UI.typed(str(p.get("text", "")), 26))
+			box.add_child(UI.typed(str(p.get("text", "")), 40))
 			if p.has("table"):
 				box.add_child(UI.table(p["table"]))
-			box.add_child(UI.label("Scene %d of %d" % [i + 1, a["pages"].size()], 20, UI.BROWN))
+			box.add_child(UI.label("Scene %d of %d" % [i + 1, a["pages"].size()], 22, UI.BROWN))
 			var n_pages: int = a["pages"].size()
 			nav.add_child(UI.button("Back", "04A", func():
 				if i > 0:
 					go.call("apply", i - 1)
 				else:
 					prev.call()))
-			nav.add_child(UI.button("Next", "03A", func():
+			on_next = func():
 				if i + 1 < n_pages:
 					go.call("apply", i + 1)
 				else:
-					next.call()))
+					next.call()
+			nav.add_child(UI.button("Next", "03A", on_next))
 			main.speak(str(p.get("text", "")))
 		"example":
 			var ex: Dictionary = l["example"]
-			box.add_child(UI.rich("[b]%s[/b] - step %d of %d" % [ex["title"], i + 1, ex["steps"].size()], 26))
-			box.add_child(UI.typed(str(ex["steps"][i]), 26))
+			box.add_child(UI.rich("[b]%s[/b] - step %d of %d" % [ex["title"], i + 1, ex["steps"].size()], 34))
+			box.add_child(UI.typed(str(ex["steps"][i]), 40))
 			box.add_child(UI.table(ex["table"], i + 1))
 			var n_steps: int = ex["steps"].size()
 			nav.add_child(UI.button("Back", "04A", func():
@@ -307,11 +306,12 @@ func render_lesson() -> void:
 					go.call("example", i - 1)
 				else:
 					prev.call()))
-			nav.add_child(UI.button("Next step" if i + 1 < n_steps else "Next", "03A", func():
+			on_next = func():
 				if i + 1 < n_steps:
 					go.call("example", i + 1)
 				else:
-					next.call()))
+					next.call()
+			nav.add_child(UI.button("Next step" if i + 1 < n_steps else "Next", "03A", on_next))
 			main.speak(str(ex["steps"][i]))
 		_:
 			var kinds := []
@@ -320,8 +320,12 @@ func render_lesson() -> void:
 				if not kinds.has(hint):
 					kinds.append(hint)
 			var tail := (" and unlock Lesson %d." % (int(L["li"]) + 2)) if int(L["li"]) + 1 < c["lessons"].size() else (" and face the Section B boss." if c.has("mtq") else " and finish the chapter.")
-			box.add_child(UI.rich("Time to test it! [b]%d exam-style questions[/b] (%s).\n\nScore [b]70%% or more[/b] to pass%s\n\nYou get Sensei's explanation after every answer." % [l["practice"].size(), ", ".join(kinds), tail], 26))
+			box.add_child(UI.rich("Time to test it! [b]%d exam-style questions[/b] (%s).\n\nScore [b]70%% or more[/b] to pass%s\n\nYou get Sensei's explanation after every answer." % [l["practice"].size(), ", ".join(kinds), tail], 38))
 			nav.add_child(UI.button("Read again", "04A", func(): go.call("learn", 0)))
 			var ch := int(L["chId"]); var li := int(L["li"])
 			nav.add_child(UI.button("Start battle!", "06A", func(): main.battle.start_lesson_practice(ch, li)))
+	# Tap the page: the first tap shows the rest of the text at once, the next tap turns the page.
+	UI.on_tap(frame, func():
+		if not UI.finish_typing(box) and on_next.is_valid():
+			on_next.call())
 	main.show_screen("lesson")
