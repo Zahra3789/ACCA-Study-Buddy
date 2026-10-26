@@ -43,3 +43,8 @@ body.xmas .mwrap > .mhat.s, body.halloween .mwrap > .mhat.w { display: block; }
 .plate { padding: 40px 50px 34px !important; }
 .plate .nm .title { font-size: 26px !important; line-height: 1.1 !important; }
 #dlg { padding: 46px 50px 40px !important; }
+/* laptops and sideways tablets (body.wide, set by fit in patch.js): fill the browser, content in a centred column */
+#deco { width: 100% !important; }
+body.wide #screen { width: 100% !important; }
+body.wide .screen, body.wide #topBar { padding-left: max(26px, calc((100% - 1360px) / 2)) !important; padding-right: max(26px, calc((100% - 1360px) / 2)) !important; }
+body.wide #journey { width: 1360px !important; left: 50% !important; transform: translateX(-50%); }

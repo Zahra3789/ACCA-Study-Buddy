@@ -5,6 +5,16 @@
 // spider (CC0); the hats and holly were drawn for the game. This block replaces the drawn-shapes banner, the still
 // samurai pictures and the theme trimmings; the questions, lessons and everything else above are unchanged.
 (function () {
+// ---------------------------------------------------------------- any screen size
+// A phone (portrait) keeps the 720 x 1280 layout. A laptop or tablet held sideways gets a wider stage: the game fills the
+// browser, the content sits in a centred column up to 1360 wide and the backgrounds run edge to edge.
+const WIDE_COL = 1360;
+const stageW = () => { const ar = innerWidth / Math.max(1, innerHeight - 24); return ar > 0.85 ? Math.max(720, Math.min(Math.round(1280 * ar), 2600)) : 720; };
+if (stageW() > 900) $('journey').width = WIDE_COL;   // the moving banner is drawn at the column's width (before it is set up below)
+removeEventListener('resize', fit);
+fit = function () { const W = stageW(), st = $('stage'); st.style.width = W + 'px'; document.body.classList.toggle('wide', W > 900);
+  const s = Math.min(innerWidth / W, (innerHeight - 24) / 1280); stageScale = s; st.style.transform = `translate(-50%, calc(-50% - 12px)) scale(${s})`; };
+addEventListener('resize', () => fit()); fit();
 const ZFW = 200, ZFH = 112, ZFEET = 96, ZBODY = 66;
 // [sheet, frames per second, loops]
 const ZS = { idle: ['zuru_idle', 8, true], quick: ['zuru_quick', 18, false], slash: ['zuru_slash', 26, false], item: ['zuru_item', 16, false],
@@ -244,13 +254,13 @@ function web(g, cx, cy, dx, dy, r) { g.strokeStyle = 'rgba(237,237,247,.55)'; g.
   for (let s = 0; s < 6; s++) { const a = Math.PI / 2 * s / 5, d = [Math.cos(a) * dx, Math.sin(a) * dy]; ends.push(d); g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + d[0] * r, cy + d[1] * r); g.stroke(); }
   for (const ring of [0.3, 0.52, 0.74, 0.95]) for (let s = 0; s < 5; s++) { const p1 = [cx + ends[s][0] * r * ring, cy + ends[s][1] * r * ring], p2 = [cx + ends[s + 1][0] * r * ring, cy + ends[s + 1][1] * r * ring];
     const mx = (p1[0] + p2[0]) / 2, my = (p1[1] + p2[1]) / 2; g.beginPath(); g.moveTo(p1[0], p1[1]); g.lineTo(mx + (cx - mx) * 0.12, my + (cy - my) * 0.12); g.lineTo(p2[0], p2[1]); g.stroke(); } }
-function drawDeco(now) { const th = theme(), g = deco.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, 720, 1280); deco.style.display = th ? 'block' : 'none'; if (!th) return;
+function drawDeco(now) { const th = theme(), g = deco.getContext('2d'); g.imageSmoothingEnabled = false; if (deco.width !== $('screen').clientWidth) deco.width = $('screen').clientWidth; const DW = deco.width; g.clearRect(0, 0, DW, 1280); deco.style.display = th ? 'block' : 'none'; if (!th) return;
   if (th === 'xmas') { let x = 6, i = 0;
-    while (x < 720) { const r = ((Math.sin(i * 12.9898) * 43758.5453) % 1 + 1) % 1, w = 8 + r * 6, h = 10 + r * 22;
+    while (x < DW) { const r = ((Math.sin(i * 12.9898) * 43758.5453) % 1 + 1) % 1, w = 8 + r * 6, h = 10 + r * 22;
       g.fillStyle = 'rgba(224,242,255,.85)'; g.beginPath(); g.moveTo(x, TOP); g.lineTo(x + w, TOP); g.lineTo(x + w / 2, TOP + h); g.fill(); x += w + 10 + r * 18; i++; }
-    const ho = JI('../assets/xmas/holly.png'); if (ready(ho)) { const w = ho.naturalWidth * 3, h = ho.naturalHeight * 3; g.drawImage(ho, 4, TOP + 2, w, h); g.drawImage(ho, 720 - 4 - w, TOP + 2, w, h); }
+    const ho = JI('../assets/xmas/holly.png'); if (ready(ho)) { const w = ho.naturalWidth * 3, h = ho.naturalHeight * 3; g.drawImage(ho, 4, TOP + 2, w, h); g.drawImage(ho, DW - 4 - w, TOP + 2, w, h); }
     g.fillStyle = 'rgba(245,250,255,.92)'; for (const [cx, d] of [[-6, 1], [726, -1]]) { g.beginPath(); g.arc(cx, 1294, 52, 0, 6.3); g.fill(); g.beginPath(); g.arc(cx + 40 * d, 1302, 34, 0, 6.3); g.fill(); } }
-  else { web(g, 0, TOP, 1, 1, 120); web(g, 720, TOP, -1, 1, 120); web(g, 0, 1280, 1, -1, 110); web(g, 720, 1280, -1, -1, 110);
+  else { web(g, 0, TOP, 1, 1, 120); web(g, DW, TOP, -1, 1, 120); web(g, 0, 1280, 1, -1, 110); web(g, DW, 1280, -1, -1, 110);
     const sp = JI('../assets/fx/spider.png'); if (ready(sp)) { const x = 56, y = TOP + 70 + Math.sin(now * 1.3) * 12; g.strokeStyle = 'rgba(235,235,242,.7)'; g.lineWidth = 2;
       g.beginPath(); g.moveTo(x, TOP + 30); g.lineTo(x, y - 18); g.stroke(); g.drawImage(sp, 0, (Math.floor(now * 4) % 4) * 16, 16, 16, x - 24, y - 24, 48, 48); } } }
 const props = [];
