@@ -161,7 +161,6 @@ func chapter_detail(id: int) -> void:
 	info.add_child(sr)
 	head.add_child(info)
 	dv.add_child(head)
-	dv.add_child(UI.typed("[b]Sensei:[/b] " + main.S("chapter_pick", {"monster": c["monster"]}), 22))
 	var path := UI.vbox(8)
 	for i in les.size():
 		var l: Dictionary = les[i]
@@ -232,17 +231,7 @@ func render_lesson() -> void:
 	box.add_child(UI.label("Syllabus: " + str(l.get("outcome", c["title"])), 20, UI.BROWN))
 	var phase: String = L["phase"]
 	var i := int(L["i"])
-	# Sensei's aside for this page (random; sometimes none mid-lesson). The lesson text itself never changes.
-	var aside_key := "lesson_turn"
-	match phase:
-		"learn": aside_key = "lesson_open" if i == 0 else "lesson_page"
-		"apply": aside_key = "lesson_apply"
-		"example": aside_key = "lesson_example"
-	var aside = main.S(aside_key)
-	if aside != "":
-		var al := UI.typed("[b]Sensei:[/b] " + aside, 22)
-		al.add_theme_color_override("default_color", UI.BROWN)
-		box.add_child(al)
+	# No Sensei lines in lessons - only the lesson text types in, so there is one thing to read.
 	var pi := 0
 	for k in phases.size():
 		if phases[k][0] == phase:
