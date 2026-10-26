@@ -266,14 +266,25 @@ scene = function (c) { const th = theme();   // a snowy night field with Christm
 // A right answer: Sisi dashes across and cuts (a big slash on a combo). A wrong one: the monster pounces on her.
 // Now and then a one-liner pops up: Sisi bragging, the monster yelping, taunting, or begging when it's down.
 Object.assign(SENSEI, {
-  quip_win: { proper: ['Too easy!', 'Slay.', 'Ate and left no crumbs.', 'Debit: you. Credit: the floor.', 'Main character energy.', 'Understood the assignment.', 'Next!'],
+  quip_win: { proper: ['Too easy!', 'Ate and left no crumbs.', 'Debit: you. Credit: the floor.', 'Main character energy.', 'Understood the assignment.', 'Next!'],
     east: ['Light work, wallahi.', 'Sit DOWN, walaal.', 'Debit you, credit the floor, innit.', "You're not ready, sxb.", 'Mashallah to ME, honestly.', 'Bring your cousin next time.', 'Easy. Hooyo could do that one.', "Haye! Who's next?"] },
   quip_hurt: { proper: ['Ouch! My margins!', 'Not the variances!', 'Lowkey that hurt.', 'My reserves!'],
     east: ['Ay! HOOYOOO!', 'Wallahi that hurt!', 'Ow, ow, OW, walaal!', "I'm telling my aabo!", "Waa maxay?! That's not fair!"] },
   quip_taunt: { proper: ['Is that all?', "It's giving... wrong.", 'Not the vibe, bestie.', "Your budget doesn't even balance!", 'Ha! Back to the revision notes!', 'Flop era.'],
-    east: ['Ceeb! Your hooyo saw that.', 'Nacas! Who taught you, TikTok?', 'That was embarrassing, wallahi.', "Allow it, you're getting cooked.", 'Even my ayeeyo knows that one!', 'Ha! Back to dugsi with you!', 'Doqon! Sit down.'] },
+    east: ['Ceeb! Your hooyo saw that.', 'Nacas! Who taught you, TikTok?', 'That was embarrassing, wallahi.', "Allow it, you're getting cooked.", 'Even my ayeeyo knows that one!', 'Ha! Back to dugsi with you!', 'Ukun! Sit down.'] },
   quip_low: { proper: ['Wait! Can we talk about this?', 'I yield! Respectfully!', 'Please... not the audit!'],
     east: ["Wait wait, walaal, we're cousins!", "Allow it! I've got kids!", "I'll pay you in xalwo, I swear!", "Waan ka xumahay! I'm sorry!"] } });
+// The big pop-up and name tag after an answer: not CORRECT / WRONG (green or red says that) but a quick daft word.
+Object.assign(SENSEI, {
+  shout_right: { proper: ['NICE!', 'ATE THAT!', 'BIG BRAIN!', 'SHEESH!', 'CLEAN!', 'BIG W!', 'HAYE!'],
+    east: ['WALLAHI!', 'MASHALLAH!', 'HAYE!', 'LIGHT WORK!', 'PENG!', 'SAY LESS!', 'HAMBALYO!', 'SUBHANALLAH!'] },
+  shout_wrong: { proper: ['OOF!', 'NOPE!', 'FLOP!', 'YIKES!', 'NOT IT!', 'L!', 'CEEB!'],
+    east: ['CEEB!', 'NACAS!', 'WARYAA!', 'ALLOW IT!', 'PEAK!', 'UKUN!', 'BRUV...'] } });
+let shout = '';
+verdict = function (ok) { const v = $('verdict'); shout = S(ok ? 'shout_right' : 'shout_wrong'); v.textContent = shout; v.className = ok ? 'good' : 'bad';
+  clearTimeout(v._t); v._t = setTimeout(() => v.className = 'hidden', 1600); };
+const _speaker = speaker;
+speaker = function (name, style) { _speaker(name, style); if ((name === 'CORRECT' || name === 'WRONG') && shout) $('speaker').textContent = shout; };
 // Boss Arena names: daft ones (with a few Somali names mixed in); with E-LDN on, Somali characters.
 const BOSS_NAMES = {
   proper: ['Karen', 'Your Situationship', "Man Who Says 'No Cap' Unironically", 'Love Island Reject', 'Group Chat Admin', 'The Guy From Hinge', 'Influencer With 300 Followers',
@@ -283,6 +294,20 @@ const BOSS_NAMES = {
     'Deeqa From The Wedding Committee', "Hooyo's Friend Who Asks When You're Getting Married", 'Abshir The Uber Driver', "Warsame Who Does 'Business'", 'Xaliimo The Gossip',
     'Macalin From Dugsi', 'The Uncle Who Calls Everyone Doctor', 'Guled The Unemployed Philosopher', 'Your Cousin From Minnesota', "Ali Who's 'Basically A Lawyer'",
     'Sahra And Her Five Sisters', "The Shaah That's Far Too Sweet", 'Cousin Who Snitched To Hooyo'] };
+// Siham's extras: TikTok brainrot and the Ash Trevino vs Bri fights, mixed into the lines above.
+const more = (k, mode, lines) => SENSEI[k][mode].push(...lines);
+more('quip_win', 'proper', ['+1000 aura.', 'Let her cook!', 'Sigma accountant behaviour.', 'You just mogged that question.', 'W rizz on the ledger.']);
+more('quip_win', 'east', ['+1000 aura, wallahi.', 'Let her cook, walaal!']);
+more('quip_taunt', 'proper', ['-1000 aura.', "That answer is giving Ohio.", 'NPC behaviour.', 'Bro is COOKED.', 'That was messier than an Ash and Bri fight.', 'Delulu is not the solulu.']);
+more('quip_taunt', 'east', ['Ash and Bri argue better than you answer, walaal.', "-1000 aura, ceeb!"]);
+more('quip_hurt', 'proper', ['Fanum taxed my margins!', 'My aura!', "That's lowkey violating."]);
+more('quip_low', 'proper', ["Okay okay, you've got rizz!", "Please, I'm just an NPC!"]);
+more('shout_right', 'proper', ['+1000 AURA!', 'SIGMA!', 'COOKED IT!']);
+more('shout_right', 'east', ['+1000 AURA!']);
+more('shout_wrong', 'proper', ['-1000 AURA!', 'OHIO!', 'COOKED!', 'NPC!']);
+more('shout_wrong', 'east', ['-1000 AURA!']);
+BOSS_NAMES.proper.push('Ash Trevino (Mid-Rant)', 'Bri, Round 7', 'Skibidi Toilet Auditor', 'The Fanum Tax Collector', 'Sigma Grindset CFO', 'Ohio Final Boss', 'Mewing Accountant', 'Delulu Debtor');
+BOSS_NAMES.east.push('Ash And Bri, Arguing Again', 'The Fanum Tax Collector');
 const _makeLineup = makeLineup;
 makeLineup = function () { const out = _makeLineup(), east = settings.sensei === 'east', names = shuffle([...BOSS_NAMES[east ? 'east' : 'proper']]); let i = 0;
   for (const b of out) b.name = b.lv === 'SHOGUN' ? (east ? 'Hooyo, Final Boss' : "Karen's Final Form") : names[i++ % names.length];

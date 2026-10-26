@@ -318,13 +318,17 @@ func update_bars() -> void:
 
 func _speaker(name: String) -> void:
 	var l: Label = speaker.get_meta("label")
-	l.text = name
+	l.text = _shout if (name in ["CORRECT", "WRONG"] and _shout != "") else name   # the same daft word as the pop-up
 	var style := "BannerSmall_02C"
 	speaker.add_theme_stylebox_override("panel", UI.banner_style(style))
 	l.add_theme_color_override("font_color", UI.GREEN if name == "CORRECT" else (UI.RED if name == "WRONG" else UI.DARK))
 
+var _shout := ""   # the word on the last verdict pop-up, repeated on the name tag
+
 func _verdict(ok: bool) -> void:
-	verdict_label.text = "CORRECT!" if ok else "WRONG"
+	# not "CORRECT"/"WRONG" (the green or red says that): a quick daft word instead
+	_shout = main.S("shout_right" if ok else "shout_wrong")
+	verdict_label.text = _shout
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.1, 0.5, 0.3, 0.92) if ok else Color(0.7, 0.12, 0.25, 0.92)
 	sb.set_corner_radius_all(12); sb.set_border_width_all(6); sb.border_color = Color("2b1d2a")
