@@ -3,7 +3,7 @@
 
 extends RefCounted
 
-const BUILD := 16
+const BUILD := 17
 # Updates live on the rolling "live" release: version.txt + content.pck (content updates, no reinstall),
 # apk.txt + ACCA_Study_Buddy.apk (only when the app itself must change: icon, name, permissions, engine).
 const UPDATE_URL := "https://github.com/Zahra3789/ACCA-Study-Buddy/releases/download/live"
