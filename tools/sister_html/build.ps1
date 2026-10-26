@@ -30,6 +30,10 @@ $head = Must $head '<canvas id="journey" width="720" height="150"' '<canvas id="
 $app = [regex]::Replace($app, "welcome_title: \{ proper: \[[^\]]*\]", "welcome_title: { proper: ['Welcome to the dojo, Zuru.', 'Welcome back to the dojo, Zuru.', 'Good to see you, Zuru. Welcome to the dojo.', 'Zuru! The dojo has been waiting for you.']")
 $app = [regex]::Replace($app, "welcome_home: \{ proper: \[[^\]]*\]", "welcome_home: { proper: ['Welcome back, Zuru!', 'Good to see you, Zuru - ready to study?', `"Hello again, Zuru. Let's get to work.`", 'Welcome back, Zuru. One chapter at a time.']")
 if (-not $app.Contains("Hello again, Zuru")) { throw "greetings not replaced" }
+# --- no Sensei line on the chapter page (as in the app): it took a row of the panel and pushed the lessons over it
+$before = $app.Length
+$app = [regex]::Replace($app, '(<div class="stars">\$\{st\}</div></div>`)\s*\+ `<div class="senseiLine"[^\n]*', '$1;')
+if ($app.Length -eq $before) { throw "chapter Sensei line not removed" }
 # --- the character is Sisi in this version (names only; asset file names are lower case and untouched)
 $head = $head -creplace 'Zuru', 'Sisi' -creplace 'ZURU', 'SISI'
 $exams = $exams -creplace 'Zuru', 'Sisi' -creplace 'ZURU', 'SISI'
