@@ -12,6 +12,7 @@ run/main_scene="res://Boot.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
 config/icon="res://assets/icon.png"
 config/version="2.6"
+config/quit_on_go_back=false
 
 [audio]
 

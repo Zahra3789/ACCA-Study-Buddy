@@ -74,6 +74,7 @@ var menu_title := ""   # which menu() screen is showing, so Help can explain it
 # ---------------------------------------------------------------- setup
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	get_tree().quit_on_go_back = false   # Android back / edge swipe steps back instead of closing (_on_back)
 	_apply_orientation(false)
 	get_tree().root.size_changed.connect(func(): _apply_orientation(true))
 	exam_id = Game.exam_id
@@ -445,6 +446,52 @@ func _glide(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
 		escape_screen()
+
+# ---------------------------------------------------------------- Android back (Samsung edge swipe)
+# Godot's default closes the app on "back"; instead it steps back like ESC. Mid-battle, lesson or case it asks
+# for a second swipe so a stray edge swipe never throws you out; a running mock ignores it (use End exam);
+# on the exam list a second swipe closes the app.
+var _back_ms := -100000
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		_on_back()
+
+func _on_back() -> void:
+	if help.visible or calc.visible:
+		escape_screen()
+		return
+	if cur_screen == "exam" and not exam.X.get("done", true):
+		toast("Mock in progress - use End exam when you're finished.")
+		return
+	var twice := cur_screen in ["battle", "lesson", "mtq", "title"]
+	if twice and Time.get_ticks_msec() - _back_ms > 2000:
+		_back_ms = Time.get_ticks_msec()
+		toast("Swipe back again to close the app" if cur_screen == "title" else "Swipe back again to leave")
+		return
+	_back_ms = -100000
+	if cur_screen == "title":
+		get_tree().quit()
+	else:
+		escape_screen()
+
+# A short message that fades out near the bottom of the screen.
+func toast(text: String) -> void:
+	var p := PanelContainer.new()
+	var sb := StyleBoxFlat.new(); sb.bg_color = Color(0.17, 0.11, 0.16, 0.92); sb.set_corner_radius_all(14)
+	sb.content_margin_left = 22; sb.content_margin_right = 22; sb.content_margin_top = 12; sb.content_margin_bottom = 12
+	p.add_theme_stylebox_override("panel", sb)
+	p.add_child(UI.label(text, 22, UI.LIGHT, true))
+	p.z_index = 50
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(p)
+	p.reset_size()
+	p.size.x = minf(W - 60.0, maxf(p.size.x, 300.0))
+	p.position = Vector2((W - p.size.x) / 2.0, H - 150.0)
+	var tw := create_tween()
+	tw.tween_interval(1.6)
+	tw.tween_property(p, "modulate:a", 0.0, 0.4)
+	tw.tween_callback(p.queue_free)
 
 func escape_screen() -> void:
 	if help.visible:
