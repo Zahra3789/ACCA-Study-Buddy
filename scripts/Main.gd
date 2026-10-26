@@ -146,6 +146,16 @@ func journey(h: int) -> Control:
 	j.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	return j
 
+# The banner edge to edge across the top of screen s (under the top buttons), before the page column is added
+# so it sits behind it. Returns its height: taller on tall phones, slimmer when held sideways.
+func journey_top(s: Control) -> int:
+	var h := 230 if landscape else int(clampf(H * 0.26, 300.0, 440.0))
+	var j := journey(h)
+	j.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	j.offset_bottom = h
+	s.add_child(j)
+	return h
+
 # "App v2.5 · update 3": the APK's version, then the content update it is running - worked out like
 # Boot.installed_version(), because Boot cached the APK's build_info.gd before any pack was loaded.
 func version_text() -> String:
@@ -570,7 +580,8 @@ func text_for(v: Control, s: String, size := 28) -> RichTextLabel:
 # ---------------------------------------------------------------- title (exam picker)
 func show_title() -> void:
 	var s := screen("title")
-	var v := column(s, 58, 26, 24, 14, [Color("141a33"), Color("3b2a52"), Color("2a1e2e")])
+	var jh := journey_top(s)   # the moving banner runs edge to edge across the top; the title sits on its lower edge
+	var v := column(s, jh - 46, 26, 24, 14, [Color("141a33"), Color("3b2a52"), Color("2a1e2e")])
 	v.alignment = BoxContainer.ALIGNMENT_BEGIN
 	v.add_child(UI.banner("SAMURAI LEDGER"))
 	_update_button(v)
@@ -584,7 +595,6 @@ func show_title() -> void:
 		left = UI.vbox(10); left.custom_minimum_size.x = 520
 		right = UI.vbox(8); right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		cols.add_child(left); cols.add_child(right)
-	left.add_child(journey(240 if not landscape else 220))
 	var span := 616 if landscape else W   # width the decorations frame Zuru across
 	var dy := (-50 if landscape else 0) + ((64 + (8 if landscape else 14)) if update_info else 0)   # below the update button when shown
 	if festive():
@@ -711,7 +721,8 @@ func _exam_row(x: Dictionary) -> Control:
 # ---------------------------------------------------------------- home
 func show_home() -> void:
 	var s := screen("home")
-	var v := column(s, 58, 26, 14, 10, [Color("3b2a52"), Color("5a3a6e"), Color("2a1e2e")])
+	var jh := journey_top(s)   # the moving banner runs edge to edge across the top; the title sits on its lower edge
+	var v := column(s, jh - 46, 26, 14, 10, [Color("3b2a52"), Color("5a3a6e"), Color("2a1e2e")])
 	var right := v
 	if landscape:   # held sideways: banner, Zuru and Sensei on the left, the area cards on the right
 		var cols := UI.hbox(20)
@@ -723,7 +734,6 @@ func show_home() -> void:
 		v = left
 	v.add_child(UI.banner("SAMURAI LEDGER"))
 	_update_button(v)
-	v.add_child(journey(170 if landscape else 200))
 	var hero := UI.vbox(6)
 	var speech := UI.box("BGbox_04A", true, Vector4(36, 30, 36, 26))
 	speech.size_flags_horizontal = Control.SIZE_EXPAND_FILL

@@ -1,7 +1,8 @@
 extends Control
 # The moving banner on the title and home screens: Zuru runs on while LyniaDesign's Tiny Pixel Japan scenery
 # scrolls past in parallax layers (sky, clouds, Fuji, hills, blossoms, house, pagoda, trees, path, grass),
-# tinted through dawn, day, sunset and night. Rocks come along the path and he jumps them. Every so often he
+# tinted through dawn, day, sunset and night. Rocks come along the path and he takes each one with a move: a
+# double jump with a spin, a dash that slices through it, or a front flip. Every so often he
 # stops: in the evening and at night he sets a log on a stump, chops it into a woodpile, lights a campfire and
 # sits by it until it burns down; by day he practises sword strikes. Every step plays out in order (dust and
 # smoke puffs, things growing in) rather than popping in and out.
@@ -35,11 +36,15 @@ static var camp_x := 0.0      # where the campsite is (path coordinates); it scr
 static var camp_on := false
 static var rock_x := -1.0     # the next rock on the path (path coordinates), -1 = none
 static var next_rock := 6.0   # seconds of running before the next rock rolls in
+static var rock_move := ""    # the move for the coming rock (never the same twice running)
 static var bubble := ""
 
 var speed := 0.0
 var chops := 0
-var jump_t := -1.0            # seconds into a jump, -1 = on the ground
+var move := ""               # the move he is doing over a rock: double / dash / flip
+var move_t := -1.0           # seconds into it, -1 = running normally
+var jumped_twice := false
+var smash := []              # [path x, time] of the last rock he sliced, for the cut effect
 var puffs := []               # [x, y, born] smoke puffs, path coordinates
 var zuru: AnimatedSprite2D
 var front: Node2D
@@ -59,12 +64,13 @@ func _ready() -> void:
 		var p := "res://assets/scenery/%s.png" % l[0]
 		if ResourceLoader.exists(p):
 			tex[l[0]] = load(p)
-	for f in ["stump", "log", "log_pile", "rock", "smoke", "embers", "wood_chips", "slash_curved", "campfire"]:
+	for f in ["stump", "log", "log_pile", "rock", "smoke", "embers", "wood_chips", "slash_curved", "cutx", "campfire"]:
 		var p := "res://assets/fx/%s.png" % f
 		if ResourceLoader.exists(p):
 			tex[f] = load(p)
 	zuru = AnimatedSprite2D.new()
 	zuru.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	zuru.offset = Vector2(0, -16)   # the frame is centred on his head; pivot spins and flips round his middle instead
 	var frames := SpriteFrames.new()
 	frames.remove_animation("default")
 	for anim in [["run", "zuru_run", 16.0], ["attack", "zuru_attack1", 13.0], ["sit", "zuru_idle", 6.0]]:
@@ -155,6 +161,12 @@ func _ground() -> float:
 func _puff(x: float, y: float) -> void:
 	puffs.append([x, y, Time.get_ticks_msec() / 1000.0])
 
+func _end_move() -> void:
+	move = ""; move_t = -1.0; jumped_twice = false
+	zuru.rotation = 0.0
+	if state == "walk":
+		_play("run")
+
 func _process(delta: float) -> void:
 	if not is_visible_in_tree():
 		return
@@ -182,28 +194,57 @@ func _process(delta: float) -> void:
 	if state == "walk" and zuru.animation != "run":
 		_play("run")
 	near += speed * delta
-	# rocks roll in from the right while he runs; he jumps each one
+	# rocks roll in from the right while he runs; for each one he does a move - never the same twice running
 	if state == "walk":
 		next_rock -= delta
-		if rock_x < 0.0 and next_rock <= 0.0:
+		if rock_x < 0.0 and next_rock <= 0.0 and move_t < 0.0:
 			rock_x = near + size.x + 20.0
 			next_rock = rng.randf_range(6.0, 11.0)
+			var moves := ["double", "dash", "flip"].filter(func(m): return m != rock_move)
+			rock_move = moves[rng.randi() % moves.size()]
+	var k := _k()
 	if rock_x >= 0.0:
 		var rx := rock_x - near
-		if jump_t < 0.0 and rx < _zx() + 34.0 * _k() and rx > _zx() - 10.0:
-			jump_t = 0.0
-		if rx < -40.0:
+		var reach: float = {"double": 44.0, "flip": 40.0, "dash": 100.0}.get(rock_move, 40.0) * k
+		if move_t < 0.0 and rx < _zx() + reach and rx > _zx() - 10.0 and state == "walk":
+			move = rock_move; move_t = 0.0
+			if move == "dash":
+				_play("attack")
+				_puff(near + _zx() - 20.0 * k, _ground())
+		if move == "dash" and move_t >= 0.0 and rx < _zx() + 16.0 * k:   # the blade goes through it: it shatters
+			_puff(rock_x, _ground())
+			smash = [rock_x, Time.get_ticks_msec() / 1000.0]
+			rock_x = -1.0
+		elif rx < -40.0:
 			rock_x = -1.0
 	var lift := 0.0
-	if jump_t >= 0.0:
-		jump_t += delta
-		var p := jump_t / 0.55
-		lift = sin(clampf(p, 0.0, 1.0) * PI) * 30.0 * _k()
-		if p >= 1.0:
-			jump_t = -1.0
+	var spin := 0.0
+	if move_t >= 0.0:
+		move_t += delta
+		match move:
+			"double":   # a hop, then a higher second jump off the air with a spin
+				if move_t < 0.3:
+					lift = sin(move_t / 0.4 * PI) * 20.0 * k
+				else:
+					var p := clampf((move_t - 0.3) / 0.6, 0.0, 1.0)
+					if not jumped_twice:
+						jumped_twice = true
+						_puff(near + _zx(), _ground() - sin(0.75 * PI) * 20.0 * k)
+					lift = sin(0.75 * PI) * 20.0 * k * (1.0 - p) + sin(p * PI) * 30.0 * k
+					spin = p * TAU
+					if p >= 1.0: _end_move()
+			"flip":   # one big leap with a full somersault
+				var p := clampf(move_t / 0.7, 0.0, 1.0)
+				lift = sin(p * PI) * 32.0 * k
+				spin = p * TAU
+				if p >= 1.0: _end_move()
+			"dash":   # a burst of speed with after-images, slicing through the rock
+				near += STRIDE * s * 2.4 * delta
+				if move_t > 0.45: _end_move()
 	var seated := 13.0 * _k() if (phase == "sit") else 0.0   # no sitting frames in the pack: he kneels low, legs behind the grass
 	zuru.scale = Vector2(s, s)
-	zuru.position = Vector2(_zx(), _ground() - 32.0 * s - lift + seated)
+	zuru.rotation = spin
+	zuru.position = Vector2(_zx(), _ground() - 16.0 * s - lift + seated)   # feet on the path (the pivot is his middle)
 	zuru.modulate = _tint().lerp(Color.WHITE, 0.35)   # lit a little more than the scenery so he stays readable
 	if camp_on and camp_x - near < -200.0:
 		camp_on = false   # the campsite has scrolled off the left edge
@@ -265,6 +306,12 @@ func _draw() -> void:
 		_campsite(camp_x - near)
 	if rock_x >= 0.0:
 		_prop("rock", rock_x - near, _k() * 1.6)
+	if move == "dash" and move_t >= 0.0 and zuru.sprite_frames:   # after-images trailing the dash
+		var ft: Texture2D = zuru.sprite_frames.get_frame_texture(zuru.animation, zuru.frame)
+		var fs := FRAME * zuru.scale.x
+		for i in range(3, 0, -1):
+			var gx := zuru.position.x - i * 26.0 * _k()
+			draw_texture_rect(ft, Rect2(gx - fs / 2.0, zuru.position.y + zuru.offset.y * zuru.scale.y - fs / 2.0, fs, fs), false, Color(0.6, 0.8, 1.0, 0.45 - i * 0.12))
 
 # stump with a log on it, the woodpile filling up, and the fire - each grown in, in order
 func _campsite(x: float) -> void:
@@ -320,6 +367,8 @@ func _draw_front() -> void:
 			puffs.erase(pf)
 			continue
 		_frame(front, "smoke", int(age / 0.5 * 6.0), Rect2(pf[0] - near - 18.0 * k, pf[1] - 30.0 * k, 36.0 * k, 36.0 * k), _tint())
+	if not smash.is_empty() and now - float(smash[1]) < 0.3:   # the cut flashing through the sliced rock
+		_frame(front, "cutx", int((now - float(smash[1])) / 0.3 * 4.0), Rect2(float(smash[0]) - near - 22.0 * k, g - 40.0 * k, 44.0 * k, 44.0 * k))
 	var gt: Texture2D = tex.get(FRONT[0])
 	if gt:
 		var w := 353.0 * k
