@@ -251,7 +251,7 @@ func plan_form(v: VBoxContainer) -> void:
 	v.add_child(UI.button("Save plan", "06A", func():
 		var st: String = inputs["start"].text.strip_edges(); var ex: String = inputs["exam"].text.strip_edges()
 		if not valid_date(st) or not valid_date(ex) or unix(ex) <= unix(st):
-			main.speak("The exam date must be after the start date, in the form year, month, day.", true)
+			main.toast("The exam date must be after the start date (YYYY-MM-DD).")
 			return
 		Game.plan = {"start": st, "exam": ex, "wd": max(0.5, float(inputs["wd"].text)), "we": max(0.5, float(inputs["we"].text)), "mocks": clamp(int(inputs["mocks"].text), 0, 3)}
 		Game.save_game()

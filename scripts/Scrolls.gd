@@ -74,7 +74,6 @@ func _render() -> void:
 	v.add_child(front)
 	if not S["shown"]:
 		v.add_child(UI.button("Reveal", "06A", func(): S["shown"] = true; main.sfx("page"); _render(), true, 28))
-		main.speak(str(c["f"]))
 		return
 	var back := UI.box("BGbox_04A", true, Vector4(36, 32, 36, 30))   # same light card as the front, so the answer reads clearly
 	UI.content(back).add_child(UI.typed(str(c["b"]), 26, true))
@@ -83,7 +82,6 @@ func _render() -> void:
 	row.add_child(UI.button("Not yet", "02A", func(): _mark(idx, false), true, 26))
 	row.add_child(UI.button("Got it", "03A", func(): _mark(idx, true), false, 26))
 	v.add_child(row)
-	main.speak(str(c["b"]))
 
 func _mark(idx: int, ok: bool) -> void:
 	Game.review(key(idx), ok)

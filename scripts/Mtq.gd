@@ -123,7 +123,6 @@ func render() -> void:
 	else:
 		nav.add_child(UI.button("Chapter Book", "04A", func(): main.book.open_chapter(int(M["chId"]))))
 	main.show_screen("mtq")
-	main.speak(str(box.get_child(0).get_meta("base", "")) if box.get_child_count() else "")
 
 func _ok(t: Dictionary, key: String) -> bool:
 	var given = main.norm(M["ans"].get(key, ""))

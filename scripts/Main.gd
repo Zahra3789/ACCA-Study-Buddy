@@ -52,14 +52,12 @@ var stage: Control
 var screens: Dictionary = {}
 var cur_screen := ""
 var top_bar: Control
-var voice_btn: Button
 var sfx_btn: Button
 var snow: Node2D
 var lights: TextureRect
 var sfx_player: AudioStreamPlayer
 var sfx_streams: Dictionary = {}
 var study_sec := 0.0
-var tts_voice := ""
 
 var book: Node
 var battle: Node
@@ -106,7 +104,6 @@ func _ready() -> void:
 	add_child(help)
 	help.setup(self)
 	_load_sfx()
-	_init_tts()
 	bank_kind = str(Game.settings.get("bank_kind", ""))
 	if Game.settings.get("entered", false):   # been in before: straight to that exam's home (ESC goes to the list)
 		show_home()
@@ -252,7 +249,6 @@ func _build_top_bar() -> void:
 	row.add_theme_constant_override("separation", 10)
 	top_bar.add_child(row)
 	_top_button(row, "ESC", "04A", escape_screen)
-	voice_btn = _top_button(row, "VOICE OFF", "05A", toggle_voice)
 	sfx_btn = _top_button(row, "SFX ON", "02A", toggle_sfx)
 	theme_btn = _top_button(row, "THEME OFF", "01A", toggle_theme)
 	sensei_btn = _top_button(row, "E-LDN OFF", "04A", toggle_sensei)
@@ -279,7 +275,6 @@ func _top_button(row: HBoxContainer, text: String, code: String, fn: Callable) -
 	return b
 
 func draw_toggles() -> void:
-	voice_btn.text = "VOICE ON" if Game.settings.get("voice", false) else "VOICE OFF"
 	sfx_btn.text = "SFX ON" if Game.settings.get("sfx", true) else "SFX OFF"
 	var t := theme()   # icon when a theme is on (tree / pumpkin), the word THEME when off
 	var ip := "res://assets/xmas/%s.png" % ("tree" if t == "xmas" else "pumpkin")
@@ -345,7 +340,6 @@ func toggle_sensei() -> void:
 	Game.settings["sensei"] = "proper" if east() else "east"
 	Game.save_settings()
 	draw_toggles()
-	speak("Alright fam? Sensei's gone East London. Wallahi." if east() else "Sensei is back to proper.", true)
 	if cur_screen == "home":
 		show_home()
 	elif cur_screen == "title":
@@ -1233,41 +1227,6 @@ func q_text(b: Dictionary) -> String:
 	return "Complete the sentence below using the drop-down lists." if b["type"] == "picklist" else str(b["q"])
 
 # ---------------------------------------------------------------- voice, sound, festive
-func _init_tts() -> void:
-	tts_voice = ""
-	if DisplayServer.has_feature(DisplayServer.FEATURE_TEXT_TO_SPEECH):
-		var vs := DisplayServer.tts_get_voices_for_language("en")
-		if vs.size():
-			tts_voice = vs[0]
-			for vid in vs:
-				var lower := str(vid).to_lower()
-				if lower.contains("gb") or lower.contains("en-gb") or lower.contains("uk"):
-					tts_voice = vid
-					break
-
-func speak(text: String, force := false) -> void:
-	if not (Game.settings.get("voice", false) or force):
-		return
-	if tts_voice == "":
-		return
-	var t := UI.plain(text).strip_edges()
-	if t == "":
-		return
-	DisplayServer.tts_stop()
-	DisplayServer.tts_speak(t, tts_voice)
-
-func toggle_voice() -> void:
-	Game.settings["voice"] = not Game.settings.get("voice", false)
-	Game.save_settings()
-	draw_toggles()
-	if Game.settings["voice"]:
-		if tts_voice == "":
-			voice_btn.text = "NO VOICE"
-		else:
-			speak("Voice on.", true)
-	else:
-		DisplayServer.tts_stop()
-
 func _load_sfx() -> void:
 	sfx_player = AudioStreamPlayer.new()
 	sfx_player.max_polyphony = 4

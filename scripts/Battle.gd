@@ -349,9 +349,7 @@ func _dmg(text: String, pos: Vector2) -> void:
 	tw.tween_callback(l.queue_free)
 
 # ---------------------------------------------------------------- dialogue
-func type_text(text: String, say := true) -> void:
-	if say:
-		main.speak(text)
+func type_text(text: String) -> void:
 	UI.set_rich(dlg_text, text, 26)
 	typing = true
 	skip = false
@@ -415,7 +413,7 @@ func ask(b: Dictionary, sess: Dictionary) -> Dictionary:
 	UI.clear(cmds)
 	var head := ("[i]%s[/i]\n" % b["_topic"]) if (sess["mode"] not in ["trial", "lesson"] and b.has("_topic")) else ""
 	var hint = {"multi": "Multiple response", "picklist": "Pick list", "sort": "Sort", "input": "Number entry", "choice": "Multiple choice"}[b["type"]]
-	await type_text(head + main.q_text(b) + "\n[i]%s - 2 marks[/i]" % hint, false)
+	await type_text(head + main.q_text(b) + "\n[i]%s - 2 marks[/i]" % hint)
 	if not valid(sess):
 		return {"quit": true}
 	_answer = {}
@@ -553,10 +551,6 @@ func ask(b: Dictionary, sess: Dictionary) -> Dictionary:
 	cmds.add_child(UI.button("Finish session" if drill else "Run away", "04A", func():
 		_answer = {"quit": true}
 		answered.emit()))
-	var spoken = main.q_text(b)
-	if b["type"] in ["choice", "multi"]:
-		spoken += ". " + ". ".join(b["opts"].map(func(o): return str(o)))
-	main.speak(spoken)
 	await answered
 	if not valid(sess):
 		return {"quit": true}

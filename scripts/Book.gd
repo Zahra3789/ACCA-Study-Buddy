@@ -277,7 +277,6 @@ func render_lesson() -> void:
 				else:
 					next.call()
 			nav.add_child(UI.button("Next", "03A", on_next))
-			main.speak(str(p.get("text", "")))
 		"apply":
 			var a: Dictionary = l["apply"]
 			var p: Dictionary = a["pages"][i]
@@ -302,7 +301,6 @@ func render_lesson() -> void:
 				else:
 					next.call()
 			nav.add_child(UI.button("Next", "03A", on_next))
-			main.speak(str(p.get("text", "")))
 		"example":
 			var ex: Dictionary = l["example"]
 			box.add_child(UI.rich("[b]%s[/b] - step %d of %d" % [ex["title"], i + 1, ex["steps"].size()], 34))
@@ -320,7 +318,6 @@ func render_lesson() -> void:
 				else:
 					next.call()
 			nav.add_child(UI.button("Next step" if i + 1 < n_steps else "Next", "03A", on_next))
-			main.speak(str(ex["steps"][i]))
 		_:
 			var kinds := []
 			for q in l["practice"]:
