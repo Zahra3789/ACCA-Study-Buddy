@@ -1,0 +1,32 @@
+FA/FFA chapters - syllabus references per chapter (chapters in the usual study-text order).
+Used to set the "ch" chapter(s) for each outcome in the syllabus map. Exam-context notes in brackets.
+
+1  Introduction to accounting ............ A1(a) A1(b) A1(c) A1(d) A1(e) A2(a) A3(a) A3(b) A5(a) A5(b)  [entity types, users, element definitions]
+2  The regulatory framework .............. A4(a) A4(b)  [knowledge: role of each body]
+3  Qualitative characteristics ........... A3(a) A3(b) B1(a) B2(a)  [what makes information relevant; elements]
+4  Financial transactions & acc systems .. C1(a) C1(b) C1(d) C1(e) C1(f) C2(a) C2(b) D1(a) D1(b) D2(a) D2(b)  [transactions, documents, purpose of systems]
+5  Ledger accounts and double entry ...... C1(f) C2(a) C2(b) C2(c) C2(e) D1(a) D1(b) D2(a)  [double entry; MTQ: pick Dr/Cr accounts and amount]
+6  From TB to financial statements ....... F1(a) F1(b) F1(c) F1(d) C1(c)  [missing figures via accounting equation; drawings entry; SOFP vs SOPL]
+7  Inventory ............................. D3(a)-(g)  [cost vs NRV; opening/closing inventory adjustments; calculations]
+8  Tangible non-current assets ........... D4(a)-(j) D5(a)-(g) G3(b)(i)  [depreciation, asset values at cost and revalued, cost components; can be Section B]
+9  Intangible non-current assets ......... D6(a)-(f) G3(b)(i)  [tangible vs intangible, research vs development criteria, amortisation]
+10 Accruals and prepayments .............. D7(a)-(f)  [SOFP accrual/prepayment, SOPL expense, journals; income and expenses]
+11 Provisions and contingencies .......... D9(a)-(f)  [provision vs contingent liability; calculate a provision]
+12 Irrecoverable debts and allowances .... D8(a)-(k)  [write-offs, recoveries, allowance movement; SOPL/SOFP amounts; can be Section B]
+13 Sales tax ............................. D1(c) D1(d)  [journals incl. sales tax; sales tax in cost of non-current assets]
+14 Trade receivables and trade payables .. E2(a)-(e) D1(b) D1(e) D1(f) D8(j) D8(k)  [returns, contras, discounts; reconcile supplier statements]
+15 Bank reconciliations .................. E1(a)-(f)  [adjust in ledger vs reconciliation; derive bank statement / ledger balance]
+16 Correction of errors .................. C2(d) F2(a)-(d) F3(a)-(d)  [which errors explain a difference; correcting journals; effect on profit]
+17 Incomplete records .................... G6(a)  [missing sales, closing inventory, drawings; margin / mark-up; control accounts]
+19 Introduction to company accounting .... D10(a)-(k) A1(c) A1(d)  [share issues, bonus and rights issues, dividends, finance costs + journals; sole trader vs company]
+20 Preparation of FS for companies ...... G1(b) G2(a)-(e) G3(a) G3(b)(i)-(iv) D10(k) D4(i) D5(e)  + IFRS 15 revenue (transfer of control)  [SECTION B: company SOPL/OCI, SOFP, SOCE, disclosure notes; tax incl. under/over-provision]
+21 Events after the reporting period .... G4(a)-(c)  [classify adjusting vs non-adjusting from a list; treatment]
+22 Statement of cash flows ............... G5(a)-(g)  [what goes in / stays out; cash generated from operations; cash paid for PPE; SECTION B could require a full SOCF; direct and indirect methods]
+23 Intro to consolidated FS ............. H1(a) H1(b) H2(a)-(c)  [subsidiary vs associate vs trade investment; treatment in group FS; parent's own FS: investment at cost, dividend income]
+24 Consolidated SOFP .................... H1(a)(v) H1(c)(i)-(v) H1(d)  [SECTION B: CSOFP extracts; goodwill with NCI at FV; FV adjustments; intra-group balances; URP; mid-year acquisition]
+25 Consolidated SOPL .................... H1(e)(i)-(iii)  [SECTION B: CSOPL with intra-group trading, URP (adjust NCI if sub is seller), mid-year acquisition pro-rating]
+26 Interpretation of FS .................. I1(a) I1(b) I2(a) I2(b) I3(a) I3(b)  [calculate ratios; explain differences between years/companies; purpose and limitations; Section A or B]
+   Ratio definitions used: GP margin = GP/Revenue; Operating margin = PBIT/Revenue; ROCE = PBIT/(Total equity + NCL); ROE = (Profit - pref divs)/Total equity;
+   Current = CA/CL; Quick = (CA - Inventories)/CL; Inventory days = Inv/COS x 365; Receivable days = TR/Revenue x 365; Payable days = TP/COS x 365;
+   Working capital cycle = inv days + rec days - pay days; Asset turnover = Revenue/(Total assets - CL); Interest cover = PBIT/Interest; Gearing = NCL/(Total equity + NCL).
+18 Preparation of FS (sole traders) ...... F1(c) F2(c) F3(c) F3(d) G1(b) G2(b)  [SECTION B: full/extract SOFP and SOPL; key adjustments: closing inventory, drawings, depreciation, irrecoverable debts, accruals/prepayments, receivables/payables]

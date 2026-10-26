@@ -5,7 +5,7 @@ of the same game in `preview/`. You are **Zuru**, a samurai at the dojo gate; ea
 lesson ends in a practice battle, and the mocks are laid out like the real ACCA CBE.
 
 ## What's in it
-- **26 chapters** following the FA/FFA study text, 88 lessons (Learn → Apply it → Worked example → Your turn),
+- **26 chapters** in the usual FA study-text order, 88 lessons (Learn → Apply it → Worked example → Your turn),
   535 exam-style questions (multiple choice, multiple response, number entry, pick lists, sort), 5 Section B
   15-mark cases, and a syllabus map covering all 154 ACCA FA outcomes.
 - **Apply it**: every lesson has a scene from *Zuru's Lemonade Stand* — one story that grows from a shoebox of

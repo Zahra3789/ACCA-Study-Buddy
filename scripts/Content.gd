@@ -20,21 +20,21 @@ extends Node
 # Planned modes (next build): a mixed general-knowledge boss, a question bank by
 # topic/type, and a timed 2-hour exam mock — all reuse these question pools.
 #
-# note: these are ORIGINAL exam-style questions. Don't paste the Exam Kit
+# Note: these are ORIGINAL exam-style questions. Don't paste a published exam kit
 # in wholesale (copyright). Individual questions you own can be added one at a time.
 
 const EXAMS := [
 	{
 		"id": "FFA",
 		"name": "FFA - Foundations of Financial Accounting",
-		# Chapters follow the FA/FFA study text (26 chapters) so they can be cross-referenced with the book.
+		# 26 chapters in the usual FA study-text order (the order she studies in).
 		"chapters": [
 			{
 				"id": 1, "title": "Introduction to accounting", "monster": "The Gatekeeper Spirit",
 				"beats": [
 					{"type":"choice","q":"Who are the PRIMARY users of general purpose financial statements?","opts":["Investors, lenders and other creditors","Competitors","Tax inspectors only","The general public"],"a":0,"ex":"The Conceptual Framework names existing and potential investors, lenders and other creditors as the primary users."}
 				],
-				# Ch 1 learning objectives: A1(a)-(e), A2(a), A3(a), A3(b), A5(a), A5(b).
+				# Ch 1 syllabus outcomes: A1(a)-(e), A2(a), A3(a), A3(b), A5(a), A5(b).
 				"lessons": [
 					{
 						"id": "L1", "title": "What is financial reporting?",
@@ -179,7 +179,7 @@ const EXAMS := [
 				"beats": [
 					{"type":"choice","q":"Which body writes IFRS Standards?","opts":["The IASB","The external auditors","The IFRS Foundation","The directors"],"a":0,"ex":"The IASB develops and issues IFRS Standards; the IFRS Foundation oversees it."}
 				],
-				# Ch 2 learning objectives: A4(a), A4(b). Exam: knowledge questions on what each body does.
+				# Ch 2 syllabus outcomes: A4(a), A4(b). Exam: knowledge questions on what each body does.
 				"lessons": [
 					{
 						"id": "L1", "title": "Who sets the rules?",
@@ -252,7 +252,7 @@ const EXAMS := [
 					{"type":"choice","q":"Using the same accounting policies from one year to the next mainly supports:","opts":["Comparability","Timeliness","Materiality","Going concern"],"a":0,"ex":"Consistent policies let users compare one period with another."},
 					{"type":"choice","q":"A LIABILITY is:","opts":["A present obligation of the entity to transfer an economic resource as a result of past events","Any future cost the business expects","The owner's capital","An expense not yet paid in cash only"],"a":0,"ex":"A liability is a present obligation, arising from past events, to transfer an economic resource."}
 				],
-				# Ch 3 learning objectives: A3(a), A3(b), B1(a), B2(a). Exam: qualitative characteristics (e.g. what makes information relevant) and the elements.
+				# Ch 3 syllabus outcomes: A3(a), A3(b), B1(a), B2(a). Exam: qualitative characteristics (e.g. what makes information relevant) and the elements.
 				"lessons": [
 					{
 						"id": "L1", "title": "The objective: accruals and going concern",
@@ -375,7 +375,7 @@ const EXAMS := [
 					{"type":"choice","q":"Which is NOT a book of prime entry?","opts":["The nominal (general) ledger","Sales day book","Cash book","The journal"],"a":0,"ex":"The nominal ledger holds the accounts; prime-entry books feed it."},
 					{"type":"choice","q":"Credit sales invoices are first recorded in the:","opts":["Sales day book","Purchase day book","Cash book","Petty cash book"],"a":0,"ex":"The sales day book lists credit sales invoices before they are posted to the ledgers."}
 				],
-				# Ch 4 learning objectives: C1(a), C1(b), C1(d), C1(e), C1(f), C2(a), C2(b), D1(a), D1(b), D2(a), D2(b).
+				# Ch 4 syllabus outcomes: C1(a), C1(b), C1(d), C1(e), C1(f), C2(a), C2(b), D1(a), D1(b), D2(a), D2(b).
 				"lessons": [
 					{
 						"id": "L1", "title": "Business transactions and their documents",
@@ -476,7 +476,7 @@ const EXAMS := [
 					{"type":"choice","q":"The business pays a credit supplier 800 by bank transfer. The entry is:","opts":["Dr Payables, Cr Bank","Dr Bank, Cr Payables","Dr Purchases, Cr Bank","Dr Payables, Cr Purchases"],"a":0,"ex":"The liability to the supplier falls (debit) and cash at bank falls (credit)."},
 					{"type":"input","q":"Assets are 30,000 and liabilities are 12,000. Capital = ?  (number)","accept":["18000"],"display_answer":"18,000","ex":"Capital = Assets - Liabilities = 30,000 - 12,000 = 18,000."}
 				],
-				# Ch 5 learning objectives: C1(f), C2(a), C2(b), C2(c), C2(e), D1(a), D1(b), D2(a).
+				# Ch 5 syllabus outcomes: C1(f), C2(a), C2(b), C2(c), C2(e), D1(a), D1(b), D2(a).
 				# Exam: identify the correct double entry, and (Section B) pick accounts to debit/credit and the amount.
 				"lessons": [
 					{
@@ -663,7 +663,7 @@ const EXAMS := [
 					{"type":"choice","q":"Under a PERPETUAL inventory system:","opts":["Inventory records are updated after every receipt and issue","Inventory is only counted at the year-end","Inventory is never counted","Only LIFO can be used"],"a":0,"ex":"Perpetual = a running balance after every movement; periodic = counted at intervals."},
 					{"type":"choice","q":"Closing inventory was UNDERSTATED by 2,000. This year's profit is:","opts":["Understated by 2,000","Overstated by 2,000","Unaffected","Understated by 4,000"],"a":0,"ex":"Lower closing inventory raises cost of sales, so profit is understated by 2,000."}
 				],
-				# Ch 7 learning objectives: D3(a)-(g). Exam: 'cost' vs 'NRV', calculations, opening and closing inventory adjustments.
+				# Ch 7 syllabus outcomes: D3(a)-(g). Exam: 'cost' vs 'NRV', calculations, opening and closing inventory adjustments.
 				"lessons": [
 					{
 						"id": "L1", "title": "Why inventory needs adjusting",
@@ -793,7 +793,7 @@ const EXAMS := [
 					{"type":"input","q":"Cost 40,000, reducing balance at 20% a year. Carrying amount after 2 years = ?  (number)","accept":["25600"],"display_answer":"25,600","ex":"Year 1: 40,000 x 80% = 32,000. Year 2: 32,000 x 80% = 25,600."},
 					{"type":"choice","q":"When an asset is sold, the sale proceeds are posted:","opts":["Dr Cash, Cr Disposal account","Dr Disposal account, Cr Cash","Dr Cash, Cr Revenue","Dr Cash, Cr Asset at cost"],"a":0,"ex":"Proceeds are credited to the disposal account, which then shows the profit or loss."}
 				],
-				# Ch 8 learning objectives: D4(a)-(j), D5(a)-(g), G3(b)(i). Exam: depreciation, asset values (cost and revalued), cost components; can be Section B.
+				# Ch 8 syllabus outcomes: D4(a)-(j), D5(a)-(g), G3(b)(i). Exam: depreciation, asset values (cost and revalued), cost components; can be Section B.
 				"lessons": [
 					{
 						"id": "L1", "title": "Capital or revenue? What goes into cost",
@@ -943,7 +943,7 @@ const EXAMS := [
 					{"type":"choice","q":"Amortisation is charged on:","opts":["Land","Intangible assets with a finite life","Inventory","Cash"],"a":1,"ex":"Amortisation spreads the cost of a finite-life intangible; land is not depreciated."},
 					{"type":"choice","q":"Development costs that meet all the IAS 38 criteria are:","opts":["Capitalised as an intangible asset","Always expensed","Added to inventory","Credited to reserves"],"a":0,"ex":"Qualifying development is capitalised and amortised; research is always expensed."}
 				],
-				# Ch 9 learning objectives: D6(a)-(f), G3(b)(i). Exam: tangible vs intangible, research vs development criteria, amortisation.
+				# Ch 9 syllabus outcomes: D6(a)-(f), G3(b)(i). Exam: tangible vs intangible, research vs development criteria, amortisation.
 				"lessons": [
 					{
 						"id": "L1", "title": "What is an intangible asset?",
@@ -1036,7 +1036,7 @@ const EXAMS := [
 					{"type":"input","q":"Opening accrual 400, cash paid 5,200, closing accrual 600. Expense for the year = ?  (number)","accept":["5400"],"display_answer":"5,400","ex":"Expense = 5,200 - 400 (paid for last year) + 600 (owed for this year) = 5,400."},
 					{"type":"choice","q":"Forgetting to record a closing accrual makes profit:","opts":["Overstated","Understated","Unaffected","Doubled"],"a":0,"ex":"The expense is too low, so profit is too high (and liabilities too low)."}
 				],
-				# Ch 10 learning objectives: D7(a)-(f). Exam: SOFP accrual/prepayment, SOPL expense, journals - for income AND expenses.
+				# Ch 10 syllabus outcomes: D7(a)-(f). Exam: SOFP accrual/prepayment, SOPL expense, journals - for income AND expenses.
 				"lessons": [
 					{
 						"id": "L1", "title": "Accruals: used but not yet paid",
@@ -1164,7 +1164,7 @@ const EXAMS := [
 					{"type":"choice","q":"A contingent liability where the outflow is REMOTE should be:","opts":["Ignored - no provision and no disclosure","Disclosed by note","Provided for","Recognised as an asset"],"a":0,"ex":"Remote = neither provided for nor disclosed."},
 					{"type":"choice","q":"At each reporting date, a provision should be:","opts":["Reviewed and adjusted to the current best estimate","Left unchanged until settled","Written off","Moved to equity"],"a":0,"ex":"Provisions are reviewed every reporting date and adjusted to the best current estimate."}
 				],
-				# Ch 11 learning objectives: D9(a)-(f). Exam: when to provide vs disclose; calculating a provision.
+				# Ch 11 syllabus outcomes: D9(a)-(f). Exam: when to provide vs disclose; calculating a provision.
 				"lessons": [
 					{
 						"id": "L1", "title": "Provisions",
@@ -1236,7 +1236,7 @@ const EXAMS := [
 					{"type":"choice","q":"The allowance falls from 5,000 to 3,500. The effect on the SOPL is:","opts":["An expense of 1,500","A reduction of the expense of 1,500","An expense of 3,500","No effect"],"a":1,"ex":"A decrease of 1,500 reduces the irrecoverable debts expense."},
 					{"type":"choice","q":"A debt previously written off is unexpectedly paid. On receipt:","opts":["Dr Receivables, Cr Cash","Dr Cash, Cr Irrecoverable debts (expense/income)","Dr Allowance, Cr Cash","Dr Sales, Cr Cash"],"a":1,"ex":"Cash recovered is Dr Cash and credited back against the irrecoverable debts expense."}
 				],
-				# Ch 12 learning objectives: D8(a)-(k). Exam: write-offs, cash later received, allowance movements; SOPL and SOFP figures; can be Section B.
+				# Ch 12 syllabus outcomes: D8(a)-(k). Exam: write-offs, cash later received, allowance movements; SOPL and SOFP figures; can be Section B.
 				# (Contras and supplier statements are taught in Ch 14.)
 				"lessons": [
 					{
@@ -1326,7 +1326,7 @@ const EXAMS := [
 					{"type":"choice","q":"A business NOT registered for sales tax records its purchases:","opts":["Gross, including the tax it paid","Net of tax","At nil","In the sales tax control account"],"a":0,"ex":"It cannot reclaim input tax, so the tax is part of the cost."},
 					{"type":"choice","q":"A credit balance on the sales tax control account is:","opts":["A current liability owed to the tax authority","A current asset","Revenue","An expense"],"a":0,"ex":"Output tax exceeds input tax, so the business owes the difference - a liability."}
 				],
-				# Ch 13 learning objectives: D1(c), D1(d). Exam: journals for sales/purchases incl. sales tax; sales tax in the cost of non-current assets.
+				# Ch 13 syllabus outcomes: D1(c), D1(d). Exam: journals for sales/purchases incl. sales tax; sales tax in the cost of non-current assets.
 				"lessons": [
 					{
 						"id": "L1", "title": "How sales tax works",
@@ -1397,7 +1397,7 @@ const EXAMS := [
 					{"type":"choice","q":"A contra between a customer who is also a supplier is entered as:","opts":["Dr Payables control, Cr Receivables control","Dr Receivables control, Cr Payables control","Dr Cash, Cr Receivables","Dr Suspense, Cr Payables"],"a":0,"ex":"The contra reduces both balances: debit payables, credit receivables."},
 					{"type":"choice","q":"A discount received from a supplier for paying early is:","opts":["Dr Payables, Cr Discounts received (income)","Dr Discounts received, Cr Payables","Dr Cash, Cr Payables","Dr Purchases, Cr Payables"],"a":0,"ex":"The amount owed falls and the discount is income in profit or loss."}
 				],
-				# Ch 14 learning objectives: E2(a)-(e), D1(b), D1(e), D1(f), D8(j), D8(k).
+				# Ch 14 syllabus outcomes: E2(a)-(e), D1(b), D1(e), D1(f), D8(j), D8(k).
 				# Exam: returns, contras, discounts; reconciling supplier statements. Discount treatment per ACCA's 'Discounts' technical article (IFRS 15).
 				"lessons": [
 					{
@@ -1520,7 +1520,7 @@ const EXAMS := [
 					{"type":"choice","q":"Bank interest RECEIVED, shown only on the bank statement, should be:","opts":["Debited in the cash book","Credited in the cash book","Shown as a timing difference","Ignored"],"a":0,"ex":"Money has come in, so debit (increase) the cash book."},
 					{"type":"choice","q":"An outstanding lodgement is:","opts":["Money banked and in the cash book but not yet on the bank statement","A cheque written but not yet cleared","A bank charge","A dishonoured cheque"],"a":0,"ex":"Deposits recorded in the cash book that the bank has not yet processed - a timing difference."}
 				],
-				# Ch 15 learning objectives: E1(a)-(f). Exam: adjust in the ledger (cash book) or in the reconciliation? Derive the bank statement or ledger balance.
+				# Ch 15 syllabus outcomes: E1(a)-(f). Exam: adjust in the ledger (cash book) or in the reconciliation? Derive the bank statement or ledger balance.
 				"lessons": [
 					{
 						"id": "L1", "title": "Why the bank and the cash book differ",
@@ -1615,7 +1615,7 @@ const EXAMS := [
 					{"type":"input","q":"A credit purchase of 1,000 was posted Dr Purchases 1,000 and Dr Payables 1,000. The balance on suspense = ?  (number)","accept":["2000"],"display_answer":"2,000 (credit)","ex":"Debits are 2,000 more than credits, so suspense holds a 2,000 credit until corrected."},
 					{"type":"choice","q":"A credit sale of 250 was omitted entirely. The correcting journal is:","opts":["Dr Receivables 250, Cr Sales 250","Dr Suspense 250, Cr Sales 250","Dr Sales 250, Cr Receivables 250","Dr Receivables 250, Cr Suspense 250"],"a":0,"ex":"An omission does not affect the TB balance, so no suspense - just post the missing entry."}
 				],
-				# Ch 16 learning objectives: C2(d), F2(a)-(d), F3(a)-(d). Exam: which errors explain a difference; correcting journals; effect on profit.
+				# Ch 16 syllabus outcomes: C2(d), F2(a)-(d), F3(a)-(d). Exam: which errors explain a difference; correcting journals; effect on profit.
 				"lessons": [
 					{
 						"id": "L1", "title": "Types of error",
@@ -1709,7 +1709,7 @@ const EXAMS := [
 					{"type":"input","q":"Cash from credit customers 70,000. Opening receivables 5,000; closing 8,000. Credit sales = ?  (number)","accept":["73000"],"display_answer":"73,000","ex":"Sales = 70,000 + 8,000 - 5,000 = 73,000."},
 					{"type":"choice","q":"Cash stolen from the till is usually found as:","opts":["The balancing figure in the reconstructed cash account","The opening capital","Part of drawings automatically","The suspense balance"],"a":0,"ex":"Reconstruct the cash account; the unexplained shortfall is the missing (stolen) cash."}
 				],
-				# Ch 17 learning objectives: G6(a). Exam: find missing figures - sales, closing inventory, drawings.
+				# Ch 17 syllabus outcomes: G6(a). Exam: find missing figures - sales, closing inventory, drawings.
 				"lessons": [
 					{
 						"id": "L1", "title": "Margins and mark-ups",
@@ -1808,7 +1808,7 @@ const EXAMS := [
 					{"type":"choice","q":"A sole trader's personal income tax paid from the business bank is:","opts":["Drawings","A business expense","A liability of the business","Cost of sales"],"a":0,"ex":"A sole trader is taxed personally, so it is drawings, not a business expense."},
 					{"type":"choice","q":"The owner pays 10,000 of personal savings into the business bank. The entry is:","opts":["Dr Bank, Cr Capital","Dr Capital, Cr Bank","Dr Bank, Cr Sales","Dr Bank, Cr Drawings"],"a":0,"ex":"Capital introduced: cash rises (debit) and capital rises (credit)."}
 				],
-				# Ch 18 learning objectives: F1(c), F2(c), F3(c), F3(d), G1(b), G2(b). Section B accounts-preparation practice:
+				# Ch 18 syllabus outcomes: F1(c), F2(c), F3(c), F3(d), G1(b), G2(b). Section B accounts-preparation practice:
 				# the key adjustments (closing inventory, drawings, depreciation, irrecoverable debts, accruals/prepayments, receivables/payables).
 				"lessons": [
 					{
@@ -1932,7 +1932,7 @@ const EXAMS := [
 					{"type":"choice","q":"A bonus issue is recorded as:","opts":["Dr Share premium (or retained earnings), Cr Share capital","Dr Cash, Cr Share capital","Dr Share capital, Cr Cash","Dr Retained earnings, Cr Cash"],"a":0,"ex":"Reserves are capitalised into share capital; no cash moves."},
 					{"type":"choice","q":"The revaluation surplus is shown in:","opts":["Equity","Non-current liabilities","Revenue","Current assets"],"a":0,"ex":"It is an unrealised reserve within equity."}
 				],
-				# Ch 19 learning objectives: D10(a)-(k), A1(c), A1(d). Exam: share capital movements (new issues, bonus, rights), dividends, finance costs + journals; sole trader vs company.
+				# Ch 19 syllabus outcomes: D10(a)-(k), A1(c), A1(d). Exam: share capital movements (new issues, bonus, rights), dividends, finance costs + journals; sole trader vs company.
 				"lessons": [
 					{
 						"id": "L1", "title": "Companies: capital structure and equity",
@@ -2053,7 +2053,7 @@ const EXAMS := [
 					{"type":"input","q":"A dividend of 0.10 per share is paid on 200,000 shares. The amount = ?  (number)","accept":["20000"],"display_answer":"20,000","ex":"200,000 x 0.10 = 20,000, an appropriation of profit."},
 					{"type":"input","q":"Last year's tax liability of 5,000 was settled for 5,600. This year's estimate is 9,000. Tax charge in profit or loss = ?  (number)","accept":["9600"],"display_answer":"9,600","ex":"9,000 current estimate + 600 under-provision from last year = 9,600."}
 				],
-				# Ch 20 learning objectives: G1(b), G2(a)-(e), G3(a), G3(b)(i)-(iv), D10(k), D4(i), D5(e) + IFRS 15 revenue.
+				# Ch 20 syllabus outcomes: G1(b), G2(a)-(e), G3(a), G3(b)(i)-(iv), D10(k), D4(i), D5(e) + IFRS 15 revenue.
 				# SOPL layout follows IFRS 18 (examinable from Sept 2025): operating / investing / financing / income tax categories.
 				"lessons": [
 					{
@@ -2211,7 +2211,7 @@ const EXAMS := [
 					{"type":"choice","q":"A fire destroys a warehouse two weeks after the year-end. This is:","opts":["An adjusting event","A non-adjusting event - disclose if material","Recognised as a loss this year","A provision"],"a":1,"ex":"A new condition after the year-end is non-adjusting; disclose if material."},
 					{"type":"choice","q":"After the year-end, a fraud is discovered showing the financial statements are wrong. This is:","opts":["An adjusting event","A non-adjusting event","Ignored","A contingent asset"],"a":0,"ex":"Discovering fraud or errors that show the statements were incorrect is an adjusting event."}
 				],
-				# Ch 21 learning objectives: G4(a)-(c). Exam: pick adjusting vs non-adjusting events from a list, and the treatment.
+				# Ch 21 syllabus outcomes: G4(a)-(c). Exam: pick adjusting vs non-adjusting events from a list, and the treatment.
 				"lessons": [
 					{
 						"id": "L1", "title": "Adjusting or non-adjusting?",
@@ -2260,7 +2260,7 @@ const EXAMS := [
 					{"type":"choice","q":"In the indirect method, a PROFIT on disposal of PPE is:","opts":["Deducted from profit (proceeds go in investing)","Added back to profit","Shown in financing","Ignored"],"a":0,"ex":"The profit is non-cash; the actual cash (proceeds) is shown under investing activities."},
 					{"type":"choice","q":"Dividends paid are shown under:","opts":["Financing activities","Investing activities","Cost of sales","Revenue"],"a":0,"ex":"Dividends paid to shareholders are a financing cash flow."}
 				],
-				# Ch 22 learning objectives: G5(a)-(g). IAS 7 as amended by IFRS 18 (examinable from Sept 2025): indirect method starts from OPERATING PROFIT;
+				# Ch 22 syllabus outcomes: G5(a)-(g). IAS 7 as amended by IFRS 18 (examinable from Sept 2025): indirect method starts from OPERATING PROFIT;
 				# interest paid = financing; interest and dividends received = investing; dividends paid = financing; tax paid = operating.
 				"lessons": [
 					{
@@ -2373,7 +2373,7 @@ const EXAMS := [
 					{"type":"choice","q":"Consolidated financial statements present the parent and subsidiary as:","opts":["Two separate entities","A single economic entity (the group)","Only the parent","Only the subsidiary"],"a":1,"ex":"Consolidation shows the group as one economic entity."},
 					{"type":"choice","q":"An associate (significant influence, usually 20-50%) is accounted for using:","opts":["The equity method","Full consolidation","Proportionate consolidation","Cost only, never adjusted"],"a":0,"ex":"Associates use the equity method: one line in the SOFP and the share of profit in profit or loss."}
 				],
-				# Ch 23 learning objectives: H1(a), H1(b), H2(a)-(c). Exam: subsidiary vs associate vs trade investment; how each is treated in the group accounts.
+				# Ch 23 syllabus outcomes: H1(a), H1(b), H2(a)-(c). Exam: subsidiary vs associate vs trade investment; how each is treated in the group accounts.
 				"lessons": [
 					{
 						"id": "L1", "title": "Parents, subsidiaries and control",
@@ -2462,7 +2462,7 @@ const EXAMS := [
 					{"type":"input","q":"S has net assets of 400,000 at acquisition. P owns 75%; NCI is measured at its share of net assets. NCI at acquisition = ?  (number)","accept":["100000"],"display_answer":"100,000","ex":"25% x 400,000 = 100,000."},
 					{"type":"input","q":"P receivables 50,000; S receivables 30,000. S owes P 4,000 (agreed). Consolidated receivables = ?  (number)","accept":["76000"],"display_answer":"76,000","ex":"50,000 + 30,000 - 4,000 intra-group = 76,000."}
 				],
-				# Ch 24 learning objectives: H1(a)(v), H1(c)(i)-(v), H1(d). Section B: consolidated SOFP extracts - goodwill (NCI at fair value), FV adjustments, intra-group balances, unrealised profit, mid-year acquisition.
+				# Ch 24 syllabus outcomes: H1(a)(v), H1(c)(i)-(v), H1(d). Section B: consolidated SOFP extracts - goodwill (NCI at fair value), FV adjustments, intra-group balances, unrealised profit, mid-year acquisition.
 				"lessons": [
 					{
 						"id": "L1", "title": "Goodwill and the non-controlling interest at acquisition",
@@ -2608,7 +2608,7 @@ const EXAMS := [
 					{"type":"choice","q":"Sales made between the parent and its subsidiary are:","opts":["Added to group revenue","Eliminated on consolidation","Shown as NCI","Treated as goodwill"],"a":1,"ex":"The group cannot trade with itself, so intra-group sales are eliminated."},
 					{"type":"input","q":"P sold goods to S for 10,000 at cost plus 25%. Half are still in S's inventory at the year-end. Unrealised profit (PURP) = ?  (number)","accept":["1000"],"display_answer":"1,000","ex":"Profit = 10,000 x 25/125 = 2,000; half unsold = 1,000."}
 				],
-				# Ch 25 learning objectives: H1(e)(i)-(iii). Section B: consolidated SOPL with intra-group trading, unrealised profit (adjust NCI if the subsidiary sold), mid-year acquisition.
+				# Ch 25 syllabus outcomes: H1(e)(i)-(iii). Section B: consolidated SOPL with intra-group trading, unrealised profit (adjust NCI if the subsidiary sold), mid-year acquisition.
 				"lessons": [
 					{
 						"id": "L1", "title": "The consolidated statement of profit or loss",
@@ -2722,8 +2722,8 @@ const EXAMS := [
 				"id": 26, "title": "Interpretation of financial statements", "monster": "The Ratio Raven",
 				"beats": [
 				],
-				# Ch 26 learning objectives: I1(a)(b), I2(a)(b), I3(a)(b). Exam: calculate ratios; explain differences between years / companies; purpose and limitations. Section A or B.
-				# Ratio definitions follow the study text.
+				# Ch 26 syllabus outcomes: I1(a)(b), I2(a)(b), I3(a)(b). Exam: calculate ratios; explain differences between years / companies; purpose and limitations. Section A or B.
+				# Ratio definitions follow the standard FA definitions.
 				"lessons": [
 					{
 						"id": "L1", "title": "Why interpret, and the profitability ratios",
@@ -2810,7 +2810,7 @@ const EXAMS := [
 			}
 		],
 		# Syllabus map: every learning outcome in ACCA's FA/FFA syllabus and study guide (Sept 2026 - June 2027),
-		# with our own short labels. "ch" = chapter that teaches it. "cover": "6/L1" = taught in a chapter-6
+		# with our own short labels. "ch" = the chapter that teaches it. "cover": "6/L1" = taught in a chapter-6
 		# lesson, "ch5" = only quizzed in chapter 5's questions. Empty = gap.
 		"areas": [
 			{"code":"A","title":"The context and purpose of financial reporting"},

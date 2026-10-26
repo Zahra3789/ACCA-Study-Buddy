@@ -55,7 +55,11 @@ func setup(m: Node) -> void:
 	var sc := UI.scroll(body)
 	sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	v.add_child(sc)
-	v.add_child(UI.button("Got it", "03A", close, false, 26))
+	body.meta_clicked.connect(func(url): OS.shell_open(str(url)))
+	var row := UI.hbox(10)
+	row.add_child(UI.button("Credits & disclaimer", "05A", open_credits, true, 22))
+	row.add_child(UI.button("Got it", "03A", close, false, 26))
+	v.add_child(row)
 	relayout()
 
 func relayout() -> void:
@@ -81,6 +85,16 @@ func open() -> void:
 	var p := _page()
 	title_label.text = "HELP - " + p[0]
 	UI.set_rich(body, p[1] + TOP_BAR, 24)
+	relayout()
+	visible = true
+
+# Credits (Franuka's licence asks for a link back; the others are thanked too) and the disclaimer.
+# Set as raw BBCode rather than through UI.bb, which escapes [url] tags, so the links can be tapped.
+const CREDITS := "[b]Not affiliated with ACCA.[/b] This is a free, personal study aid. It is not affiliated with, endorsed or sponsored by ACCA or by any tuition provider or publisher.\n\n[b]Study aid only.[/b] The questions, lessons and mocks are original and may contain mistakes. Always check the official ACCA syllabus and study guide.\n\n[b]Art, sound and voice[/b] (tap a link to visit)\n• Menus, frames and buttons: [b]Franuka[/b], RPG UI pack - [url=https://franuka.itch.io]franuka.itch.io[/url]\n• Monster, battle effects, sounds and fight music: [b]Pixel-boy[/b], Ninja Adventure (CC0) - [url=https://pixel-boy.itch.io/ninja-adventure-asset-pack]pixel-boy.itch.io[/url]\n• Zuru the samurai: [b]xzany[/b], Samurai 2D Pixel Art - [url=https://xzany.itch.io/samurai-2d-pixel-art]xzany.itch.io[/url]\n• Zuru's voice: [b]John Carroll[/b], Warrior Voice Pack (CC0) - [url=https://johncarroll.itch.io/warrior-voice-pack]johncarroll.itch.io[/url]\n• Spare UI pieces: [b]Kenney[/b] (CC0) - [url=https://kenney.nl]kenney.nl[/url]\n• Fonts: Pixelify Sans (Stefie Justprince), VT323 (Peter Hull), Silkscreen (Jason Kottke), SIL Open Font License - [url=https://fonts.google.com]fonts.google.com[/url]\n• App icon, Christmas and Halloween art and the other sounds: made for this game."
+
+func open_credits() -> void:
+	title_label.text = "CREDITS & DISCLAIMER"
+	body.text = "[font_size=24]" + CREDITS + "[/font_size]"
 	relayout()
 	visible = true
 

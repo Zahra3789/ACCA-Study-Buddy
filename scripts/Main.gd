@@ -578,7 +578,7 @@ func show_title() -> void:
 	sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right.add_child(sc)
 	right.add_child(UI.label("Zuru's dojo - choose an exam to enter" + (" - happy holidays!" if festive() else (" - happy Halloween!" if spooky() else "")), 22, Color("fbe9d0"), true))
-	right.add_child(UI.label(version_text(), 18, Color(1, 1, 1, 0.55), true))
+	right.add_child(UI.label(version_text() + "  ·  not affiliated with ACCA  ·  study aid only (see ? > Credits)", 18, Color(1, 1, 1, 0.55), true))
 	show_screen("title")
 
 func _exam_row(x: Dictionary) -> Control:

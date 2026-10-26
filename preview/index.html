@@ -701,7 +701,7 @@ function showHome() {
 }
 
 // ---------------------------------------------------------------- STUDY PLANNER
-// Her exam window: chapters in order, then the mocks, packed into the days between start and exam by the
+// Her exam window: chapters in study-text order, then the mocks, packed into the days between start and exam by the
 // hours she has (weekday evenings vs weekends). Recomputed from today every time, so it adapts as she progresses.
 const DAY = 864e5, MOCK_MIN = HALL.otMin + 30;   // Section A mock at exam pace + review
 const mockName = k => typeof k === 'string' ? 'Full Mock ' + k.slice(1) : k ? 'Mock ' + k : 'Mini mock';

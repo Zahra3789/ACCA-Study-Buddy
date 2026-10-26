@@ -1,5 +1,5 @@
 # Keeps the syllabus map in Content.gd in step with the content:
-#  - "ch":   list of chapters that teach each outcome (from objectives.txt)
+#  - "ch":    list of chapters that teach each outcome (from chapter_objectives.txt)
 #  - "cover": adds "ch/Lx" for every lesson whose "outcome" label names the code; keeps "chN" quiz refs
 # Only the one-line syllabus entries are rewritten; everything else in Content.gd is untouched.
 #   powershell -ExecutionPolicy Bypass -File preview\update_syllabus_map.ps1
@@ -20,7 +20,7 @@ function Expand-Codes([string]$text) {
 }
 
 $chOf = @{}
-foreach ($line in Get-Content -LiteralPath (Join-Path $here 'objectives.txt')) {
+foreach ($line in Get-Content -LiteralPath (Join-Path $here 'chapter_objectives.txt')) {
   if ($line -notmatch '^\s*(\d{1,2})\s+[A-Za-z].*?\.{2,}\s*(.*)$') { continue }
   $ch = [int]$Matches[1]; $refs = ($Matches[2] -split '\[')[0]
   foreach ($code in Expand-Codes $refs) { if (-not $chOf.ContainsKey($code)) { $chOf[$code] = @() }; if ($chOf[$code] -notcontains $ch) { $chOf[$code] += $ch } }
@@ -43,8 +43,8 @@ for ($i = 0; $i -lt $lines.Count; $i++) {
   $indent = $Matches[1]; $comma = $Matches[3]; $o = $Matches[2] | ConvertFrom-Json
   $quiz = @($o.cover | Where-Object { $_ -like 'ch*' })
   $cover = @(@($lessonRefs[$o.code]) + $quiz | Where-Object { $_ } | Select-Object -Unique)
-  $ch = @($chOf[$o.code]); if (-not $ch.Count) { $noCh += $o.code; $ch = @($o.ch) }
-  $new = [ordered]@{ code = $o.code; k = $o.k; t = $o.t; cover = $cover; ch = $ch }
+  $chs = @($chOf[$o.code]); if (-not $chs.Count) { $noCh += $o.code; $chs = @($o.ch) }
+  $new = [ordered]@{ code = $o.code; k = $o.k; t = $o.t; cover = $cover; ch = $chs }
   if ($o.note) { $new.note = $o.note }
   $txt = $indent + (J $new) + $comma
   if ($txt -ne $lines[$i]) { $lines[$i] = $txt; $changed++ }
