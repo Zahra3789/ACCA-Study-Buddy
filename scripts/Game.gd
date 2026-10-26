@@ -32,6 +32,11 @@ var exam_id: String = "FFA"
 func _ready() -> void:
 	load_game()
 
+# Save again whenever the app is switched away from, closed or about to be killed by the phone.
+func _notification(what: int) -> void:
+	if what in [NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_WM_CLOSE_REQUEST, NOTIFICATION_WM_GO_BACK_REQUEST]:
+		save_game()
+
 # ---------------------------------------------------------------- progress
 func best(key: String) -> int:
 	var d = progress.get(key, {})
