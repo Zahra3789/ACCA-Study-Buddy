@@ -1,5 +1,5 @@
 extends Control
-# The first scene: keeps ACCA Study Buddy up to date by itself (same idea as DojoChef's boot.gd).
+# The first scene: keeps Samurai Ledger up to date by itself (same idea as DojoChef's boot.gd).
 # On start it asks the "live" release which content version is newest (giving up after a few seconds
 # when offline). If that's newer than what's on the phone, it downloads the new content pack and saves it.
 # Then it loads the newest pack it has, swaps the always-loaded scripts (Game, Content, UI) for the pack's
@@ -97,7 +97,7 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, sz), Color("2a1e2e"))
 	var font := ThemeDB.fallback_font
 	var y := sz.y / 2.0
-	draw_string(font, Vector2(0, y - 40), "ACCA STUDY BUDDY", HORIZONTAL_ALIGNMENT_CENTER, sz.x, 48, Color("f2c14e"))
+	draw_string(font, Vector2(0, y - 40), "SAMURAI LEDGER", HORIZONTAL_ALIGNMENT_CENTER, sz.x, 48, Color("f2c14e"))
 	draw_string(font, Vector2(0, y + 20), status, HORIZONTAL_ALIGNMENT_CENTER, sz.x, 24, Color(1, 1, 1, 0.8))
 	if progress >= 0.0:
 		var w := minf(400.0, sz.x - 80.0)

@@ -1,17 +1,17 @@
 ; Engine configuration file.
-; ACCA Study Buddy — study ACCA/FIA exams by battling topic monsters.
+; Samurai Ledger — study for ACCA/FIA exams by battling topic monsters (not affiliated with ACCA).
 ; Built for Godot 4.x. Open this folder in Godot (it finds project.godot).
 
 config_version=5
 
 [application]
 
-config/name="ACCA Study Buddy"
-config/description="Study ACCA / FIA exams by battling a monster for each topic."
+config/name="Samurai Ledger"
+config/description="A samurai study game for the ACCA FA exam: battle a monster for each topic. Not affiliated with ACCA."
 run/main_scene="res://Boot.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
 config/icon="res://assets/icon.png"
-config/version="2.5"
+config/version="2.6"
 
 [audio]
 

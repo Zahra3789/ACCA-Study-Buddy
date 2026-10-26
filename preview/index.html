@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>ACCA Study Buddy - preview</title>
+<title>Samurai Ledger - preview</title>
 <!-- PREVIEW / PROTOTYPE of the Godot app (720x1280 portrait). Questions come from
      scripts/Content.gd (served as data.js, or embedded by build-standalone.ps1).
      UI art: Franuka RPG UI pack (assets/rpg, not redistributed). Samurai: tools/make_samurai.ps1.
@@ -365,7 +365,7 @@ body.halloween #foe { filter: drop-shadow(0 0 14px rgba(232,129,43,.8)) hue-rota
   <div id="xmasDeco"><div class="lights"></div></div>
   <!-- TITLE: pick the exam -->
   <div id="title" class="screen hidden">
-    <div class="banner titleO light" data-art="BannerMedium_02C">ACCA STUDY BUDDY</div>
+    <div class="banner titleO light" data-art="BannerMedium_02C">SAMURAI LEDGER</div>
     <img class="hero" data-src="../assets/characters/samurai.png" data-zuru alt="">
     <img class="xtree l" data-src="../assets/xmas/tree.png" alt=""><img class="xtree r" data-src="../assets/xmas/tree.png" alt="">
     <img class="xgift a" data-src="../assets/xmas/present.png" alt=""><img class="xgift b" data-src="../assets/xmas/present.png" alt=""><img class="xgift c" data-src="../assets/xmas/present.png" alt="">
@@ -376,7 +376,7 @@ body.halloween #foe { filter: drop-shadow(0 0 14px rgba(232,129,43,.8)) hue-rota
   </div>
 
   <div id="home" class="screen">
-    <div class="banner titleO light" data-art="BannerMedium_02C">ACCA STUDY BUDDY</div>
+    <div class="banner titleO light" data-art="BannerMedium_02C">SAMURAI LEDGER</div>
     <div class="hero">
       <img data-src="../assets/characters/samurai.png" data-zuru alt="">
       <div class="speech box dark" data-art="BGbox_04A">
@@ -506,7 +506,7 @@ addEventListener('resize', fit); fit();
 // serve.ps1 / build-standalone.ps1 pass it in as APP_CFG next to EXAMS. Everything exam-specific - the name on the banner,
 // the journey list on the title screen, the mock format, key dates, plan defaults and the browser storage keys - comes from
 // there, so the engine itself never mentions one qualification. The defaults below only keep the preview alive without it.
-const APP = Object.assign({ id: 'acca', name: 'ACCA Study Buddy', banner: 'ACCA STUDY BUDDY', key: 'accaStudyBuddy', short: 'FA', planCode: 'FA', dojo: "Zuru's dojo - choose an exam to enter",
+const APP = Object.assign({ id: 'acca', name: 'Samurai Ledger', banner: 'SAMURAI LEDGER', key: 'accaStudyBuddy', short: 'FA', planCode: 'FA', dojo: "Zuru's dojo - choose an exam to enter",
   journey: [], plan: { start: '2026-10-27', exam: '2026-11-07', wd: 3, we: 6, mocks: 2 },
   hall: { intro: '', links: [], ot: 35, otMarks: 2, otMin: 84, minutes: 120, pass: 50, full: [] }, keyDates: { sections: [], link: null },
   sylIntro: 'Every learning outcome in the syllabus, and what in the game covers it. Tap an area to open it.' }, typeof APP_CFG === 'object' && APP_CFG ? APP_CFG : {});

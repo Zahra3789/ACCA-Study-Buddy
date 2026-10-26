@@ -1,4 +1,4 @@
-# publish_update.ps1 -- ship an ACCA Study Buddy update to phones (same idea as DojoChef's).
+# publish_update.ps1 -- ship a Samurai Ledger update to phones (same idea as DojoChef's).
 #
 # Normal run (content update - scripts, questions, screens, art; no reinstall):
 #   1. bumps BUILD in scripts/build_info.gd (N -> N+1) and writes it to build/update/version.txt

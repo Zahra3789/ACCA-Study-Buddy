@@ -1,4 +1,4 @@
-# ACCA Study Buddy 🏯🍋
+# Samurai Ledger 🏯🍋
 
 A monster-battling study game for **ACCA FA (FFA)**, built in **Godot 4.x** for Android, with an HTML prototype
 of the same game in `preview/`. You are **Zuru**, a samurai at the dojo gate; each chapter is a monster, each

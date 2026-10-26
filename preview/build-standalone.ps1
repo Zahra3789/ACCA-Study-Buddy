@@ -1,11 +1,11 @@
 # Builds ONE self-contained HTML file of the preview (questions, fonts and art all
 # embedded) so it opens straight from disk in Firefox - no server needed.
 #   powershell -ExecutionPolicy Bypass -File preview\build-standalone.ps1
-param([string]$Out = "")   # default: build\ACCA Study Buddy.html in this project (build\ is git-ignored)
+param([string]$Out = "")   # default: build\Samurai Ledger.html in this project (build\ is git-ignored)
 $ErrorActionPreference = 'Stop'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $root = [System.IO.Path]::GetFullPath((Join-Path $here '..'))
-if (-not $Out) { New-Item -ItemType Directory -Force (Join-Path $root 'build') | Out-Null; $Out = Join-Path $root 'build\ACCA Study Buddy.html' }
+if (-not $Out) { New-Item -ItemType Directory -Force (Join-Path $root 'build') | Out-Null; $Out = Join-Path $root 'build\Samurai Ledger.html' }
 
 # Questions: Content.gd's EXAMS constant is JSON apart from full-line # comments.
 $lines = Get-Content (Join-Path $root 'scripts\Content.gd') -Encoding UTF8
@@ -28,7 +28,7 @@ $assetsJs = ($assets.GetEnumerator() | ForEach-Object { "'$($_.Key)':'$($_.Value
 
 $html = [System.IO.File]::ReadAllText((Join-Path $here 'index.html'), [System.Text.Encoding]::UTF8)
 $html = $html.Replace('<script src="data.js"></script>', "<script>const EXAMS = $json;`nconst ASSETS = {`n$assetsJs`n};</script>")
-$html = $html.Replace('Prototype preview of the Godot app', 'ACCA Study Buddy prototype - built ' + (Get-Date -Format 'dd-MMM-yyyy HH:mm') + ' - progress is saved in this browser')
+$html = $html.Replace('Prototype preview of the Godot app', 'Samurai Ledger prototype - built ' + (Get-Date -Format 'dd-MMM-yyyy HH:mm') + ' - progress is saved in this browser')
 
 [System.IO.File]::WriteAllText($Out, $html, (New-Object System.Text.UTF8Encoding($false)))
 "Wrote $Out ($([math]::Round((Get-Item -LiteralPath $Out).Length / 1KB)) KB, $($assets.Count) assets)"

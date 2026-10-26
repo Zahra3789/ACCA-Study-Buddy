@@ -1,5 +1,5 @@
 extends Control
-# ACCA Study Buddy - Godot 4 port of the HTML prototype (preview/index.html).
+# Samurai Ledger (formerly ACCA Study Buddy) - Godot 4 port of the HTML prototype (preview/index.html).
 # Everything is built in code; Main.tscn is a single Control. Screens live under `stage` (720 x 1280).
 #   Main.gd     this file: top bar, screens (title, home, menus, records, syllabus, boss lobby), helpers
 #   Book.gd     Chapter Book + lessons (Learn / Apply it / Worked example / Your turn)
@@ -504,7 +504,7 @@ func show_title() -> void:
 	var s := screen("title")
 	var v := column(s, 58, 26, 24, 14, [Color("141a33"), Color("3b2a52"), Color("2a1e2e")])
 	v.alignment = BoxContainer.ALIGNMENT_BEGIN
-	v.add_child(UI.banner("ACCA STUDY BUDDY"))
+	v.add_child(UI.banner("SAMURAI LEDGER"))
 	_update_button(v)
 	# held sideways: Zuru and Sensei on the left, the exam list on the right
 	var left := v
@@ -657,7 +657,7 @@ func show_home() -> void:
 		right = UI.vbox(0); right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		cols.add_child(left); cols.add_child(right)
 		v = left
-	v.add_child(UI.banner("ACCA STUDY BUDDY"))
+	v.add_child(UI.banner("SAMURAI LEDGER"))
 	_update_button(v)
 	var hero: BoxContainer = UI.vbox(6) if landscape else UI.hbox(12)   # sideways: Zuru above Sensei, not beside
 	var z := UI.sprite(zuru_src("normal"), 108 if landscape else 144, 117 if landscape else 156)

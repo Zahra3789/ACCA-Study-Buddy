@@ -1,6 +1,6 @@
-# Exporting ACCA Study Buddy to an Android APK 📱
+# Exporting Samurai Ledger to an Android APK 📱
 
-The app name ("ACCA Study Buddy") comes from `project.godot` → `config/name`, so that's what shows under the icon on your phone. Name the exported file to match, e.g. `ACCA_Study_Buddy.apk`.
+The app name ("Samurai Ledger") comes from `project.godot` → `config/name`, so that's what shows under the icon on your phone. Name the exported file to match, e.g. `ACCA_Study_Buddy.apk`.
 
 
 You already did this for DojoChef, so this is the same path. High-level, with the bits people usually trip on.
