@@ -1,0 +1,23 @@
+
+/* ====================================================================== Samurai Ledger art (matches the phone app, update 24) */
+/* the moving banner: taller, with the Japan scenery; the title banner sits on its lower edge */
+#journey { height: 200px !important; }
+#title, #home { padding-top: 210px !important; }
+/* Sisi, animated: free-standing in battle, in her own gold-edged window on lessons and the Section B case */
+canvas#you { position: absolute; width: 168px; height: 182px; left: 100px; top: 352px; image-rendering: pixelated; }
+#lessonSisi { width: 150px !important; height: 132px !important; padding: 0 !important; border-image: none !important; background: rgba(26,18,31,.55);
+  border: 3px solid #f2c14e !important; border-radius: 12px; box-sizing: border-box; overflow: hidden; display: block !important; }
+#lessonSisi canvas#lessonYou { display: block; position: static; width: 144px !important; height: 126px !important; animation: none; }
+canvas#mtqYou { width: 130px !important; height: 116px !important; flex: none; animation: none; background: rgba(26,18,31,.55); border: 3px solid #f2c14e; border-radius: 12px; box-sizing: border-box; image-rendering: pixelated; }
+/* monsters wear the theme hat (the hat is not recoloured with the monster) */
+.mwrap { position: relative; display: inline-block; line-height: 0; flex: none; align-self: center; }
+.mwrap > .mhat { display: none; position: absolute; width: 50% !important; height: auto !important; left: 25%; bottom: 78%; filter: none !important; animation: none !important; image-rendering: pixelated; margin: 0 !important; }
+body.xmas .mwrap > .mhat.s, body.halloween .mwrap > .mhat.w { display: block; }
+#foeHat { position: absolute; z-index: 3; pointer-events: none; image-rendering: pixelated; display: none; }
+.fprop { position: absolute; z-index: 0; image-rendering: pixelated; pointer-events: none; }
+#deco { position: absolute; left: 0; top: 0; width: 720px; height: 1280px; pointer-events: none; z-index: 37; }
+/* readable titles: the clear body font with a dark outline (the chunky title font stays for battle shouts) */
+.title, .titleO, .chap .name, .ta .t, #examList .grp, #timer, .exRes, #cmds .btn .k { font-family: Body, sans-serif !important; letter-spacing: 0; }
+.banner.titleO { font-weight: 700; font-size: 40px;
+  text-shadow: 3px 0 0 #2b1d2a, -3px 0 0 #2b1d2a, 0 3px 0 #2b1d2a, 0 -3px 0 #2b1d2a, 2px 2px 0 #2b1d2a, -2px 2px 0 #2b1d2a, 2px -2px 0 #2b1d2a, -2px -2px 0 #2b1d2a; }
+#examList .grp { text-shadow: 2px 0 0 #2b1d2a, -2px 0 0 #2b1d2a, 0 2px 0 #2b1d2a, 0 -2px 0 #2b1d2a; }
