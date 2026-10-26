@@ -25,3 +25,7 @@ body.xmas .mwrap > .mhat.s, body.halloween .mwrap > .mhat.w { display: block; }
 #title > .banner { align-self: center; width: 668px; box-sizing: border-box; }
 /* the big title banner on the exam list and Home: taller, bigger letters, filling the space under the scene */
 #title > .banner, #home > .banner { height: 128px !important; font-size: 52px !important; padding-bottom: 18px; border-image-width: 52px 60px; flex: none; }
+/* button text always stays inside the button's frame (the frame art is 15 px top and bottom, 24 px at the sides);
+   (the top bar and calculator keys keep their own) */
+#screen .btn:not(#topBar .btn):not(#calcKeys .btn) { padding-top: 17px !important; padding-bottom: 17px !important; padding-right: 30px !important; line-height: 1.15 !important; height: auto !important; }
+#screen .btn:not(#topBar .btn):not(#calcKeys .btn):not(#cmds .btn) { padding-left: 30px !important; }
