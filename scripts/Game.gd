@@ -9,9 +9,12 @@ extends Node
 #   plan      { start, exam, wd, we, mocks }       study plan
 #   dates     "FR" -> "2027-03-05"                 sitting dates
 #   settings  { voice, sfx, xmas }                 (xmas: "auto" / true / false)
+#   srs       "FFA/3/4", "FFA/card/12" -> { b, d }   spaced review: box 0-5 and the day it is next due
 
 const SAVE_PATH := "user://acca_study_buddy_save.json"
-const SAVED := ["progress", "stats", "mistakes", "xp", "lessons", "plan", "log", "dates"]
+const SAVED := ["progress", "stats", "mistakes", "xp", "lessons", "plan", "log", "dates", "srs"]
+# Daily Review: after each right answer a question waits longer before it comes back (1, 3, 7, 14, 30, 60 days);
+# a wrong answer or "I guessed" sends it back to tomorrow.
 
 var progress: Dictionary = {}
 var stats: Dictionary = {}
@@ -21,6 +24,8 @@ var lessons: Dictionary = {}
 var plan = null
 var log: Dictionary = {}
 var dates: Dictionary = {}
+var srs: Dictionary = {}
+const SRS_DAYS := [1, 3, 7, 14, 30, 60]
 var settings: Dictionary = {"voice": false, "sfx": true, "theme": "off", "sensei": "proper"}   # theme: off/xmas/halloween; sensei: proper / east (East London)
 var exam_id: String = "FFA"
 
@@ -60,8 +65,37 @@ func answer(q_key: String, chapter_key: String, ok: bool) -> void:
 		xp += 10
 	else:
 		mistakes[q_key] = true
+	review(q_key, ok)
 	stats[chapter_key] = s
 	note("q", ok)
+
+# ---------------------------------------------------------------- Daily Review (spaced repetition)
+func day_after(days: int) -> String:
+	var d := Time.get_date_dict_from_unix_time(int(Time.get_unix_time_from_system()) + days * 86400)
+	return "%04d-%02d-%02d" % [d.year, d.month, d.day]
+
+# Right (and sure) moves a card up a box and pushes it further out; wrong or guessed starts it again tomorrow.
+func review(key: String, ok: bool, sure := true) -> void:
+	var e: Dictionary = srs.get(key, {"b": -1, "d": ""})
+	var b: int = mini(int(e.get("b", -1)) + 1, SRS_DAYS.size() - 1) if (ok and sure) else 0
+	srs[key] = {"b": b, "d": day_after(SRS_DAYS[b])}
+
+# "I guessed it": the answer was right, but it comes back tomorrow like a miss (not to the Shrine).
+func mark_guessed(key: String) -> void:
+	review(key, true, false)
+	save_game()
+
+# Everything due today or overdue whose key starts with prefix ("FFA/" questions, "FFA/card/" scrolls).
+func due(prefix: String) -> Array:
+	var today := today_key()
+	var out := []
+	for k in srs.keys():
+		if str(k).begins_with(prefix) and str(srs[k].get("d", "")) <= today:
+			out.append(k)
+	return out
+
+func box(key: String) -> int:
+	return int(srs.get(key, {}).get("b", -1))
 
 func accuracy(chapter_key: String) -> int:
 	var s = stats.get(chapter_key, {})
@@ -126,6 +160,7 @@ func reset_all() -> void:
 	xp = 0
 	lessons = {}
 	log = {}
+	srs = {}
 	save_game()   # the study plan, dates and settings survive a reset
 
 func backup_code() -> String:

@@ -461,6 +461,11 @@ func end_exam(force: bool, time_up: bool) -> void:
 	body.add_child(res)
 	if X.get("full", false):
 		body.add_child(UI.rich("[b]Section A[/b] %d / 70 (%d of 35 right)  -  [b]Section B[/b] %d / 30" % [sec_a, right, sec_b], 22))
+	# Time, calmly and after the fact - no per-question clock, just whether the whole paper fitted.
+	var mins_used := int(used / 60.0)
+	var allowed := int(float(X["total"]) / 60.0)
+	var fit := "comfortably inside the time." if mins_used <= allowed * 0.9 else ("right on the time - nicely paced." if not time_up else "the full time. In the real exam, flag the slow ones and come back to them.")
+	body.add_child(UI.rich("[b]Time used:[/b] %s of %s - %s" % [UI.hm(maxi(1, mins_used)), UI.hm(allowed), fit], 22))
 	body.add_child(UI.label("Pass mark 50%%. %sEvery wrong answer is now waiting at the Healer's Shrine." % (("Time ran out - %d unanswered. " % unanswered) if (time_up and unanswered) else ""), 21, UI.BROWN))
 	var row := UI.hbox(8)
 	if X.get("full", false):

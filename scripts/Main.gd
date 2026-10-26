@@ -35,6 +35,8 @@ const ACCA_EXAMS := [
 	{"grp": "Strategic Professional", "code": "OPT 2", "name": "Option: AFM, APM, ATX, AAA or Data Science"},
 ]
 const AREAS := [
+	{"id": "review", "name": "Daily Review", "sub": "10 minutes a day keeps it stuck", "box": "BGbox_02B", "icon": "Icon_15", "dark": false},
+	{"id": "scrolls", "name": "Sensei's Scrolls", "sub": "Formulas, formats & rules", "box": "BGbox_03A", "icon": "Icon_16", "dark": true},
 	{"id": "book", "name": "Chapter Book", "sub": "Battle each topic monster", "box": "BGbox_03A", "icon": "Icon_14", "dark": true},
 	{"id": "boss", "name": "Boss Arena", "sub": "Boss gauntlet - 32 bosses a lap", "box": "BGbox_07A", "icon": "Icon_06", "dark": false},
 	{"id": "bank", "name": "Training Grounds", "sub": "Drill by topic or type", "box": "BGbox_02B", "icon": "Icon_03", "dark": false},
@@ -65,6 +67,7 @@ var mtq: Node
 var exam: Node
 var planner: Node
 var calc: Node
+var scrolls: Node
 var help: Node
 var menu_title := ""   # which menu() screen is showing, so Help can explain it
 
@@ -89,8 +92,9 @@ func _ready() -> void:
 	mtq = preload("res://scripts/Mtq.gd").new()
 	exam = preload("res://scripts/Exam.gd").new()
 	planner = preload("res://scripts/Planner.gd").new()
+	scrolls = preload("res://scripts/Scrolls.gd").new()
 	calc = preload("res://scripts/Calc.gd").new()
-	for m in [book, battle, mtq, exam, planner]:
+	for m in [book, battle, mtq, exam, planner, scrolls]:
 		add_child(m)
 		m.setup(self)
 	_build_overlays()
@@ -675,6 +679,14 @@ func show_home() -> void:
 	var say := UI.rich("[b]Sensei Otter:[/b] " + planner.plan_summary() + ((" %d wound%s to heal at the Shrine." % [nm, "" if nm == 1 else "s"]) if nm else ""), 24)
 	say.name = "homeSay"
 	sv.add_child(say)
+	var rd := readiness()
+	if rd["areas"].size():
+		var weakest: Dictionary = rd["areas"][0]
+		for a in rd["areas"]:
+			if a["pct"] < weakest["pct"]:
+				weakest = a
+		var dq := Game.due(exam_id + "/").filter(func(k): return not "/card/" in str(k)).size()
+		sv.add_child(UI.rich("[b]Exam-ready: %d%%[/b]  ·  weakest: %s %s%s" % [rd["overall"], weakest["code"], weakest["title"], ("  ·  [b]%d[/b] to review today" % dq) if dq else ""], 22))
 	var lvl := UI.hbox(10)
 	lvl.add_child(UI.title_label("Lv %d" % Game.level(), 26))
 	var xb := UI.bar(Game.xp_in_level() / 100.0, 200, 26)
@@ -716,7 +728,13 @@ func _card(a: Dictionary, nm: int) -> Control:
 	cv.add_child(UI.label(a["sub"], 24, col, true))
 	var stat := ""
 	match a["id"]:
-		"book": stat = "%d / %d stars" % [total_stars(), EXAM["chapters"].size() * 3]
+		"review":
+			var dq := Game.due(exam_id + "/").filter(func(k): return not "/card/" in str(k)).size()
+			stat = ("%d due today" % dq) if dq else ("All done today ✓" if Game.srs.size() else "Fills up as you answer questions")
+		"scrolls":
+			var ds: int = scrolls.due().size(); var us: int = scrolls.unseen().size()
+			stat = "%d due · %d to learn" % [ds, us] if (ds or us) else "All learned ✓"
+		"book": stat ="%d / %d stars" % [total_stars(), EXAM["chapters"].size() * 3]
 		"boss":
 			var gb := Game.best(exam_id + "/gauntlet"); var gl := Game.last_run(exam_id + "/gauntlet")
 			stat = ("Last run %d · Best %d bosses" % [gl, gb]) if (gb or gl) else "Not fought yet"
@@ -747,6 +765,10 @@ func _card(a: Dictionary, nm: int) -> Control:
 				if nm: battle.start_mistakes()
 			"mock": exam.show_mock()
 			"rec": show_records()
+			"review":
+				if Game.due(exam_id + "/").filter(func(k): return not "/card/" in str(k)).size():
+					battle.start_review()
+			"scrolls": scrolls.show_scrolls()
 	)
 	p.add_child(btn)
 	return p
@@ -842,6 +864,12 @@ func show_bank() -> void:
 
 func show_records() -> void:
 	var v := menu("HALL OF RECORDS", "BGbox_05A", true)
+	var ready := readiness()
+	if ready["areas"].size():
+		v.add_child(text_for(v, "[b]Exam-ready: %d%%[/b]\nBuilt from your accuracy in each area plus how much has stuck in Daily Review. Aim to get every area into the green." % ready["overall"], 26))
+		for a in ready["areas"]:
+			v.add_child(text_for(v, "%s  %s - %d%%" % [a["code"], a["title"], a["pct"]], 22))
+			v.add_child(UI.bar(a["pct"] / 100.0, 600, 22))
 	if SYL.size():
 		var t := 0; var g := 0
 		for o in SYL:
@@ -864,6 +892,38 @@ func show_records() -> void:
 		v.add_child(text_for(v, "Ch %d %s%s" % [int(r["c"]["id"]), r["c"]["title"], (" - %d%%" % r["acc"]) if r["acc"] >= 0 else ""], 24))
 		var b := UI.bar(0.0 if r["acc"] < 0 else r["acc"] / 100.0, 600, 26)
 		v.add_child(b)
+
+# ---------------------------------------------------------------- Exam-ready meter
+# Per chapter: 60% from accuracy so far, 40% from how much has STUCK (questions answered right again on a
+# later Daily Review, i.e. review box 2+). Chapters never tried count 0. Each syllabus area averages the
+# chapters that teach it; overall weights the areas by how many outcomes they hold.
+func chapter_ready(ch_id: int) -> float:
+	var acc := Game.accuracy("%s/%d" % [exam_id, ch_id])
+	if acc < 0:
+		return 0.0
+	var qs := questions(ch_id)
+	var stuck := qs.filter(func(q): return Game.box(str(q.get("_key", ""))) >= 2).size()
+	return 0.6 * acc + 0.4 * (100.0 * stuck / maxi(1, qs.size()))
+
+func readiness() -> Dictionary:
+	var areas := []
+	var total := 0.0; var weight := 0
+	for a in EXAM.get("areas", []):
+		var chs := {}; var n := 0
+		for o in SYL:
+			if str(o["code"]).begins_with(a["code"]):
+				n += 1
+				for c in o.get("ch", []).filter(func(x): return typeof(x) in [TYPE_INT, TYPE_FLOAT]):
+					chs[int(c)] = true
+		if n == 0:
+			continue
+		var sum := 0.0
+		for c in chs.keys():
+			sum += chapter_ready(c)
+		var pct := int(round(sum / maxi(1, chs.size())))
+		areas.append({"code": a["code"], "title": a["title"], "pct": pct})
+		total += pct * n; weight += n
+	return {"overall": int(round(total / maxi(1, weight))), "areas": areas}
 
 func syl_status(o: Dictionary) -> String:
 	var cover: Array = o.get("cover", [])

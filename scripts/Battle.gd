@@ -19,6 +19,8 @@ var s: Dictionary = {}
 var session_id := 0
 var fx: Node                 # BattleFX: slashes, shakes, knockdowns, finishers, boss music and voices
 var combo := 0               # right answers in a row; 3+ is a critical (double damage on bosses)
+var guess_btn: Button
+var _guess_key := ""
 var typing := false
 var skip := false
 var _answer: Dictionary = {}
@@ -176,6 +178,10 @@ func _build() -> void:
 	dlg.gui_input.connect(_dlg_input)
 	dlg.mouse_filter = Control.MOUSE_FILTER_STOP
 	v.add_child(dlg)
+	# After a right answer: "I guessed it" sends the question back to tomorrow's Daily Review (only shown then)
+	guess_btn = UI.button("I guessed this one", "04A", _guessed, true, 22)
+	guess_btn.visible = false
+	v.add_child(guess_btn)
 	cmds = UI.vbox(10)
 	cmds_scroll = UI.scroll(cmds)
 	cmds_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -216,6 +222,8 @@ func valid(sess: Dictionary) -> bool:
 func abandon() -> void:
 	if fx:
 		fx.reset()
+	if guess_btn:
+		guess_btn.visible = false
 	session_id += 1
 	skip = true
 	tapped.emit()
@@ -412,7 +420,7 @@ func ask(b: Dictionary, sess: Dictionary) -> Dictionary:
 		return {"quit": true}
 	_answer = {}
 	var styles := ["02A", "05A", "03A", "06A"]
-	var drill: bool = sess["mode"] in ["bank", "mistakes"]
+	var drill: bool = sess["mode"] in ["bank", "mistakes", "review"]
 	match b["type"]:
 		"choice":
 			var order = main.shuffled(range(b["opts"].size()))
@@ -579,7 +587,7 @@ func run_battle(sess: Dictionary) -> void:
 		if not valid(sess):
 			return
 		if r.get("quit", false):
-			if sess["mode"] in ["bank", "mistakes"]:
+			if sess["mode"] in ["bank", "mistakes", "review"]:
 				break
 			if sess.get("gauntlet", false):
 				await finish_gauntlet(sess, "left")
@@ -613,7 +621,9 @@ func run_battle(sess: Dictionary) -> void:
 					fx.knockdown()
 			elif sess["mode"] in ["trial", "lesson"] and sess["qTotal"] and float(sess["qTotal"] - sess["correct"]) / sess["qTotal"] <= 0.25:
 				fx.knockdown()
+			_offer_guess(str(b.get("_key", "")))
 			await say([main.S("correct", {"move": MOVES[randi() % MOVES.size()].to_upper()})] + pages(str(b.get("ex", ""))), "CORRECT", sess)
+			guess_btn.visible = false
 			if sess.get("gauntlet", false) and sess["bossHp"] <= 0:
 				sess["idx"] += 1
 				if await next_boss(sess):
@@ -647,7 +657,7 @@ func _taccount(b: Dictionary) -> Control:
 	return UI.table(t)
 
 func finish(sess: Dictionary) -> void:
-	var drill: bool = sess["mode"] in ["bank", "mistakes"]
+	var drill: bool = sess["mode"] in ["bank", "mistakes", "review"]
 	var total: int = sess["beats"].slice(0, sess["idx"]).filter(main.is_q).size() if drill else sess["qTotal"]
 	var pct := int(round(float(sess["correct"]) / float(total) * 100.0)) if total else 0
 	var key: String = sess.get("key", "")
@@ -720,6 +730,24 @@ func start_lesson_practice(ch_id: int, li: int) -> void:
 
 func start_bank(id: int) -> void:
 	start_session({"mode": "bank", "beats": main.shuffled(main.questions(id, main.bank_kind)), "key": "", "foe": "Training Dummy", "foeLv": "All" if id == -1 else "Ch %d" % id, "hue": 160, "scene": main.AREA_SCENE["bank"], "intro": main.S("training_intro", {"topic": "all topics" if id == -1 else main.get_ch(id)["title"]})})
+
+# Daily Review: everything due today (questions only - Sensei's Scrolls have their own screen), up to 25.
+func start_review() -> void:
+	var due: Array = main.shuffled(main.by_keys(Game.due(main.exam_id + "/")))
+	start_session({"mode": "review", "beats": due.slice(0, 25), "key": "", "foe": "Memory Spirit", "foeLv": "Review", "hue": 180, "scene": main.AREA_SCENE["bank"], "intro": "Daily Review: [b]%d[/b] question%s due today. The ones you know come back less often; anything you miss or guess comes back tomorrow." % [mini(due.size(), 25), "" if due.size() == 1 else "s"]})
+
+func _offer_guess(key: String) -> void:
+	_guess_key = key
+	guess_btn.text = "I guessed this one"
+	guess_btn.disabled = false
+	guess_btn.visible = key != ""
+
+func _guessed() -> void:
+	if _guess_key == "":
+		return
+	Game.mark_guessed(_guess_key)
+	guess_btn.text = "Got it - it comes back in tomorrow's review"
+	guess_btn.disabled = true
 
 func start_mistakes() -> void:
 	start_session({"mode": "mistakes", "beats": main.shuffled(main.by_keys(Game.mistakes.keys())), "key": "", "foe": "Wound Spirit", "foeLv": "Heal", "hue": 260, "scene": main.AREA_SCENE["mistakes"], "intro": main.S("shrine_intro")})

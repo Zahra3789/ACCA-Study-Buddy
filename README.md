@@ -18,6 +18,10 @@ lesson ends in a practice battle, and the mocks are laid out like the real ACCA 
   (what you did each day), exam sitting dates with countdowns, a key-dates guide, an in-game calculator, voice
   (device text-to-speech), sound effects, backup/restore codes, and Christmas / Halloween themes.
 - **Help** (the ? button) explains the screen you are on and what its buttons do; works upright or sideways.
+- **Learning that sticks**: Daily Review (spaced repetition: right answers come back after 1, 3, 7, 14, 30, 60 days;
+  misses and "I guessed this one" come back tomorrow), Sensei's Scrolls (53 flip-cards for formats, formulas, rules
+  and double entries on the same schedule), an Exam-ready meter per syllabus area, and a calm "time used" note
+  after each mock - no per-question timers.
 - **Updates itself** (like DojoChef): `Boot.tscn` checks the rolling `live` release for a newer content pack and
   downloads it on start - no reinstall. Only app-level changes (icon, name, permissions, engine) need a new APK;
   then the app shows "Update ready - tap to download". See "Publishing updates" below.
