@@ -42,7 +42,8 @@ var dlg_extra: VBoxContainer
 var more: Label
 var cmds: VBoxContainer
 var cmds_scroll: ScrollContainer
-var sky_fill: ColorRect      # sideways only: sky above the scaled-down field
+var sky_fill: ColorRect      # sky and ground colour round the field when the screen is a different shape
+var ground_fill: ColorRect
 var lower: Control
 var lower_margin: MarginContainer
 
@@ -51,16 +52,21 @@ func setup(m: Node) -> void:
 	_build()
 	relayout()
 
-# Upright: field on top (720 x 600), dialogue and moves below. Sideways: the field scaled into the left
-# 640 px, sitting on the bottom edge with sky filled in above it, and dialogue and moves on the right.
+# The field (designed 720 x 600) is scaled to fit its area and sits on the area's bottom edge, centred; sky
+# and ground colour fill whatever is left round it. Upright: field across the top, dialogue and moves below
+# (they keep at least 640 px). Sideways: field in the left half, dialogue and moves in the right half.
 func relayout() -> void:
-	var k := 640.0 / 720.0 if main.landscape else 1.0
+	var area := Vector2(main.W / 2.0, main.H) if main.landscape else Vector2(main.W, minf(main.W * 600.0 / 720.0, main.H - 640.0))
+	var k := minf(area.x / 720.0, area.y / 600.0)
 	field.scale = Vector2(k, k)
-	field.position = Vector2(0, main.H - 600.0 * k) if main.landscape else Vector2.ZERO
-	sky_fill.visible = main.landscape
-	sky_fill.size = Vector2(640, field.position.y + 2)
-	lower.position = Vector2(640, 0) if main.landscape else Vector2(0, 600)
-	lower.size = Vector2(640, 720) if main.landscape else Vector2(720, 680)
+	field.position = Vector2((area.x - 720.0 * k) / 2.0, area.y - 600.0 * k)
+	var horizon := field.position.y + 372.0 * k
+	sky_fill.position = Vector2.ZERO
+	sky_fill.size = Vector2(area.x, horizon + 1)
+	ground_fill.position = Vector2(0, horizon)
+	ground_fill.size = Vector2(area.x, area.y - horizon)
+	lower.position = Vector2(area.x, 0) if main.landscape else Vector2(0, area.y)
+	lower.size = Vector2(main.W - area.x, main.H) if main.landscape else Vector2(main.W, main.H - area.y)
 	lower_margin.add_theme_constant_override("margin_top", 60 if main.landscape else 8)
 
 func _build() -> void:
@@ -69,6 +75,10 @@ func _build() -> void:
 	sky_fill.z_index = -2
 	sky_fill.color = Color("0f1a3a")
 	scr.add_child(sky_fill)
+	ground_fill = ColorRect.new()
+	ground_fill.z_index = -2
+	ground_fill.color = Color("5fc07a")
+	scr.add_child(ground_fill)
 	field = Control.new()
 	field.position = Vector2(0, 0)
 	field.size = Vector2(720, 600)
@@ -246,6 +256,7 @@ func _scene(c: Array) -> void:
 	sky.texture = gt
 	ground.color = c[2]
 	sky_fill.color = c[0]
+	ground_fill.color = c[2]
 
 func _set_hue(tr: TextureRect, deg: float) -> void:
 	if deg == 0.0:

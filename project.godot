@@ -8,10 +8,10 @@ config_version=5
 
 config/name="ACCA Study Buddy"
 config/description="Study ACCA / FIA exams by battling a monster for each topic."
-run/main_scene="res://Main.tscn"
+run/main_scene="res://Boot.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
 config/icon="res://assets/icon.png"
-config/version="2.4"
+config/version="2.5"
 
 [audio]
 
@@ -28,7 +28,7 @@ UI="*res://scripts/UI.gd"
 window/size/viewport_width=720
 window/size/viewport_height=1280
 window/stretch/mode="canvas_items"
-window/stretch/aspect="keep"
+window/stretch/aspect="expand"
 window/handheld/orientation=6
 
 [gui]

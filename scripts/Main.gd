@@ -106,9 +106,10 @@ func _ready() -> void:
 	_check_for_update()
 
 # ---------------------------------------------------------------- updates
-# Once per launch: ask GitHub for the latest release. If its tag (v2.5) is newer than this build's
-# application/config/version, title and home show a button that downloads the new APK. Offline: nothing.
-const RELEASES_API := "https://api.github.com/repos/Zahra3789/ACCA-Study-Buddy/releases/latest"
+# Content updates arrive by themselves (Boot.gd). Only when the APK itself must change (icon, app name,
+# permissions, engine) does the "live" release carry a higher apk.txt than this build's
+# application/config/version; then title and home show a button that downloads the new APK. Offline: nothing.
+const BuildInfo = preload("res://scripts/build_info.gd")
 var update_info: Dictionary = {}
 
 func _check_for_update() -> void:
@@ -119,22 +120,15 @@ func _check_for_update() -> void:
 		http.queue_free()
 		if result != HTTPRequest.RESULT_SUCCESS or code != 200:
 			return
-		var rel = JSON.parse_string(body.get_string_from_utf8())
-		if typeof(rel) != TYPE_DICTIONARY:
+		var latest := body.get_string_from_utf8().strip_edges()
+		if not _newer(latest, str(ProjectSettings.get_setting("application/config/version", "0"))):
 			return
-		var tag := str(rel.get("tag_name", ""))
-		if not _newer(tag.trim_prefix("v"), str(ProjectSettings.get_setting("application/config/version", "0"))):
-			return
-		var url := str(rel.get("html_url", ""))
-		for a in rel.get("assets", []):
-			if str(a.get("name", "")).ends_with(".apk"):
-				url = str(a.get("browser_download_url", url))
-		update_info = {"tag": tag, "url": url}
+		update_info = {"tag": "v" + latest, "url": BuildInfo.UPDATE_URL + "/ACCA_Study_Buddy.apk"}
 		if cur_screen == "title":
 			show_title()
 		elif cur_screen == "home":
 			show_home())
-	http.request(RELEASES_API, ["User-Agent: ACCA-Study-Buddy", "Accept: application/vnd.github+json"])
+	http.request(BuildInfo.UPDATE_URL + "/apk.txt?t=%d" % Time.get_unix_time_from_system())
 
 # "2.10" is newer than "2.9": compare each dotted part as a number.
 func _newer(latest: String, current: String) -> bool:
@@ -154,17 +148,25 @@ func _update_button(v: Control) -> void:
 		sfx("tap")
 		OS.shell_open(update_info["url"]), false, 24))
 
-# The phone decides: wider than tall -> 1280 x 720 landscape layouts, otherwise 720 x 1280 portrait.
+# The phone decides: wider than tall -> landscape layouts on a 1280 x 720 base, otherwise portrait on 720 x 1280.
+# The stretch aspect is "expand", so the base only sets the scale: the screen's extra length or width is
+# added on (a Flip 7 upright is about 720 x 1680, an iPhone about 720 x 1560), and W x H is the real size.
 func _apply_orientation(rebuild: bool) -> void:
 	var win := DisplayServer.window_get_size()
+	if win.x <= 0 or win.y <= 0:
+		return
 	var wide := win.x > win.y
-	if wide == landscape and rebuild:
+	var base := Vector2i(1280, 720) if wide else Vector2i(720, 1280)
+	var k := minf(float(win.x) / base.x, float(win.y) / base.y)
+	var w := int(round(win.x / k))
+	var h := int(round(win.y / k))
+	if rebuild and wide == landscape and w == W and h == H:
 		return
 	landscape = wide
-	W = 1280 if wide else 720
-	H = 720 if wide else 1280
+	W = w
+	H = h
 	UI.compact = wide
-	get_tree().root.content_scale_size = Vector2i(W, H)
+	get_tree().root.content_scale_size = base
 	if rebuild:
 		relayout()
 
@@ -328,11 +330,72 @@ func _build_overlays() -> void:
 	add_child(snow)
 
 func _process(delta: float) -> void:
+	_glide(delta)
 	if cur_screen in ["battle", "lesson", "mtq", "exam"]:
 		study_sec += delta
 		if study_sec >= 15.0:
 			study_sec -= 15.0
 			Game.note("sec", 15)
+
+# ---------------------------------------------------------------- swipe to scroll
+# On a phone a swipe that starts on a button or card never reached the list behind it, so lists wouldn't
+# scroll. This catches the press first: once the finger moves 14 px it scrolls the list under it (and keeps
+# gliding a little after letting go), and the button it started on is released off-screen so it doesn't fire.
+var _drag_sc: ScrollContainer = null
+var _drag_start := Vector2.ZERO
+var _drag_from := 0
+var _dragging := false
+var _fling := 0.0
+
+func _input(e: InputEvent) -> void:
+	if e.has_meta("synthetic"):
+		return
+	if e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT:
+		if e.pressed:
+			_fling = 0.0
+			_dragging = false
+			_drag_sc = _scroll_at(e.position)
+			_drag_start = e.position
+		elif _dragging:
+			_dragging = false
+			get_viewport().set_input_as_handled()
+	elif e is InputEventMouseMotion and _drag_sc != null and (e.button_mask & MOUSE_BUTTON_MASK_LEFT) and is_instance_valid(_drag_sc):
+		if not _dragging and absf(e.position.y - _drag_start.y) > 14.0:
+			_dragging = true
+			_drag_start = e.position
+			_drag_from = _drag_sc.scroll_vertical
+			# slide the finger off the button, then let go there: a button fires on release only if the
+			# last move left the finger inside it
+			var away := InputEventMouseMotion.new()
+			away.position = Vector2(-9999, -9999)
+			away.global_position = away.position
+			away.button_mask = MOUSE_BUTTON_MASK_LEFT
+			away.set_meta("synthetic", true)
+			get_viewport().push_input(away, true)
+			var up := InputEventMouseButton.new()
+			up.button_index = MOUSE_BUTTON_LEFT
+			up.position = away.position
+			up.global_position = up.position
+			up.set_meta("synthetic", true)
+			get_viewport().push_input(up, true)
+		if _dragging:
+			_drag_sc.scroll_vertical = _drag_from - int(e.position.y - _drag_start.y)
+			_fling = clampf(e.velocity.y, -5000.0, 5000.0)
+			get_viewport().set_input_as_handled()
+
+# The innermost visible list under the finger that has something to scroll (Help first while it is open).
+func _scroll_at(pos: Vector2) -> ScrollContainer:
+	var found: ScrollContainer = null
+	for sc in (help if help.visible else self).find_children("*", "ScrollContainer", true, false):
+		if sc.is_visible_in_tree() and sc.get_global_rect().has_point(pos) and sc.get_v_scroll_bar().max_value > sc.size.y + 1:
+			found = sc
+	return found
+
+func _glide(delta: float) -> void:
+	if _dragging or _drag_sc == null or not is_instance_valid(_drag_sc) or absf(_fling) < 30.0:
+		return
+	_drag_sc.scroll_vertical -= int(_fling * delta)
+	_fling *= pow(0.04, delta)   # slows to a stop in about a second
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:

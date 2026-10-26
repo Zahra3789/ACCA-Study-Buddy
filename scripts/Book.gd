@@ -215,7 +215,7 @@ func render_lesson() -> void:
 	UI.content(frame).add_child(sc)
 	v.add_child(frame)
 	var zuru := UI.sprite(main.zuru_src("normal"), 84, 91)
-	zuru.position = Vector2(main.W - 48 - 44 - 84, 198) if main.landscape else Vector2(720 - 26 - 44 - 84, 232)
+	zuru.position = Vector2(main.W - 48 - 44 - 84, 198) if main.landscape else Vector2(main.W - 26 - 44 - 84, 232)
 	s.add_child(zuru)
 	var nav := UI.hbox(12)
 	v.add_child(nav)

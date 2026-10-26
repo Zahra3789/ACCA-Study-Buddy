@@ -18,8 +18,11 @@ lesson ends in a practice battle, and the mocks are laid out like the real ACCA 
   (what you did each day), exam sitting dates with countdowns, a key-dates guide, an in-game calculator, voice
   (device text-to-speech), sound effects, backup/restore codes, and Christmas / Halloween themes.
 - **Help** (the ? button) explains the screen you are on and what its buttons do; works upright or sideways.
-- **Update check**: on start the app asks GitHub for the latest release and offers to download a newer APK
-  (`application/config/version` in project.godot must match `version/name` in export_presets.cfg).
+- **Updates itself** (like DojoChef): `Boot.tscn` checks the rolling `live` release for a newer content pack and
+  downloads it on start - no reinstall. Only app-level changes (icon, name, permissions, engine) need a new APK;
+  then the app shows "Update ready - tap to download". See "Publishing updates" below.
+- **Fits any phone**: the layout stretches to the real screen shape (tall phones, foldable cover screens),
+  switches to wide layouts when held sideways, and lists scroll by swiping anywhere, even over buttons.
 
 ## Run it
 1. Open **Godot 4.x** (4.3 or later; 4.7 works).
@@ -49,3 +52,13 @@ once linked in `ACCA_EXAMS` (Main.gd / preview). Keep questions original.
 
 ## Export to Android (APK)
 See `EXPORT_APK.md`.
+
+## Publishing updates
+- **Content update** (scripts, questions, screens, art): bump nothing by hand, just run
+  `powershell -ExecutionPolicy Bypass -File tools/publish_update.ps1`. It bumps `BUILD` in
+  `scripts/build_info.gd`, exports `build/update/content.pck` and uploads it with `version.txt` to the `live`
+  release. Phones pick it up the next time the app opens.
+- **New APK needed** (icon, app name, permissions, Godot version, or `Boot.gd` itself): add `-Apk`. It also bumps
+  the app version in project.godot and export_presets.cfg, builds the APK and uploads it with `apk.txt`.
+- `Boot.gd` swaps the always-loaded scripts (Game, Content, UI) for the pack versions after loading a pack.
+  Tested on a Windows export (`Windows Desktop` preset) - the source run skips updates.
