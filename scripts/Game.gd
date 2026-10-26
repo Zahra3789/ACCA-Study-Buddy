@@ -26,7 +26,7 @@ var log: Dictionary = {}
 var dates: Dictionary = {}
 var srs: Dictionary = {}
 const SRS_DAYS := [1, 3, 7, 14, 30, 60]
-var settings: Dictionary = {"voice": false, "sfx": true, "theme": "off", "sensei": "proper"}   # theme: off/xmas/halloween; sensei: proper / east (East London)
+var settings: Dictionary = {"voice": false, "sfx": true, "theme": "off", "sensei": "east", "ldn_default": true}   # theme: off/xmas/halloween; sensei: proper / east (East London)
 var exam_id: String = "FFA"
 
 func _ready() -> void:
@@ -288,6 +288,9 @@ func _apply(data: Dictionary) -> void:
 	if typeof(data.get("settings")) == TYPE_DICTIONARY:
 		for k in data["settings"].keys():
 			settings[k] = data["settings"][k]
+		if not data["settings"].has("ldn_default"):   # East London is the default now: switched on once, then the E-LDN button decides
+			settings["sensei"] = "east"
+			settings["ldn_default"] = true
 	xp = int(xp)
 	if typeof(data.get("exam")) == TYPE_STRING:
 		exam_id = data["exam"]

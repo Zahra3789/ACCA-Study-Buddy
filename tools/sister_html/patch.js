@@ -281,10 +281,12 @@ Object.assign(SENSEI, {
   shout_wrong: { proper: ['OOF!', 'NOPE!', 'FLOP!', 'YIKES!', 'NOT IT!', 'L!', 'CEEB!'],
     east: ['CEEB!', 'NACAS!', 'WARYAA!', 'ALLOW IT!', 'PEAK!', 'UKUN!', 'BRUV...'] } });
 let shout = '';
-verdict = function (ok) { const v = $('verdict'); shout = S(ok ? 'shout_right' : 'shout_wrong'); v.textContent = shout; v.className = ok ? 'good' : 'bad';
+verdict = function (ok) { if (typeof clearQuip === 'function') clearQuip(); const v = $('verdict'); shout = S(ok ? 'shout_right' : 'shout_wrong'); v.textContent = shout; v.className = ok ? 'good' : 'bad';
   clearTimeout(v._t); v._t = setTimeout(() => v.className = 'hidden', 1600); };
 const _speaker = speaker;
-speaker = function (name, style) { _speaker(name, style); if ((name === 'CORRECT' || name === 'WRONG') && shout) $('speaker').textContent = shout; };
+speaker = function (name, style) { _speaker(name, style); const e = $('speaker'); if ((name === 'CORRECT' || name === 'WRONG') && shout) e.textContent = shout;
+  // a long name (Ash Trevino Vs Bri (Round 47)) stays on one line and shrinks to fit the tag
+  e.style.removeProperty('font-size'); for (let f = 24; e.scrollWidth > e.clientWidth && f >= 16; f -= 2) e.style.setProperty('font-size', f + 'px', 'important'); };
 // Boss Arena names: daft ones (with a few Somali names mixed in); with E-LDN on, Somali characters.
 const BOSS_NAMES = {
   proper: ['Karen', 'Your Situationship', "Man Who Says 'No Cap' Unironically", 'Love Island Reject', 'Group Chat Admin', 'The Guy From Hinge', 'Influencer With 300 Followers',
@@ -328,7 +330,13 @@ makeLineup = function () { const out = _makeLineup(), east = settings.sensei ===
 let bubble = null;
 function quip(fromYou, text) { if (bubble) bubble.remove(); const b = document.createElement('div'); b.className = 'quip' + (fromYou ? '' : ' foe'); b.textContent = text;
   $('field').append(b); bubble = b;
-  b.animate([{ transform: 'scale(.4)', opacity: 1 }, { transform: 'scale(1)', opacity: 1, offset: 0.06 }, { transform: 'scale(1)', opacity: 1, offset: 0.88 }, { transform: 'scale(1)', opacity: 0 }], { duration: 2700, easing: 'ease-out' }).onfinish = () => b.remove(); }
+  b.animate([{ transform: 'scale(.4)' }, { transform: 'scale(1)' }], { duration: 160, easing: 'ease-out' }); }   // stays up until the next answer or bubble
+// East London is the default: switched on once for everyone, then the E-LDN button decides (and is remembered)
+if (!settings.ldnDefault) { settings.sensei = 'east'; settings.ldnDefault = true; saveSettings();
+  if (!$('home').classList.contains('hidden')) showHome(); if (!$('title').classList.contains('hidden')) showTitle(); }
+const clearQuip = () => { if (bubble) bubble.remove(); bubble = null; };
+const _startSession = startSession;
+startSession = function (o) { clearQuip(); return _startSession(o); };
 const _anim = anim;
 anim = function (id, cls) { const e = $(id);
   if (id === 'you' && cls === 'lungeR') { e.animate([{ transform: 'none' }, { transform: 'translate(230px,-120px)', offset: 0.22 }, { transform: 'translate(230px,-120px)', offset: 0.6 }, { transform: 'none' }], { duration: 640, easing: 'ease-out' }); return; }

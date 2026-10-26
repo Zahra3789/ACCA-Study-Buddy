@@ -109,26 +109,26 @@ func _build() -> void:
 	you.position = Vector2(100, 352)
 	field.add_child(you)
 	# plates
-	var fp := UI.box("BGbox_01A", true, Vector4(40, 30, 40, 26))
+	var fp := UI.box("BGbox_01A", true, Vector4(50, 40, 50, 34))   # text clear of the frame
 	fp.position = Vector2(22, 60); fp.size = Vector2(420, 120)
 	var fpv := UI.content(fp)
 	var fr := UI.hbox(10)
-	foe_name = UI.label("", 30, UI.RED); foe_name.autowrap_mode = TextServer.AUTOWRAP_OFF; foe_name.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	foe_name = UI.label("", 26, UI.RED); foe_name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; foe_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL   # a long name wraps inside the plate
 	foe_lv = UI.label("", 24, UI.DARK); foe_lv.size_flags_horizontal = Control.SIZE_SHRINK_END; foe_lv.autowrap_mode = TextServer.AUTOWRAP_OFF
 	fr.add_child(foe_name); fr.add_child(foe_lv)
 	fpv.add_child(fr)
-	foe_hp = UI.bar(1.0, 340, 26)
+	foe_hp = UI.bar(1.0, 320, 26)
 	fpv.add_child(foe_hp)
 	field.add_child(fp)
-	var yp := UI.box("BGbox_01A", true, Vector4(40, 30, 40, 26))
+	var yp := UI.box("BGbox_01A", true, Vector4(50, 40, 50, 34))   # text clear of the frame
 	yp.position = Vector2(338, 380); yp.size = Vector2(360, 150)
 	var ypv := UI.content(yp)
 	var yr := UI.hbox(10)
-	yr.add_child(UI.label("ZURU", 30, UI.RED))
+	yr.add_child(UI.label("ZURU", 26, UI.RED))
 	you_lv = UI.label("", 24, UI.DARK); you_lv.size_flags_horizontal = Control.SIZE_SHRINK_END; you_lv.autowrap_mode = TextServer.AUTOWRAP_OFF
 	yr.add_child(you_lv)
 	ypv.add_child(yr)
-	you_hp = UI.bar(1.0, 280, 26)
+	you_hp = UI.bar(1.0, 260, 26)
 	ypv.add_child(you_hp)
 	you_hp_txt = UI.label("", 24, UI.DARK); you_hp_txt.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	ypv.add_child(you_hp_txt)
@@ -163,7 +163,7 @@ func _build() -> void:
 	speaker.custom_minimum_size = Vector2(360, 72)   # one ribbon, big enough for the name to sit on its yellow face
 	speaker.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	v.add_child(speaker)
-	dlg = UI.box("BGbox_04A", true, Vector4(36, 32, 36, 30))
+	dlg = UI.box("BGbox_04A", true, Vector4(48, 44, 48, 40))   # text clear of the frame
 	dlg.custom_minimum_size.y = 200
 	var dv := UI.content(dlg)
 	var inner := UI.vbox(8)
@@ -236,6 +236,7 @@ func stop_timer() -> void:
 # ---------------------------------------------------------------- sessions
 func start_session(o: Dictionary) -> void:
 	session_id += 1
+	_clear_quip()
 	s = o.duplicate()
 	s["id"] = session_id
 	s["idx"] = 0
@@ -322,12 +323,20 @@ func _speaker(name: String) -> void:
 	var style := "BannerSmall_02C"
 	speaker.add_theme_stylebox_override("panel", UI.banner_style(style))
 	l.add_theme_color_override("font_color", UI.GREEN if name == "CORRECT" else (UI.RED if name == "WRONG" else UI.DARK))
+	# a long name (Ash Trevino Vs Bri (Round 47)) stays on one line and shrinks to fit
+	var f: Font = l.get_theme_font("font")
+	var fs := 30
+	while fs > 18 and f.get_string_size(l.text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x > 540:
+		fs -= 2
+	l.add_theme_font_size_override("font_size", fs)
+	speaker.reset_size()
 
 var _shout := ""   # the word on the last verdict pop-up, repeated on the name tag
 
 func _verdict(ok: bool) -> void:
 	# not "CORRECT"/"WRONG" (the green or red says that): a quick daft word instead
 	_shout = main.S("shout_right" if ok else "shout_wrong")
+	_clear_quip()
 	verdict_label.text = _shout
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.1, 0.5, 0.3, 0.92) if ok else Color(0.7, 0.12, 0.25, 0.92)
@@ -402,9 +411,12 @@ func _quip(from_you: bool, text: String) -> void:
 	p.scale = Vector2(0.4, 0.4)
 	var tw := create_tween()
 	tw.tween_property(p, "scale", Vector2.ONE, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_interval(2.2)
-	tw.tween_property(p, "modulate:a", 0.0, 0.3)
-	tw.tween_callback(p.queue_free)
+	# it stays up (time to read it and the question) until the next answer or the next bubble
+
+func _clear_quip() -> void:
+	if _bubble and is_instance_valid(_bubble):
+		_bubble.queue_free()
+	_bubble = null
 
 # A banter line - the Ash Trevino Vs Bri fight has its own lore lines (Main.SENSEI ab_*), every other boss the usual ones.
 func _q(key: String) -> String:
