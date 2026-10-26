@@ -54,6 +54,7 @@ func setup(m: Node) -> void:
 	tape = UI.rich("", 22, true)
 	tape.fit_content = false
 	tape.scroll_active = true
+	tape.get_v_scroll_bar().modulate.a = 0.0   # scrolls, but no bar
 	tape.custom_minimum_size.y = 120
 	tape.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var tp := PanelContainer.new()

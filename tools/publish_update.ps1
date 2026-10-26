@@ -10,18 +10,19 @@
 #   also bumps the app version (project.godot config/version + export_presets.cfg version/name and code),
 #   builds the APK and uploads it with apk.txt. Phones then show "Update ready - tap to download".
 #
-#   powershell -ExecutionPolicy Bypass -File %USERPROFILE%\GameDev\ACCA-Study-Buddy\tools\publish_update.ps1
-#   powershell -ExecutionPolicy Bypass -File %USERPROFILE%\GameDev\ACCA-Study-Buddy\tools\publish_update.ps1 -Apk
+#   powershell -ExecutionPolicy Bypass -File tools\publish_update.ps1
+#   powershell -ExecutionPolicy Bypass -File tools\publish_update.ps1 -Apk
 param([switch]$Apk)
 $ErrorActionPreference = "Stop"
 
-$Proj  = "%USERPROFILE%\GameDev\ACCA-Study-Buddy"
-$Godot = "%USERPROFILE%\GameDev\Godot\Godot_v4.7.2-stable_win64_console.exe"
+$Proj  = Split-Path -Parent $PSScriptRoot          # the project folder (this script lives in its tools folder)
+$Dev   = Join-Path $env:USERPROFILE "GameDev"      # Godot and the Android tools live under GameDev in your user folder
+$Godot = Join-Path $Dev "Godot\Godot_v4.7.2-stable_win64_console.exe"
 $Gh    = "C:\Program Files\GitHub CLI\gh.exe"
 $Repo  = "Zahra3789/ACCA-Study-Buddy"
 $Tag   = "live"
-$env:JAVA_HOME    = "%USERPROFILE%\GameDev\Tools\jdk17"
-$env:ANDROID_HOME = "%USERPROFILE%\GameDev\Tools\android-sdk"
+$env:JAVA_HOME    = Join-Path $Dev "Tools\jdk17"
+$env:ANDROID_HOME = Join-Path $Dev "Tools\android-sdk"
 $utf8 = New-Object Text.UTF8Encoding $false
 
 $updateDir = Join-Path $Proj "build\update"

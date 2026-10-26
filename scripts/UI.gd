@@ -250,6 +250,7 @@ func title_label(text: String, size := 30, color := RED) -> Label:
 func scroll(child: Control) -> ScrollContainer:
 	var sc := ScrollContainer.new()
 	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	sc.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER   # still scrolls by swiping; no bar
 	sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	sc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	child.size_flags_horizontal = Control.SIZE_EXPAND_FILL

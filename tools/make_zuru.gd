@@ -6,7 +6,7 @@ extends SceneTree
 # trails) is centred at x = 100 with her feet on y = 96: she stays planted while the world moves, and the
 # battle moods (normal / happy / sad, plus the festive _x and spooky _h copies) come from one fixed box.
 
-const DEFAULT_SRC := "%USERPROFILE%/Downloads/Samurai Character_V5/Samurai Character_V5/Saperate Sprites"
+const DEFAULT_SRC := "Downloads/Samurai Character_V5/Samurai Character_V5/Saperate Sprites"   # inside your user folder
 const SKIN := {"e8d5ad": "a8724c", "dab790": "8f5c3a", "bba984": "70452a"}   # artist's skin -> warm brown
 const OUT_W := 200
 const OUT_H := 112
@@ -17,11 +17,11 @@ const ANIMS := [["run", "Run", 240, 96], ["walk", "Walk", 240, 96], ["jump", "Ju
 	["relax", "Relax Idle", 240, 90], ["idle", "Unsheated Idle", 240, 96], ["hurt", "Hurt", 240, 96]]
 # battle moods: [suffix, animation, frame]; cut from the re-centred frames through MOOD_BOX (12:13, like the slots)
 const MOODS := {"": ["idle", 0], "_happy": ["quick", 9], "_sad": ["hurt", 3]}
-const MOOD_BOX := Rect2i(64, 30, 72, 78)   # tight round her body, so she fills the battle and lesson slots
+const MOOD_BOX := Rect2i(64, 30, 72, 78)   # tight round her body (centred on x = 100), so she fills the battle and lesson slots
 
 func _init() -> void:
 	var args := OS.get_cmdline_user_args()
-	var src: String = args[0] if args.size() > 0 else DEFAULT_SRC
+	var src: String = args[0] if args.size() > 0 else OS.get_environment("USERPROFILE").path_join(DEFAULT_SRC)
 	var out := ProjectSettings.globalize_path("res://assets/characters/")
 	var sheets := {}
 	for a in ANIMS:
@@ -68,7 +68,11 @@ func _recut(src: Image, fw: int, src_feet: int) -> Image:
 				if not scarf and not trail:
 					sum += x; cnt += 1
 		var cx := int(round(sum / cnt)) if cnt else w / 2
-		out.blend_rect(fr, Rect2i(Vector2i.ZERO, fr.get_size()), Vector2i(f * OUT_W + OUT_W / 2 - cx, FEET - src_feet))
+		# the artist drew her facing left; flip each frame so she faces right (running with the world, facing the monster)
+		var one := Image.create(OUT_W, OUT_H, false, Image.FORMAT_RGBA8)
+		one.blend_rect(fr, Rect2i(Vector2i.ZERO, fr.get_size()), Vector2i(OUT_W / 2 - cx, FEET - src_feet))
+		one.flip_x()
+		out.blit_rect(one, Rect2i(0, 0, OUT_W, OUT_H), Vector2i(f * OUT_W, 0))
 	return out
 
 const ICON_BG := Color("1f5d63")
