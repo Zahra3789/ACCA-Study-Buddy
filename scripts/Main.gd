@@ -54,6 +54,7 @@ var cur_screen := ""
 var top_bar: Control
 var sfx_btn: Button
 var snow: Node2D
+var deco: Node2D
 var lights: TextureRect
 var sfx_player: AudioStreamPlayer
 var sfx_streams: Dictionary = {}
@@ -291,10 +292,10 @@ func draw_toggles() -> void:
 # ---------------------------------------------------------------- Sensei's voice: proper, or East London (cheeky, a bit dark, never cruel)
 # Only Sensei's chatter changes; lessons, questions and explanations stay as written. Mirrors SENSEI in preview/index.html.
 const SENSEI := {
-	# greetings: Somali (Salaam / Asalaamu calaykum, Iska warran, Sidee tahay, Soo dhowow), picked at random
-	"welcome_title": {"proper": ["Welcome to the dojo, Zuru.", "Salaam, Zuru. Welcome to the dojo.", "Asalaamu calaykum, Zuru. Soo dhowow - welcome to the dojo.", "Iska warran, Zuru? Welcome back to the dojo."],
+	# greetings: plain English when proper; the Somali ones (Salaam / Asalaamu calaykum, Iska warran, Sidee tahay, Soo dhowow) only with E-LDN on
+	"welcome_title": {"proper": ["Welcome to the dojo, Zuru.", "Welcome back to the dojo, Zuru.", "Good to see you, Zuru. Welcome to the dojo.", "Zuru! The dojo has been waiting for you."],
 		"east": ["Salaam, Zuru! Wallahi, you're back. Soo dhowow - wipe your feet, walaal.", "Asalaamu calaykum, walaal. Sidee tahay? The dojo missed you, innit.", "Iska warran, Zuru! Back at the dojo, say less.", "Salaam, walaal. Soo dhowow, Zuru - kettle's on, shaah's brewing."]},
-	"welcome_home": {"proper": ["Welcome back, Zuru!", "Salaam, Zuru! Sidee tahay?", "Asalaamu calaykum, Zuru - ready to study?", "Iska warran, Zuru? Let's get to work."],
+	"welcome_home": {"proper": ["Welcome back, Zuru!", "Good to see you, Zuru - ready to study?", "Hello again, Zuru. Let's get to work.", "Welcome back, Zuru. One chapter at a time."],
 		"east": ["Haye, Zuru! Back again, innit. Say less - let's go.", "Salaam, walaal! Sidee tahay? Let's get these marks.", "Iska warran, Zuru! Ready? Say less.", "Asalaamu calaykum, walaal. Sidee tahay? Let's study."]},
 	"appear": {"proper": "A wild [b]{foe}[/b] appeared! Topic: {topic}.", "east": "Oi oi - [b]{foe}[/b] has rolled up wanting beef about {topic}. Allow it? Nah. Clap it."},
 	"correct": {"proper": ["[b]Correct![/b] Zuru used [b]{move}[/b]! It's super effective!"],
@@ -370,6 +371,8 @@ func _build_overlays() -> void:
 	snow = preload("res://scripts/Snow.gd").new()
 	snow.visible = false
 	add_child(snow)
+	deco = preload("res://scripts/ThemeDeco.gd").new()   # cobwebs, icicles, holly round the edges
+	add_child(deco)
 
 func _process(delta: float) -> void:
 	_glide(delta)
@@ -1298,9 +1301,34 @@ func apply_festive() -> void:
 	snow.visible = t != ""
 	snow.mode = t
 	snow.set_process(t != "")
+	deco.mode = t
+	for h in get_tree().get_nodes_in_group("theme_hat"):
+		_set_hat(h)
 	for im in get_tree().get_nodes_in_group("zuru"):
 		if is_instance_valid(im) and im is TextureRect and ResourceLoader.exists(zuru_src("normal")):
 			im.texture = load(zuru_src("normal"))
+
+# The chapter monster (one image, recoloured by hue) - wearing the theme's hat, like Zuru.
+const ZuruLive = preload("res://scripts/ZuruLive.gd")
+func monster(w: float, h: float, hue := 0.0) -> TextureRect:
+	var tr := UI.sprite(MONSTER, w, h, hue)
+	var hat := TextureRect.new()
+	hat.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	hat.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	hat.stretch_mode = TextureRect.STRETCH_SCALE
+	hat.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var hw := w * 0.5
+	hat.size = Vector2(hw, hw * 13.0 / 18.0)
+	hat.position = Vector2((w - hw) / 2.0, h * 0.22 - hat.size.y)   # between its horns
+	hat.add_to_group("theme_hat")
+	tr.add_child(hat)
+	_set_hat(hat)
+	return tr
+
+func _set_hat(h: TextureRect) -> void:
+	var t: Texture2D = ZuruLive.hat_tex()
+	h.texture = t
+	h.visible = t != null
 
 # ---------------------------------------------------------------- Zuru's face on any sprite marked zuru
 func mood(who: Control, m: String, secs := 2.6) -> void:

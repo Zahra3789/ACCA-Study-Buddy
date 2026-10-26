@@ -107,7 +107,7 @@ func _chap_entry(c: Dictionary) -> Control:
 	p.custom_minimum_size.y = 150
 	var v := UI.vbox(4)
 	var h := UI.hbox(8)
-	h.add_child(UI.sprite(main.MONSTER, 40, 36, id * 47))
+	h.add_child(main.monster(40, 36, id * 47))
 	h.add_child(UI.title_label("Ch %d" % id, 24, UI.RED))
 	var sr := UI.hbox(2)
 	for i in 3:
@@ -149,7 +149,7 @@ func chapter_detail(id: int) -> void:
 	var best := Game.best(key)
 	var st = main.stars(best)
 	var head := UI.hbox(14)
-	head.add_child(UI.sprite(main.MONSTER, 120, 107, id * 47))
+	head.add_child(main.monster(120, 107, id * 47))
 	var info := UI.vbox(6)
 	info.add_child(UI.title_label(c["monster"], 28, UI.RED))
 	info.add_child(UI.label("Chapter %d: %s" % [id, c["title"]], 24, UI.DARK))

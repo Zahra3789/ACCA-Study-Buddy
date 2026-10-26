@@ -102,7 +102,7 @@ func _build() -> void:
 	field.add_child(ground)
 	field.add_child(_platform(Vector2(400, 300), Vector2(320, 80)))
 	field.add_child(_platform(Vector2(30, 520), Vector2(360, 70)))
-	foe = UI.sprite(main.MONSTER, 240, 214)
+	foe = main.monster(240, 214)
 	foe.position = Vector2(470, 90)
 	field.add_child(foe)
 	you = load("res://scripts/ZuruLive.gd").make(168, 182)
@@ -268,6 +268,11 @@ func start_session(o: Dictionary) -> void:
 	run_battle(s)
 
 func _scene(c: Array) -> void:
+	# themes: a snowy night field with Christmas trees, or a dusky Halloween one with pumpkins
+	match main.theme():
+		"xmas": c = [Color("0f1a3a"), Color("6f8fc8"), Color("eef4ff")]
+		"halloween": c = [Color("1a0f2e"), Color("c0602a"), Color("2e2236")]
+	_theme_props(main.theme())
 	var g := Gradient.new()
 	g.offsets = PackedFloat32Array([0.0, 1.0])
 	g.colors = PackedColorArray([c[0], c[1]])
@@ -277,6 +282,23 @@ func _scene(c: Array) -> void:
 	ground.color = c[2]
 	sky_fill.color = c[0]
 	ground_fill.color = c[2]
+
+var _props: Array = []
+func _theme_props(t: String) -> void:
+	for p in _props:
+		p.queue_free()
+	_props.clear()
+	if t == "":
+		return
+	# [image, x, width, height] standing on the horizon (y 372), behind the plates and fighters
+	var list := [["tree", 24, 64, 96], ["tree", 300, 48, 72], ["present", 92, 36, 36]] if t == "xmas" else [["pumpkin", 30, 72, 58], ["pumpkin", 310, 52, 42]]
+	for it in list:
+		var sp := UI.sprite("res://assets/xmas/%s.png" % it[0], it[2], it[3])
+		sp.position = Vector2(it[1], 372 - it[3])
+		sp.z_index = -1
+		field.add_child(sp)
+		field.move_child(sp, 2)   # just after the sky and ground
+		_props.append(sp)
 
 func _set_hue(tr: TextureRect, deg: float) -> void:
 	if deg == 0.0:
@@ -784,7 +806,7 @@ func show_boss_lobby() -> void:
 	for i in min(6, lineup.size()):
 		var b: Dictionary = lineup[i]
 		var row := UI.hbox(8)
-		row.add_child(UI.sprite(main.MONSTER, 40, 40, b["hue"]))
+		row.add_child(main.monster(40, 40, b["hue"]))
 		row.add_child(main.text_for(v, "%d. %s  -  %s" % [i + 1, b["name"], ("mixed questions, %d HP" % SHOGUN_HP) if b["lv"] == "SHOGUN" else b["topic"]], 24))
 		v.add_child(row)
 	v.add_child(main.text_for(v, "... and the other %d to finish the lap." % (lineup.size() - 6), 24))

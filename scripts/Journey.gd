@@ -52,6 +52,8 @@ var smash := []              # [path x, time] of the last rock he sliced, for th
 var puffs := []               # [x, y, born] smoke puffs, path coordinates
 var zuru: AnimatedSprite2D
 var front: Node2D
+var hat: Sprite2D
+const ZL := preload("res://scripts/ZuruLive.gd")
 var tex := {}
 var rng := RandomNumberGenerator.new()
 
@@ -68,10 +70,14 @@ func _ready() -> void:
 		var p := "res://assets/scenery/%s.png" % l[0]
 		if ResourceLoader.exists(p):
 			tex[l[0]] = load(p)
-	for f in ["stump", "log", "log_pile", "rock", "smoke", "embers", "wood_chips", "cutx", "campfire"]:
+	for f in ["stump", "log", "log_pile", "rock", "smoke", "embers", "wood_chips", "cutx", "campfire", "lantern"]:
 		var p := "res://assets/fx/%s.png" % f
 		if ResourceLoader.exists(p):
 			tex[f] = load(p)
+	for f in ["tree", "present", "pumpkin", "bat"]:   # the theme pieces along the path
+		var p := "res://assets/xmas/%s.png" % f
+		if ResourceLoader.exists(p):
+			tex["x_" + f] = load(p)
 	zuru = AnimatedSprite2D.new()
 	zuru.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	zuru.offset = Vector2(0, FEET - FH / 2.0) * -1.0   # frames are re-cut with her feet at y = 96: the node sits on her feet
@@ -95,6 +101,10 @@ func _ready() -> void:
 			frames.add_frame(anim[0], at)
 	zuru.sprite_frames = frames
 	add_child(zuru)
+	hat = Sprite2D.new()   # Santa / witch hat when a theme is on (ZuruLive.place_hat keeps it on her head)
+	hat.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	hat.visible = false
+	zuru.add_child(hat)
 	front = Node2D.new()   # grass, wood chips, embers, puffs and the bubble go over Zuru
 	front.draw.connect(_draw_front)
 	add_child(front)
@@ -252,6 +262,7 @@ func _process(delta: float) -> void:
 	zuru.scale = Vector2(s, s)
 	zuru.position = Vector2(_zx(), _ground() - lift)   # the node sits on her feet
 	zuru.modulate = _tint().lerp(Color.WHITE, 0.35)   # lit a little more than the scenery so he stays readable
+	ZL.place_hat(hat, zuru, ZL.SHEET.get(str(zuru.animation), "zuru_run"), Vector2(-FW / 2.0, -FEET))
 	if camp_on and camp_x - near < -200.0:
 		camp_on = false   # the campsite has scrolled off the left edge
 	queue_redraw()
@@ -274,9 +285,76 @@ func _layer(canvas: CanvasItem, name: String, speed_k: float, extra := 0.0, rep 
 	var period := w * rep
 	var off := fposmod(near * speed_k + extra, period)
 	var x := -off
+	var tint := _layer_tint(name)
 	while x < size.x:
-		canvas.draw_texture_rect(tex[name], Rect2(x, 0, w, size.y), false, _tint())
+		canvas.draw_texture_rect(tex[name], Rect2(x, 0, w, size.y), false, tint)
 		x += period
+
+# ---------------------------------------------------------------- themes
+# Christmas: the blossom trees, hills and path go snowy white, Christmas trees and presents stand along the path,
+# and snow falls in front. Halloween: a purple dusk, jack-o'-lanterns and glowing red paper lanterns along the path,
+# and bats flit across the sky. (The THEME button; off = the normal blossom walk.)
+const SNOWY := ["Trees", "BackgroundTrees", "Ground", "Gras", "Mountain_Front", "Mountain_Middle", "Mountain_Back", "Fuji", "House", "Shrine_Multiple"]
+
+func _theme() -> String:
+	var t := str(Game.settings.get("theme", "off"))
+	return t if t in ["xmas", "halloween"] else ""
+
+func _layer_tint(name: String) -> Color:
+	var t := _tint()
+	match _theme():
+		"xmas":
+			if name in SNOWY:   # brightened past white: pink blossom and grass read as snow
+				return t * Color(1.5, 1.85, 1.95)
+		"halloween":
+			return t * (Color(0.7, 0.5, 0.95) if name in ["Sky", "Clouds"] else Color(0.78, 0.62, 0.9))
+	return t
+
+# The theme's pieces, spaced along the path so they scroll past with it.
+func _theme_props() -> void:
+	var th := _theme()
+	if th == "":
+		return
+	var k := _k()
+	var period := (430.0 if th == "xmas" else 360.0) * k
+	var first := int(floor((near - 120.0 * k) / period))
+	var last := int(ceil((near + size.x + 120.0 * k) / period))
+	for i in range(first, last + 1):
+		var x := i * period + 150.0 * k - near
+		if th == "xmas":
+			_prop("x_tree", x, k * 2.2)
+			if posmod(i, 2) == 0:
+				_prop("x_present", x + 24.0 * k, k * 1.6)
+				_prop("x_present", x - 22.0 * k, k * 1.3)
+		else:
+			_prop("x_pumpkin", x, k * 1.4)
+			if posmod(i, 2) == 1 and tex.has("lantern"):   # a red paper lantern glowing on a pole
+				var lx := x + 70.0 * k
+				var top := _ground() - 46.0 * k
+				draw_line(Vector2(lx, _ground()), Vector2(lx, top), Color("3b2a2a"), maxf(2.0, 2.0 * k))
+				draw_circle(Vector2(lx, top - 6.0 * k), 16.0 * k, Color(1.0, 0.45, 0.2, 0.22 + 0.06 * sin(Time.get_ticks_msec() / 300.0 + i)))
+				var ls := 16.0 * k * 1.2
+				draw_texture_rect_region(tex["lantern"], Rect2(lx - ls / 2.0, top - ls + 4.0 * k, ls, ls), Rect2(0, (int(Time.get_ticks_msec() / 220.0) % 4) * 16, 16, 16))
+
+# In front of everything: snowflakes at Christmas, bats at Halloween.
+func _theme_front() -> void:
+	var th := _theme()
+	var now := Time.get_ticks_msec() / 1000.0
+	if th == "xmas":
+		for i in 40:
+			var r1 := fposmod(sin(i * 12.9898) * 43758.5453, 1.0)
+			var r2 := fposmod(sin(i * 78.233) * 12345.678, 1.0)
+			var y := fposmod(r2 * size.y + now * (18.0 + r1 * 22.0), size.y)
+			var x := fposmod(r1 * size.x * 1.3 + sin(now * 0.8 + i) * 10.0 - near * 0.15, size.x)
+			var s: float = 2.0 + floor(r1 * 3.0)
+			front.draw_rect(Rect2(floor(x), floor(y), s, s), Color(1, 1, 1, 0.85))
+	elif th == "halloween" and tex.has("x_bat"):
+		for i in 3:
+			var r1 := fposmod(sin(i * 3.7 + 1.0) * 43758.5453, 1.0)
+			var x := size.x - fposmod(now * (40.0 + r1 * 30.0) + r1 * size.x, size.x + 80.0)
+			var y := size.y * (0.12 + 0.22 * r1) + sin(now * 5.0 + i) * 8.0
+			var flap := absf(sin(now * 9.0 + i)) > 0.5
+			front.draw_texture_rect(tex["x_bat"], Rect2(x, y, 16.0 * 2.4, (8.0 if flap else 5.0) * 2.4), false)
 
 # a sprite standing on the path at screen x, its bottom on the ground, grown in by g (0..1)
 func _prop(name: String, x: float, scale_k: float, grow := 1.0, lift := 0.0) -> void:
@@ -308,6 +386,7 @@ func _draw() -> void:
 				var sx := fposmod(fposmod(sin(i * 12.9898) * 43758.5453, 1.0) * size.x * 1.2 - near * 0.01, size.x)
 				var sy := fposmod(sin(i * 78.233) * 12345.678, 1.0) * size.y * 0.45
 				draw_rect(Rect2(floor(sx), floor(sy), 2, 2), Color(1, 1, 0.9, a * (0.5 + 0.5 * sin(Time.get_ticks_msec() / 400.0 + i))))
+	_theme_props()
 	if camp_on:
 		_campsite(camp_x - near)
 	if rock_x >= 0.0:
@@ -382,6 +461,7 @@ func _draw_front() -> void:
 		while x < size.x:
 			front.draw_texture_rect(gt, Rect2(x, 0, w, size.y), false, _tint())
 			x += w
+	_theme_front()
 	if bubble != "" and state != "walk":
 		_bubble(bubble)
 

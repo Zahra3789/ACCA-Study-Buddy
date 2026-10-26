@@ -25,7 +25,7 @@ func render() -> void:
 	var s: Control = main.screen("mtq")
 	var v: VBoxContainer = main.column(s, 58, 26, 20, 12, [Color("3a0f1e"), Color("5a2a3a"), Color("2a1e2e")])
 	var head := UI.hbox(14)
-	head.add_child(UI.sprite(main.MONSTER, 111, 99, int(M["chId"]) * 47))
+	head.add_child(main.monster(111, 99, int(M["chId"]) * 47))
 	var info := UI.vbox(6)
 	info.add_child(UI.label(m["title"], 26, Color("fbe9d0")))
 	info.add_child(UI.bar(1.0 - float(M["got"]) / float(m["marks"]), 300, 26))
