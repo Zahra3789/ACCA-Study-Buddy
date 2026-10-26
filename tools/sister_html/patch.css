@@ -53,18 +53,18 @@ body.wide #journey { width: 1360px !important; left: 50% !important; transform: 
 #helpBody .hRow { display: flex; gap: 16px; align-items: flex-start; margin: 0 0 18px; }
 #helpBody .hRow img { width: 48px; height: 48px; flex: none; image-rendering: pixelated; }
 #helpBody .hRow > div { display: flex; flex-direction: column; gap: 2px; font-size: 23px; }
-#helpBody .hName { color: #8c2b3c; font-size: 26px; }
+#helpBody .hName { color: #f2c14e; font-size: 26px; }
 #helpBody .hNote { margin: 0 0 16px; font-size: 22px; }
-#helpBody .hHead { margin: 26px 0 12px; color: #8c2b3c; font-size: 26px; font-weight: 700; }
+#helpBody .hHead { margin: 26px 0 12px; color: #f2c14e; font-size: 26px; font-weight: 700; }
 #helpBody .hKeys { display: grid; grid-template-columns: 130px 1fr; gap: 12px 14px; align-items: center; margin-bottom: 16px; font-size: 22px; }
 #helpBody .hKeys .btn { pointer-events: none; height: 44px !important; font-size: 17px !important; padding: 0 6px !important; }
 #help.first #helpPanel { height: auto; max-height: 1196px; top: 50%; transform: translateY(-50%); }
 body.wide #helpPanel { left: 50%; width: min(1100px, calc(100% - 40px)); transform: translateX(-50%); box-sizing: border-box; }
 body.wide #help.first #helpPanel { transform: translate(-50%, -50%); }
-/* Help and every pop-up in their own colours (pale blue, navy frame) so they never blend into the orange boxes */
-#helpPanel { border-image: none !important; background: #e6f2ff !important; border: 6px solid #2f4f8f !important; border-radius: 18px !important;
+/* Help and every pop-up in their own colours (forest green, gold frame) so they never blend into the orange boxes */
+#helpPanel { border-image: none !important; background: #24533a !important; border: 6px solid #f2c14e !important; border-radius: 18px !important; color: #f4efdc;
   box-shadow: 0 10px 28px rgba(0,0,0,.5); padding: 30px 34px 28px !important; box-sizing: border-box; }
-#helpTitle { color: #2f4f8f !important; }
+#helpTitle { color: #f2c14e !important; } #helpBody { color: #f4efdc !important; } #helpBody a { color: #9fd3ff !important; }
 /* the guide's buttons, and the small ? badge on each Home box */
 #guideRow { display: flex; flex-direction: column; gap: 10px; }
 #guideRow .btn { font-size: 22px; min-height: 56px; }

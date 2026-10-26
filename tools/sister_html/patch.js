@@ -451,7 +451,7 @@ const _openCredits = openCredits;
 openCredits = function () { helpMode('help'); _openCredits(); };
 // First visit to each part: a short "what is this?" card, once (we can't assume anyone knows how a part works).
 function maybeIntro() { setTimeout(() => {   // after the screen has set its mode (battle type, lesson step)
-  if (!$('help').classList.contains('hidden') || ($('calc') && !$('calc').classList.contains('hidden'))) return;
+  if (settings.guideOnOpen === false || !$('help').classList.contains('hidden') || ($('calc') && !$('calc').classList.contains('hidden'))) return;   // off with the guide's switch
   const [t, b] = helpPage(); if (t === 'HELP') return;
   const key = t + ':' + b.length, seen = settings.seenHelp || []; if (seen.includes(key)) return;
   settings.seenHelp = [...seen, key]; saveSettings();
@@ -490,7 +490,7 @@ const GUIDE = [
     ['Icon_07', 'This guide', 'Open it again any time: [b]?[/b] then [b]Guide[/b].']]]];
 let gStep = 0;
 const areaIcon = id => (AREAS.find(a => a.id === id) || {}).icon || id;
-function drawToggle() { gToggle.textContent = 'Show this guide when it opens: ' + (settings.guideOnOpen === false ? 'OFF' : 'ON'); }
+function drawToggle() { gToggle.textContent = 'Guide and first-time tips: ' + (settings.guideOnOpen === false ? 'OFF' : 'ON'); }
 function openGuide(i) { gStep = Math.max(0, Math.min(GUIDE.length - 1, i)); const [t, intro, rows] = GUIDE[gStep];
   helpMode('guide'); drawToggle(); gBack.style.visibility = gStep === 0 ? 'hidden' : '';
   gNext.textContent = gStep === GUIDE.length - 1 ? "Let's go!" : 'Next ▶';

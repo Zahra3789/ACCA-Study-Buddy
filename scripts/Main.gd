@@ -111,7 +111,63 @@ func _ready() -> void:
 		show_home()
 	else:
 		show_title()
+	await _splash()
 	help.guide_on_start()   # the walk-through, unless it's been switched off
+
+# ---------------------------------------------------------------- the opening splash
+# The moving banner over the whole phone with the title, for 5 seconds: when the app opens and again just after an
+# update has been put in (cold start or mid-session), saying which update it is now on. Shown from here because the
+# loading screen itself (Boot.gd) comes from the installed app and only changes with a new APK.
+const SPLASH_SECS := 5.0
+
+func _installed_update() -> int:
+	var n := BuildInfo.BUILD
+	if FileAccess.file_exists("user://update/content.pck") and FileAccess.file_exists("user://update/version.txt"):
+		n = maxi(n, int(FileAccess.get_file_as_string("user://update/version.txt").strip_edges()))
+	return n
+
+func _splash() -> void:
+	var n := _installed_update()
+	if int(Engine.get_meta("sl_splash_for", -1)) == n:
+		if Engine.has_meta("sl_splashing"):
+			Engine.remove_meta("sl_splashing")
+		return   # already shown for this version in this run (screens rebuilt for another reason)
+	Engine.set_meta("sl_splash_for", n)
+	Engine.set_meta("sl_splashing", true)   # Help waits for it before any first-time card
+	var updated := int(Game.settings.get("last_update_seen", n)) != n
+	Game.settings["last_update_seen"] = n
+	Game.save_settings()
+	var ov := Control.new()
+	ov.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ov.z_index = 90
+	ov.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(ov)
+	var j := journey(int(H))
+	j.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ov.add_child(j)
+	var strip := ColorRect.new()   # a dark band behind the title so it reads over the scenery
+	strip.color = Color(0.1, 0.07, 0.12, 0.55)
+	strip.anchor_right = 1.0
+	strip.offset_top = H * 0.12 - 24
+	strip.offset_bottom = H * 0.12 + 210
+	ov.add_child(strip)
+	var col := UI.vbox(14)
+	col.anchor_left = 0.5; col.anchor_right = 0.5
+	col.offset_left = -330; col.offset_right = 330
+	col.offset_top = H * 0.12
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_child(UI.banner("SAMURAI LEDGER", "BannerMedium_02C", 46))
+	var sub := UI.banner(("UPDATED - NOW ON UPDATE %d" % n) if updated else "ENTERING THE DOJO...", "BannerSmall_02C", 28)
+	sub.custom_minimum_size = Vector2(560, 72)
+	sub.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	col.add_child(sub)
+	ov.add_child(col)
+	await get_tree().create_timer(SPLASH_SECS).timeout
+	var tw := create_tween()
+	tw.tween_property(ov, "modulate:a", 0.0, 0.45)
+	await tw.finished
+	ov.queue_free()
+	Engine.remove_meta("sl_splashing")
 
 # ---------------------------------------------------------------- updates
 # Content updates arrive by themselves: Boot.gd fetches them at start-up, and while the app is open the live

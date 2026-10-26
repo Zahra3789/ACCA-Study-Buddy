@@ -49,10 +49,10 @@ func setup(m: Node) -> void:
 			close())
 	add_child(dim)
 	panel = UI.box("BGbox_04A", true, Vector4(40, 40, 40, 36))
-	# Help and every pop-up in its own colours (pale blue, navy frame) so it never blends into the orange boxes behind it
+	# Help and every pop-up in its own colours (forest green, gold frame) so it never blends into the orange boxes behind it
 	var hs := StyleBoxFlat.new()
-	hs.bg_color = Color("e6f2ff")
-	hs.border_color = Color("2f4f8f")
+	hs.bg_color = Color("24533a")
+	hs.border_color = Color("f2c14e")
 	hs.set_border_width_all(6)
 	hs.set_corner_radius_all(18)
 	hs.shadow_color = Color(0, 0, 0, 0.45)
@@ -61,9 +61,9 @@ func setup(m: Node) -> void:
 	panel.add_theme_stylebox_override("panel", hs)
 	add_child(panel)
 	var v := UI.content(panel)
-	title_label = UI.title_label("HELP", 30, Color("2f4f8f"))
+	title_label = UI.title_label("HELP", 30, Color("f2c14e"))
 	v.add_child(title_label)
-	body = UI.rich("", 24, true)
+	body = UI.rich("", 24, false)
 	list = UI.vbox(18)
 	var holder := UI.vbox(0)
 	holder.add_child(list)
@@ -155,8 +155,8 @@ func _row(name: String, desc: String, icon := "") -> Control:
 	r.add_child(ic)
 	var col := UI.vbox(2)
 	if name != "":
-		col.add_child(UI.label(name, 26, UI.RED))
-	col.add_child(UI.rich(desc.substr(0, 1).to_upper() + desc.substr(1) if not desc.begins_with("[") else desc, 23, true))
+		col.add_child(UI.label(name, 26, Color("f2c14e")))
+	col.add_child(UI.rich(desc.substr(0, 1).to_upper() + desc.substr(1) if not desc.begins_with("[") else desc, 23, false))
 	r.add_child(col)
 	return r
 
@@ -165,14 +165,14 @@ func _fill(p: Array, first_time: bool) -> void:
 	body.visible = false
 	list.visible = true
 	var d := _parse(p[1])
-	list.add_child(UI.rich(d["intro"], 25, true))
+	list.add_child(UI.rich(d["intro"], 25, false))
 	for it in d["items"]:
-		list.add_child(UI.rich(it[1], 23, true) if it[0] == null else _row(it[0], it[1]))
+		list.add_child(UI.rich(it[1], 23, false) if it[0] == null else _row(it[0], it[1]))
 	if first_time:
-		list.add_child(UI.rich("[i]Tap [b]?[/b] at the top right any time to see this again.[/i]", 21, true))
+		list.add_child(UI.rich("[i]Tap [b]?[/b] at the top right any time to see this again.[/i]", 21, false))
 		return
 	list.add_child(UI.spacer(6))
-	list.add_child(UI.label("The buttons along the top", 26, UI.RED))
+	list.add_child(UI.label("The buttons along the top", 26, Color("f2c14e")))
 	var g := GridContainer.new()
 	g.columns = 2
 	g.add_theme_constant_override("h_separation", 14)
@@ -184,15 +184,17 @@ func _fill(p: Array, first_time: bool) -> void:
 		b.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.focus_mode = Control.FOCUS_NONE
 		g.add_child(b)
-		g.add_child(UI.rich(k[2], 22, true))
+		g.add_child(UI.rich(k[2], 22, false))
 	list.add_child(g)
-	list.add_child(UI.rich("Swipe back from the screen's edge to go back, like [b]ESC[/b].", 22, true))
+	list.add_child(UI.rich("Swipe back from the screen's edge to go back, like [b]ESC[/b].", 22, false))
 
 # ---------------------------------------------------------------- first time on a screen: a short "what is this?" card
 # Shown once per page for everyone (we can't assume anyone knows how a part works), then only from the ? button.
 func maybe_intro() -> void:
 	await get_tree().create_timer(0.45).timeout   # let the screen set its mode (battle type, lesson step) first
-	if visible or not is_inside_tree() or main.calc.visible:
+	while Engine.has_meta("sl_splashing"):   # not under the opening splash
+		await get_tree().create_timer(0.3).timeout
+	if visible or not is_inside_tree() or main.calc.visible or not Game.settings.get("guide_on_open", true):   # switched off with the guide's button
 		return
 	var p := _page()
 	var seen: Array = Game.settings.get("seen_help", [])
@@ -323,7 +325,7 @@ func open_guide(step := 0) -> void:
 	UI.clear(list)
 	body.visible = false
 	list.visible = true
-	list.add_child(UI.rich(st[1], 25, true))
+	list.add_child(UI.rich(st[1], 25, false))
 	for r in st[2]:
 		list.add_child(_row(r[1], r[2], _area_icon(r[0])))
 	g_back.disabled = g_step == 0
@@ -344,7 +346,7 @@ func _guide_step(d: int) -> void:
 	open_guide(g_step + d)
 
 func _draw_toggle() -> void:
-	g_toggle.text = "Show this guide when the app opens: " + ("ON" if Game.settings.get("guide_on_open", true) else "OFF")
+	g_toggle.text = "Guide and first-time tips: " + ("ON" if Game.settings.get("guide_on_open", true) else "OFF")
 
 func _toggle_guide_on_open() -> void:
 	Game.settings["guide_on_open"] = not Game.settings.get("guide_on_open", true)
@@ -368,20 +370,20 @@ func add_corner(box: Control, title: String, names: Array, page := "home") -> vo
 	q.text = "?"
 	q.focus_mode = Control.FOCUS_NONE
 	q.add_theme_font_override("font", UI.body_font)
-	q.add_theme_font_size_override("font_size", 20)
+	q.add_theme_font_size_override("font_size", 18)
 	for st in ["normal", "hover", "pressed"]:
 		var sb := StyleBoxFlat.new()
 		sb.bg_color = Color("f2c14e") if st != "pressed" else Color("d9a632")
 		sb.border_color = Color("2b1d2a")
 		sb.set_border_width_all(3)
-		sb.set_corner_radius_all(15)
+		sb.set_corner_radius_all(13)
 		sb.content_margin_bottom = 2
 		q.add_theme_stylebox_override(st, sb)
 		q.add_theme_color_override("font_color" if st == "normal" else "font_%s_color" % st, Color("2b1d2a"))
 	q.pressed.connect(func(): main.sfx("tap"); open_box(title, names, page))
 	layer.add_child(q)
 	q.anchor_left = 1.0; q.anchor_right = 1.0; q.anchor_top = 0.0; q.anchor_bottom = 0.0
-	q.offset_left = -24; q.offset_right = 6; q.offset_top = -8; q.offset_bottom = 22   # on the frame's corner, clear of the name
+	q.offset_left = -24; q.offset_right = 6; q.offset_top = -8; q.offset_bottom = 22   # on the corner, as in the HTML
 
 func open_box(title: String, names: Array, page := "home") -> void:
 	var d := _parse(PAGES[page][1])
