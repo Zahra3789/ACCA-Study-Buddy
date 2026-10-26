@@ -294,6 +294,16 @@ const SENSEI := {
 		"east": ["Ay! HOOYOOO!", "Wallahi that hurt!", "Ow, ow, OW, walaal!", "I'm telling my aabo!", "Waa maxay?! That's not fair!"]},
 	"quip_taunt": {"proper": ["Is that all?", "Your trial balance doesn't balance!", "Wrong side of the ledger!", "Ha! Back to the textbook!", "I've seen better from an intern.", "Suspense account for you!"],
 		"east": ["Ceeb! Your hooyo saw that.", "Nacas! Who taught you, YouTube?", "That was embarrassing, wallahi.", "Allow it, you're getting cooked.", "Even my ayeeyo knows that one!", "Ha! Back to dugsi with you!", "Doqon! Sit down."]},
+	# Boss Arena names (Battle.make_lineup): daft ones with a few Somali names mixed in; E-LDN = Somali characters
+	"boss_names": {"proper": ["Karen", "Karen's Sister-in-Law's Boyfriend", "Phil Mitchell", "Gemma Collins' Accountant", "Your Ex's New Situationship", "Gary From Finance",
+			"The Man Who Replies-All", "Peggy Mitchell's Ghost", "Deliveroo Driver Who Ate Your Chips", "Hun From Facebook Selling Leggings", "Landlord Who Won't Fix The Boiler",
+			"Dodgy Mechanic Dave", "Shoreditch Crypto Bro", "LinkedIn Influencer Chad", "Uncle Abdi (Unpaid Invoice)", "Auntie Hodan", "Faduma's Fiance (Allegedly)",
+			"Ibrahim With The Mixtape", "Cousin Mo", "Dot Cotton's Lawyer"],
+		"east": ["Abdi From The Corner Shop", "Auntie Hodan With The Dacas", "Uncle Farah, Phone-Case King", "Cousin Mo Who Owes You 20 Quid", "Ayeeyo's 9-Minute Voice Note",
+			"Deeqa From The Wedding Committee", "Hooyo's Friend Who Asks When You're Getting Married", "Abshir The Uber Driver", "Warsame Who Does 'Business'", "Xaliimo The Gossip",
+			"Macalin From Dugsi", "The Uncle Who Calls Everyone Doctor", "Guled The Unemployed Philosopher", "Your Cousin From Minnesota", "Auntie Fowsiya's Biryani",
+			"Ali Who's 'Basically A Lawyer'", "Sahra And Her Five Sisters", "The Shaah That's Far Too Sweet", "Cousin Who Snitched To Hooyo", "Uncle Who Says 'Back In Somalia...'"]},
+	"boss_final": {"proper": "Karen's Final Form", "east": "Hooyo, Final Boss"},
 	"quip_low": {"proper": ["Wait! Can we talk about this?", "I yield! Partially!", "Please... not the audit!"],
 		"east": ["Wait wait, walaal, we're cousins!", "Allow it! I've got kids!", "I'll pay you in xalwo, I swear!", "Waan ka xumahay! I'm sorry!"]},
 }

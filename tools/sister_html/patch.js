@@ -56,7 +56,7 @@ function drawHat(g, an, x, y, s) { const h = hatImg(); if (!ready(h)) return; co
 const lives = [];
 class Live {
   constructor(canvas, boxed) { this.c = canvas; this.boxed = boxed; this.an = new Anim('idle'); this.wait = 2; canvas._live = this; lives.push(this); }
-  act(m) { this.an.play(m === 'happy' ? 'quick' : m === 'sad' ? 'hurt' : 'idle', true); }
+  act(m) { this.an.play(m === 'happy' ? 'quick' : m === 'slash' ? 'slash' : m === 'sad' ? 'hurt' : 'idle', true); }
   step(dt) { if (this.an.step(dt)) { this.an.play('idle', true); this.wait = 1.8 + Math.random() * 1.8; }
     if (this.an.name === 'idle') { this.wait -= dt; if (this.wait <= 0) this.an.play(['quick', 'slash', 'item'][Math.floor(Math.random() * 3)], true); } }
   draw() { const c = this.c, g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, c.width, c.height);
@@ -261,6 +261,47 @@ scene = function (c) { const th = theme();   // a snowy night field with Christm
   const list = th === 'xmas' ? [['tree', 24, 64, 96], ['tree', 300, 48, 72], ['present', 92, 36, 36]] : th === 'halloween' ? [['pumpkin', 30, 72, 58], ['pumpkin', 310, 52, 42]] : [];
   for (const [n, x, w, h] of list) { const im = document.createElement('img'); im.className = 'fprop'; im.src = A(`../assets/xmas/${n}.png`); Object.assign(im.style, { left: x + 'px', top: (372 - h) + 'px', width: w + 'px', height: h + 'px' });
     $('field').prepend(im); props.push(im); } };
+
+// ---------------------------------------------------------------- battle action and banter (as in the app)
+// A right answer: Sisi dashes across and cuts (a big slash on a combo). A wrong one: the monster pounces on her.
+// Now and then a one-liner pops up: Sisi bragging, the monster yelping, taunting, or begging when it's down.
+Object.assign(SENSEI, {
+  quip_win: { proper: ['Too easy!', 'Slay.', 'Ate and left no crumbs.', 'Debit: you. Credit: the floor.', 'Main character energy.', 'Understood the assignment.', 'Next!'],
+    east: ['Light work, wallahi.', 'Sit DOWN, walaal.', 'Debit you, credit the floor, innit.', "You're not ready, sxb.", 'Mashallah to ME, honestly.', 'Bring your cousin next time.', 'Easy. Hooyo could do that one.', "Haye! Who's next?"] },
+  quip_hurt: { proper: ['Ouch! My margins!', 'Not the variances!', 'Lowkey that hurt.', 'My reserves!'],
+    east: ['Ay! HOOYOOO!', 'Wallahi that hurt!', 'Ow, ow, OW, walaal!', "I'm telling my aabo!", "Waa maxay?! That's not fair!"] },
+  quip_taunt: { proper: ['Is that all?', "It's giving... wrong.", 'Not the vibe, bestie.', "Your budget doesn't even balance!", 'Ha! Back to the revision notes!', 'Flop era.'],
+    east: ['Ceeb! Your hooyo saw that.', 'Nacas! Who taught you, TikTok?', 'That was embarrassing, wallahi.', "Allow it, you're getting cooked.", 'Even my ayeeyo knows that one!', 'Ha! Back to dugsi with you!', 'Doqon! Sit down.'] },
+  quip_low: { proper: ['Wait! Can we talk about this?', 'I yield! Respectfully!', 'Please... not the audit!'],
+    east: ["Wait wait, walaal, we're cousins!", "Allow it! I've got kids!", "I'll pay you in xalwo, I swear!", "Waan ka xumahay! I'm sorry!"] } });
+// Boss Arena names: daft ones (with a few Somali names mixed in); with E-LDN on, Somali characters.
+const BOSS_NAMES = {
+  proper: ['Karen', 'Your Situationship', "Man Who Says 'No Cap' Unironically", 'Love Island Reject', 'Group Chat Admin', 'The Guy From Hinge', 'Influencer With 300 Followers',
+    'Course Mate Who Never Does Their Part', 'Uber Driver Doing A Podcast', 'Phil Mitchell', 'Pret Barista Who Spells Your Name Wrong', 'Ex Who Watched Your Story',
+    'Library Seat Thief', 'Lecturer Who Reads The Slides', 'Brother-In-Law Who Does Crypto', 'Auntie Hodan', 'Cousin Abdi', 'Faduma Who Left You On Read'],
+  east: ['Abdi From The Corner Shop', 'Auntie Hodan With The Dacas', 'Uncle Farah, Phone-Case King', 'Cousin Mo Who Owes You 20 Quid', "Ayeeyo's 9-Minute Voice Note",
+    'Deeqa From The Wedding Committee', "Hooyo's Friend Who Asks When You're Getting Married", 'Abshir The Uber Driver', "Warsame Who Does 'Business'", 'Xaliimo The Gossip',
+    'Macalin From Dugsi', 'The Uncle Who Calls Everyone Doctor', 'Guled The Unemployed Philosopher', 'Your Cousin From Minnesota', "Ali Who's 'Basically A Lawyer'",
+    'Sahra And Her Five Sisters', "The Shaah That's Far Too Sweet", 'Cousin Who Snitched To Hooyo'] };
+const _makeLineup = makeLineup;
+makeLineup = function () { const out = _makeLineup(), east = settings.sensei === 'east', names = shuffle([...BOSS_NAMES[east ? 'east' : 'proper']]); let i = 0;
+  for (const b of out) b.name = b.lv === 'SHOGUN' ? (east ? 'Hooyo, Final Boss' : "Karen's Final Form") : names[i++ % names.length];
+  return out; };
+let bubble = null;
+function quip(fromYou, text) { if (bubble) bubble.remove(); const b = document.createElement('div'); b.className = 'quip' + (fromYou ? '' : ' foe'); b.textContent = text;
+  $('field').append(b); bubble = b;
+  b.animate([{ transform: 'scale(.4)', opacity: 1 }, { transform: 'scale(1)', opacity: 1, offset: 0.06 }, { transform: 'scale(1)', opacity: 1, offset: 0.88 }, { transform: 'scale(1)', opacity: 0 }], { duration: 2700, easing: 'ease-out' }).onfinish = () => b.remove(); }
+const _anim = anim;
+anim = function (id, cls) { const e = $(id);
+  if (id === 'you' && cls === 'lungeR') { e.animate([{ transform: 'none' }, { transform: 'translate(230px,-120px)', offset: 0.22 }, { transform: 'translate(230px,-120px)', offset: 0.6 }, { transform: 'none' }], { duration: 640, easing: 'ease-out' }); return; }
+  if (id === 'foe' && cls === 'lungeL') { e.animate([{ transform: 'none' }, { transform: 'translate(-230px,170px)', offset: 0.24 }, { transform: 'translate(-230px,170px)', offset: 0.45 }, { transform: 'none' }], { duration: 580, easing: 'ease-in-out' }); return; }
+  _anim(id, cls); };
+mood = function (m, id = 'you') { const c = $(id); if (!c || !c._live) return;
+  if (id !== 'you') { c._live.act(m); return; }
+  if (m === 'happy') { c._live.act((session && session.combo >= 3) ? 'slash' : 'happy');
+    setTimeout(() => { if (FX.knocked) quip(false, S('quip_low')); else if (Math.random() < 0.45) quip(true, S('quip_win')); else if (Math.random() < 0.5) quip(false, S('quip_hurt')); }, 450); }
+  else if (m === 'sad') { c._live.act('sad'); if (Math.random() < 0.65) setTimeout(() => quip(false, S('quip_taunt')), 300); }
+  else c._live.act(m); };
 
 // ---------------------------------------------------------------- one clock for everything animated here
 let last = 0;

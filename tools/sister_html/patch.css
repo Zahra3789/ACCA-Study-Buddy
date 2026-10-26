@@ -31,3 +31,11 @@ body.xmas .mwrap > .mhat.s, body.halloween .mwrap > .mhat.w { display: block; }
    and the empty space above and below it falls outside the box, at twice size - a big face with the title centred on it */
 #title > .banner, #home > .banner { height: 128px !important; flex: none; font-size: 46px !important; padding: 0 70px 20px !important;
   border-image-slice: 33 48 48 48 fill !important; border-image-width: 66px 96px 96px 96px !important; border-image-outset: 40px 0 52px 0 !important; }
+/* battle: one big name-tag ribbon (the art is 48 px tall, yellow face on rows 9-29), and the banter bubbles */
+#speaker { height: 72px !important; font-size: 30px !important; padding: 0 44px 20px !important; margin: 6px 0 -30px 22px !important;
+  border-image-slice: 16 24 24 24 fill !important; border-image-width: 24px 36px 36px 36px !important; display: flex; align-items: center;
+  justify-content: center; min-width: 320px; box-sizing: border-box; font-family: Body, sans-serif !important; font-weight: 700; color: #3e2731 !important; text-shadow: none !important; }
+#speaker.good { color: #1a804d !important; } #speaker.bad { color: #8c2b3c !important; }
+.quip { position: absolute; z-index: 24; max-width: 300px; background: #fff4d6; color: #3e2731; border: 4px solid #2b1d2a; border-radius: 14px; padding: 8px 16px 10px;
+  font-size: 24px; line-height: 1.2; text-align: center; left: 24px; top: 300px; pointer-events: none; }
+.quip.foe { left: auto; right: 24px; color: #8c2b3c; }

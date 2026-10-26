@@ -844,11 +844,13 @@ func make_lineup() -> Array:
 	var out := []
 	var chs: Array = main.EXAM["chapters"].filter(func(c): return main.questions(int(c["id"])).size() > 0)
 	chs = main.shuffled(chs)
+	# the bosses get silly names (Somali characters with E-LDN on); the chapter is still on the plate and in the topic
+	var names: Array = main.shuffled(main.SENSEI["boss_names"]["east" if main.east() else "proper"])
 	for i in chs.size():
 		var c: Dictionary = chs[i]
-		out.append({"name": c["monster"], "chId": int(c["id"]), "topic": c["title"], "hue": int(c["id"]) * 47, "lv": "Ch %d" % int(c["id"]), "hp": BOSS_HP})
+		out.append({"name": names[i % names.size()], "chId": int(c["id"]), "topic": c["title"], "hue": int(c["id"]) * 47, "lv": "Ch %d" % int(c["id"]), "hp": BOSS_HP})
 		if i % 4 == 3:
-			out.append({"name": "Exam Hall Shogun", "chId": -1, "topic": "every chapter", "hue": 300, "lv": "SHOGUN", "hp": SHOGUN_HP})
+			out.append({"name": main.S("boss_final"), "chId": -1, "topic": "every chapter", "hue": 300, "lv": "SHOGUN", "hp": SHOGUN_HP})
 	return out
 
 func show_boss_lobby() -> void:
