@@ -190,25 +190,88 @@ func restore_code(code: String) -> bool:
 	save_game()
 	return true
 
+# Saving never risks the only copy: the new save is written to a .tmp file and checked, the old one is kept
+# as .bak, and once a day a dated copy goes into user://snapshots (the last SNAP_KEEP days are kept).
+# Updates only replace the app's content - these files are never touched by them.
+const BAK_PATH := "user://acca_study_buddy_save.bak.json"
+const TMP_PATH := "user://acca_study_buddy_save.tmp.json"
+const SNAP_DIR := "user://snapshots"
+const SNAP_KEEP := 14
+
 func save_game() -> void:
 	var d := {"version": 3, "settings": settings, "exam": exam_id}
 	for f in SAVED:
 		d[f] = get(f)
-	var fh := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if fh:
-		fh.store_string(JSON.stringify(d))
-		fh.close()
-
-func load_game() -> void:
-	if not FileAccess.file_exists(SAVE_PATH):
-		return
-	var fh := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	var text := JSON.stringify(d)
+	var fh := FileAccess.open(TMP_PATH, FileAccess.WRITE)
 	if not fh:
 		return
-	var data = JSON.parse_string(fh.get_as_text())
+	fh.store_string(text)
 	fh.close()
+	if FileAccess.get_file_as_string(TMP_PATH) != text:
+		return   # the write did not land in full - leave the existing save alone
+	if FileAccess.file_exists(SAVE_PATH):
+		DirAccess.remove_absolute(BAK_PATH)
+		DirAccess.rename_absolute(SAVE_PATH, BAK_PATH)
+	DirAccess.rename_absolute(TMP_PATH, SAVE_PATH)
+	_snapshot(text)
+
+func _snapshot(text: String) -> void:
+	DirAccess.make_dir_recursive_absolute(SNAP_DIR)
+	var f := FileAccess.open(SNAP_DIR.path_join(today_key() + ".json"), FileAccess.WRITE)
+	if f:
+		f.store_string(text)   # today's copy is refreshed with each save; earlier days stay as they were
+		f.close()
+	var days := snapshots()
+	for i in range(SNAP_KEEP, days.size()):
+		DirAccess.remove_absolute(SNAP_DIR.path_join(days[i] + ".json"))
+
+# Dated auto-saves, newest first ("2026-10-26", ...).
+func snapshots() -> Array:
+	var out := []
+	for f in DirAccess.get_files_at(SNAP_DIR):
+		if f.ends_with(".json"):
+			out.append(f.get_basename())
+	out.sort()
+	out.reverse()
+	return out
+
+func restore_snapshot(day: String) -> bool:
+	var data = _read(SNAP_DIR.path_join(day + ".json"))
 	if typeof(data) != TYPE_DICTIONARY:
+		return false
+	_apply(data)
+	save_game()
+	return true
+
+func _read(path: String):
+	if not FileAccess.file_exists(path):
+		return null
+	return JSON.parse_string(FileAccess.get_file_as_string(path))
+
+func load_game() -> void:
+	# The main save first; if it is missing or damaged, the newest daily copy (refreshed on every save),
+	# then the save before last, then older daily copies.
+	var paths := [SAVE_PATH, TMP_PATH]
+	var days := snapshots()
+	if not days.is_empty():
+		paths.append(SNAP_DIR.path_join(days[0] + ".json"))
+	paths.append(BAK_PATH)
+	for i in range(1, days.size()):
+		paths.append(SNAP_DIR.path_join(days[i] + ".json"))
+	var data = null
+	for path in paths:
+		if FileAccess.file_exists(path):
+			data = _read(path)
+			if typeof(data) == TYPE_DICTIONARY:
+				break
+	if typeof(data) != TYPE_DICTIONARY:
+		if FileAccess.file_exists(SAVE_PATH):   # keep an unreadable save aside rather than writing over it
+			DirAccess.rename_absolute(SAVE_PATH, "user://damaged_save_%d.json" % int(Time.get_unix_time_from_system()))
 		return
+	_apply(data)
+
+func _apply(data: Dictionary) -> void:
 	if not data.has("version"):
 		progress = data   # the very first save format held only progress
 		return

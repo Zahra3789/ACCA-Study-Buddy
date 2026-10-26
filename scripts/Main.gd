@@ -906,6 +906,31 @@ func _ask_restore() -> void:
 	row.add_child(UI.button("Cancel", "05A", show_home))
 	UI.content(p).add_child(row)
 	cards.add_child(p)
+	# The phone also keeps a copy of your progress for each of the last two weeks - tap a day to go back to it.
+	var days: Array = Game.snapshots()
+	if days.is_empty():
+		return
+	var q := UI.box("BGbox_03A", true)
+	UI.content(q).add_child(UI.label("Or go back to an auto-save from this phone:", 18))
+	var grid := GridContainer.new()
+	grid.columns = 2
+	for day in days:
+		grid.add_child(UI.button(_nice_day(day), "02A", func():
+			if Game.restore_snapshot(day):
+				show_home(); home_say("Back to your progress from %s." % _nice_day(day))
+			else:
+				home_say("That auto-save could not be read - try another day."), true, 18))
+	UI.content(q).add_child(grid)
+	cards.add_child(q)
+
+func _nice_day(day: String) -> String:
+	if day == Game.today_key():
+		return "Today"
+	if day == Game.day_after(-1):
+		return "Yesterday"
+	var p := day.split("-")
+	var months := ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+	return "%d %s" % [int(p[2]), months[int(p[1]) - 1]] if p.size() == 3 else day
 
 # ---------------------------------------------------------------- training grounds, records, syllabus
 var bank_kind := "":   # the Training Grounds question-type filter, remembered between launches
