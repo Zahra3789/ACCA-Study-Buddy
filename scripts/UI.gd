@@ -151,9 +151,16 @@ func banner(text: String, name := "BannerMedium_02C", size := 40) -> PanelContai
 	p.custom_minimum_size = Vector2(480, 80) if compact else Vector2(660, 96)
 	var l := Label.new()
 	l.text = text
-	l.add_theme_font_override("font", title_o_font)
 	l.add_theme_font_size_override("font_size", size)
-	l.add_theme_color_override("font_color", LIGHT)
+	if name.begins_with("BannerSmall"):   # name tags (SENSEI OTTER, ZURU, monsters): dark text reads on the yellow
+		l.add_theme_font_size_override("font_size", maxi(size, 28))
+		l.add_theme_font_override("font", title_font)
+		l.add_theme_color_override("font_color", DARK)
+	else:   # big title banners: white with a thick dark outline so it stands off the yellow
+		l.add_theme_font_override("font", title_o_font)
+		l.add_theme_color_override("font_color", LIGHT)
+		l.add_theme_color_override("font_outline_color", Color("2b1d2a"))
+		l.add_theme_constant_override("outline_size", 8)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	p.add_child(l)

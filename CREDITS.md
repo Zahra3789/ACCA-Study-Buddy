@@ -6,6 +6,7 @@
 | Digit font `assets/fonts/VT323.ttf` | VT323 — Peter Hull (Google Fonts) | SIL OFL 1.1 (`assets/fonts/OFL-vt323.txt`) |
 | `assets/fonts/Silkscreen.ttf` (kept, unused) | Silkscreen — Jason Kottke (Google Fonts) | SIL OFL 1.1 (`assets/fonts/OFL-silkscreen.txt`) |
 | Monster sprite `assets/monster.png`, `assets/font.ttf` | **Ninja Adventure Asset Pack** — Pixel-boy | CC0 1.0 |
+| Battle effects `assets/fx/*`, sword / impact / explosion / alert sounds `assets/sfx/slash*, sword, impact*, boom, alert, powerup`, fight music `assets/music/*` | **Ninja Adventure Asset Pack** — Pixel-boy | CC0 1.0 |
 | Dialogue panel / buttons `assets/ui/*` (fallback UI) | **Kenney UI Pack 2.0** — kenney.nl | CC0 1.0 |
 | Zuru the samurai (`assets/characters/*`) | **FREE_Samurai 2D Pixel Art v1.2** (same art as the DojoChef game), cut by `tools/make_zuru.gd` | Free for use in any game, personal or commercial; not to be resold or redistributed as a standalone asset |
 | App icon - the open study book (`assets/icon*.png`) | drawn for this project by `tools/make_zuru.gd` | CC0 (original) |

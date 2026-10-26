@@ -17,6 +17,8 @@ const HEAL := 3
 var main: Node
 var s: Dictionary = {}
 var session_id := 0
+var fx: Node                 # BattleFX: slashes, shakes, knockdowns, finishers, boss music and voices
+var combo := 0               # right answers in a row; 3+ is a critical (double damage on bosses)
 var typing := false
 var skip := false
 var _answer: Dictionary = {}
@@ -51,6 +53,9 @@ func setup(m: Node) -> void:
 	main = m
 	_build()
 	relayout()
+	fx = preload("res://scripts/BattleFX.gd").new()
+	add_child(fx)
+	fx.setup(self)
 
 # The field (designed 720 x 600) is scaled to fit its area and sits on the area's bottom edge, centred; sky
 # and ground colour fill whatever is left round it. Upright: field across the top, dialogue and moves below
@@ -209,6 +214,8 @@ func valid(sess: Dictionary) -> bool:
 	return int(sess.get("id", -1)) == session_id
 
 func abandon() -> void:
+	if fx:
+		fx.reset()
 	session_id += 1
 	skip = true
 	tapped.emit()
@@ -245,6 +252,11 @@ func start_session(o: Dictionary) -> void:
 	if hud.visible:
 		_hud()
 	update_bars()
+	combo = 0
+	fx.reset()
+	if o.get("gauntlet", false):
+		fx.music_start("boss")
+		fx.boss_intro(int(o.get("bossesDown", 0)) + 1)
 	run_battle(s)
 
 func _scene(c: Array) -> void:
@@ -278,7 +290,7 @@ func _speaker(name: String) -> void:
 	l.text = name
 	var style := "BannerSmall_02C"
 	speaker.add_theme_stylebox_override("panel", UI.banner_style(style))
-	l.add_theme_color_override("font_color", Color("e8ffe8") if name == "CORRECT" else (Color("ffe0e0") if name == "WRONG" else UI.LIGHT))
+	l.add_theme_color_override("font_color", UI.GREEN if name == "CORRECT" else (UI.RED if name == "WRONG" else UI.DARK))
 
 func _verdict(ok: bool) -> void:
 	verdict_label.text = "CORRECT!" if ok else "WRONG"
@@ -580,12 +592,27 @@ func run_battle(sess: Dictionary) -> void:
 			sess["correct"] += 1
 		UI.clear(cmds)
 		if r["ok"]:
-			main.sfx("hit"); _verdict(true); main.mood(you, "happy"); _anim(you, "lungeR")
+			combo += 1
+			var dmg := 2 if (combo >= 3 and sess.get("gauntlet", false)) else 1
+			_verdict(true); main.mood(you, "happy"); _anim(you, "lungeR")
 			await get_tree().create_timer(0.18).timeout
-			_anim(foe, "hit"); _dmg("-1", Vector2(560, 100))
+			fx.hit(combo)
+			if not fx.knocked:
+				_anim(foe, "hit")
+			_dmg(("CRIT -%d" if combo >= 3 else "-%d") % dmg, Vector2(540, 100))
 			if sess.get("gauntlet", false):
-				sess["bossHp"] -= 1
+				sess["bossHp"] = max(0, int(sess["bossHp"]) - dmg)
 			update_bars()
+			# one good hit from defeat: knocked down (the defeating blow itself is the finisher)
+			if sess.get("gauntlet", false):
+				if int(sess["bossHp"]) <= 0:   # the defeating blow lands now, before Sensei explains the answer
+					await fx.finisher(true)
+					if not valid(sess):
+						return
+				elif int(sess["bossHp"]) == 1 and int(sess["bossMax"]) > 1:
+					fx.knockdown()
+			elif sess["mode"] in ["trial", "lesson"] and sess["qTotal"] and float(sess["qTotal"] - sess["correct"]) / sess["qTotal"] <= 0.25:
+				fx.knockdown()
 			await say([main.S("correct", {"move": MOVES[randi() % MOVES.size()].to_upper()})] + pages(str(b.get("ex", ""))), "CORRECT", sess)
 			if sess.get("gauntlet", false) and sess["bossHp"] <= 0:
 				sess["idx"] += 1
@@ -593,10 +620,12 @@ func run_battle(sess: Dictionary) -> void:
 					return
 				continue
 		else:
+			combo = 0
 			main.sfx("miss"); _verdict(false); main.mood(you, "sad")
 			sess["you"] = max(0, sess["you"] - 1)
 			_anim(foe, "lungeL")
 			await get_tree().create_timer(0.18).timeout
+			fx.hurt(sess["you"] > 0 and sess["you"] <= maxi(2, int(sess["youMax"] * 0.3)))
 			_anim(you, "hit"); _dmg("-1", Vector2(200, 330))
 			update_bars()
 			await say([main.S("wrong", {"foe": sess["foe"], "ans": main.correct_text(b)})] + pages(str(b.get("ex", ""))), "WRONG", sess)
@@ -626,10 +655,16 @@ func finish(sess: Dictionary) -> void:
 	if key != "":
 		Game.record(key, pct)
 	var won := pct >= 70
+	fx.set_danger(false)
 	if won:
-		main.sfx("win")
 		if not drill:
-			_anim(foe, "faint")
+			await fx.finisher(false)
+			if not valid(sess):
+				return
+		main.sfx("win")
+		fx.voice("win")
+	elif not drill:
+		fx.voice("lose")
 	var lines := []
 	var vars := {"foe": sess["foe"], "n": sess["correct"], "total": total, "pct": pct}
 	lines.append(main.S(("won" if won else "lost") if not drill else "session_done", vars))
@@ -749,9 +784,9 @@ func next_boss(sess: Dictionary) -> bool:
 	var beaten: Dictionary = sess["lineup"][sess["bossNo"]]
 	sess["bossesDown"] += 1
 	main.sfx("win")
-	_anim(foe, "faint")
 	sess["you"] = min(int(sess["youMax"]), int(sess["you"]) + HEAL)
 	update_bars(); _hud()
+	fx.set_danger(int(sess["you"]) <= maxi(2, int(sess["youMax"] * 0.3)))
 	await say([main.S("boss_down", {"foe": beaten["name"], "n": sess["bossesDown"], "es": "" if sess["bossesDown"] == 1 else "es", "heal": HEAL})], "VICTORY", sess)
 	if not valid(sess):
 		return true
@@ -761,11 +796,14 @@ func next_boss(sess: Dictionary) -> bool:
 		return true
 	var nb: Dictionary = sess["lineup"][sess["bossNo"]]
 	_set_foe(sess, nb)
+	fx.boss_intro(int(sess["bossesDown"]) + 1)
 	sess["beats"] = sess["beats"].slice(0, sess["idx"])
 	await say(["Boss %d: a wild [b]%s[/b] appeared! Topic: %s." % [sess["bossesDown"] + 1, nb["name"], nb["topic"]]], "BATTLE", sess)
 	return false
 
 func finish_gauntlet(sess: Dictionary, how: String) -> void:
+	fx.reset()
+	fx.voice("win" if how == "cleared" else ("lose" if how == "fell" else ""))
 	var n := int(sess["bossesDown"])
 	var asked = sess["beats"].slice(0, sess["idx"]).filter(main.is_q).size()
 	var before := Game.best(sess["key"])

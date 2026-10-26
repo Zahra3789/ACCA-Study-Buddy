@@ -130,6 +130,14 @@ func _check_for_update() -> void:
 			show_home())
 	http.request(BuildInfo.UPDATE_URL + "/apk.txt?t=%d" % Time.get_unix_time_from_system())
 
+# "App v2.5 · update 3": the APK's version, then the content update it is running - worked out like
+# Boot.installed_version(), because Boot cached the APK's build_info.gd before any pack was loaded.
+func version_text() -> String:
+	var n := BuildInfo.BUILD
+	if FileAccess.file_exists("user://update/content.pck") and FileAccess.file_exists("user://update/version.txt"):
+		n = maxi(n, int(FileAccess.get_file_as_string("user://update/version.txt").strip_edges()))
+	return "App v%s · update %d" % [ProjectSettings.get_setting("application/config/version", "?"), n]
+
 # "2.10" is newer than "2.9": compare each dotted part as a number.
 func _newer(latest: String, current: String) -> bool:
 	var a := latest.split(".")
@@ -331,6 +339,7 @@ func _build_overlays() -> void:
 
 func _process(delta: float) -> void:
 	_glide(delta)
+	_keyboard_lift(delta)
 	if cur_screen in ["battle", "lesson", "mtq", "exam"]:
 		study_sec += delta
 		if study_sec >= 15.0:
@@ -390,6 +399,21 @@ func _scroll_at(pos: Vector2) -> ScrollContainer:
 		if sc.is_visible_in_tree() and sc.get_global_rect().has_point(pos) and sc.get_v_scroll_bar().max_value > sc.size.y + 1:
 			found = sc
 	return found
+
+# ---------------------------------------------------------------- on-screen keyboard
+# Android's keyboard slides up over the bottom of the game rather than shrinking it, which hid the answer
+# box. While it is up, slide the whole screen up just enough that the box being typed in sits above it.
+func _keyboard_lift(delta: float) -> void:
+	var lift := 0.0
+	var kb := DisplayServer.virtual_keyboard_get_height()
+	var f := get_viewport().gui_get_focus_owner()
+	if kb > 0 and f is LineEdit and f.is_visible_in_tree() and stage.is_ancestor_of(f):
+		var kb_h := kb * float(H) / DisplayServer.window_get_size().y
+		var bottom := f.get_global_rect().end.y - stage.position.y + 24.0
+		lift = maxf(0.0, bottom - (H - kb_h))
+	stage.position.y = lerpf(stage.position.y, -lift, minf(1.0, delta * 14.0))
+	if absf(stage.position.y + lift) < 0.5:
+		stage.position.y = -lift
 
 func _glide(delta: float) -> void:
 	if _dragging or _drag_sc == null or not is_instance_valid(_drag_sc) or absf(_fling) < 30.0:
@@ -554,6 +578,7 @@ func show_title() -> void:
 	sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right.add_child(sc)
 	right.add_child(UI.label("Zuru's dojo - choose an exam to enter" + (" - happy holidays!" if festive() else (" - happy Halloween!" if spooky() else "")), 22, Color("fbe9d0"), true))
+	right.add_child(UI.label(version_text(), 18, Color(1, 1, 1, 0.55), true))
 	show_screen("title")
 
 func _exam_row(x: Dictionary) -> Control:
@@ -1108,6 +1133,10 @@ func toggle_sfx() -> void:
 	draw_toggles()
 	if Game.settings["sfx"]:
 		sfx("hit")
+		if cur_screen == "battle" and battle.s.get("gauntlet", false):
+			battle.fx.music_start("boss")
+	else:
+		battle.fx.music_stop()   # the boss fight music goes quiet with the other sounds
 
 # Themes: only when she picks one with the THEME button - "off" / "xmas" / "halloween". Saved with the settings.
 func theme() -> String:
