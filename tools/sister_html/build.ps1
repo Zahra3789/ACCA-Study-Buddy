@@ -26,6 +26,9 @@ $head = Must $head '<img id="you" data-src="../assets/characters/samurai.png" da
 $head = Must $head '<img id="lessonYou" data-src="../assets/characters/samurai.png" data-zuru alt="" title="Zuru">' '<canvas id="lessonYou" width="288" height="252"></canvas>' 'lesson Zuru'
 $head = Must $head '<img id="mtqYou" data-src="../assets/characters/samurai.png" data-zuru alt="" title="Zuru">' '<canvas id="mtqYou" width="260" height="232"></canvas>' 'mtq Zuru'
 $head = Must $head '<canvas id="journey" width="720" height="150"' '<canvas id="journey" width="720" height="200"' 'banner canvas'
+# --- iPhone: lay out at the phone's own width (without this Safari draws a wide desktop page, zoomed and cut off),
+#     and run full screen when added to the Home Screen
+$head = Must $head '<meta charset="utf-8">' ("<meta charset=`"utf-8`">`n<meta name=`"viewport`" content=`"width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover`">`n" + "<meta name=`"apple-mobile-web-app-capable`" content=`"yes`">`n<meta name=`"mobile-web-app-capable`" content=`"yes`">`n<meta name=`"apple-mobile-web-app-title`" content=`"SM Study Buddy`">`n<meta name=`"apple-mobile-web-app-status-bar-style`" content=`"black-translucent`">") 'charset meta'
 # --- greetings: plain English when Sensei is proper; the Somali ones only with E-LDN on
 $app = [regex]::Replace($app, "welcome_title: \{ proper: \[[^\]]*\]", "welcome_title: { proper: ['Welcome to the dojo, Zuru.', 'Welcome back to the dojo, Zuru.', 'Good to see you, Zuru. Welcome to the dojo.', 'Zuru! The dojo has been waiting for you.']")
 $app = [regex]::Replace($app, "welcome_home: \{ proper: \[[^\]]*\]", "welcome_home: { proper: ['Welcome back, Zuru!', 'Good to see you, Zuru - ready to study?', `"Hello again, Zuru. Let's get to work.`", 'Welcome back, Zuru. One chapter at a time.']")
@@ -68,3 +71,6 @@ $html = $head + "`n" + $exams + "`n" + $assets + "`n" + $add.ToString() + "`n" +
 [IO.File]::WriteAllText($Out, $html, $utf8)
 "Wrote $Out  ({0:N1} MB)" -f ((Get-Item $Out).Length / 1MB)
 "Zuru left: " + ([regex]::Matches($head + $exams + $app, 'Zuru').Count)
+# --- the online copy she opens in Safari (GitHub Pages: push the sm-study-buddy repo to publish it)
+$site = Join-Path $env:USERPROFILE 'GameDev\sm-study-buddy'
+if (Test-Path $site) { Copy-Item $Out (Join-Path $site 'index.html'); "Copied to $site\index.html" }
