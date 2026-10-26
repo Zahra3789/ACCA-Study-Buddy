@@ -28,7 +28,7 @@ window/size/viewport_width=720
 window/size/viewport_height=1280
 window/stretch/mode="canvas_items"
 window/stretch/aspect="keep"
-window/handheld/orientation="portrait"
+window/handheld/orientation=6
 
 [gui]
 
@@ -39,6 +39,8 @@ common/snap_controls_to_pixels=true
 pointing/emulate_touch_from_mouse=true
 
 [rendering]
+
+environment/defaults/default_clear_color=Color(0.0706, 0.051, 0.0863, 1)
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"

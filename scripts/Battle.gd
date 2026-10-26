@@ -87,7 +87,7 @@ func _build() -> void:
 	var ypv := UI.content(yp)
 	var yr := UI.hbox(10)
 	yr.add_child(UI.label("ZURU", 30, UI.RED))
-	you_lv = UI.label("", 24, UI.DARK); you_lv.size_flags_horizontal = Control.SIZE_SHRINK_END
+	you_lv = UI.label("", 24, UI.DARK); you_lv.size_flags_horizontal = Control.SIZE_SHRINK_END; you_lv.autowrap_mode = TextServer.AUTOWRAP_OFF
 	yr.add_child(you_lv)
 	ypv.add_child(yr)
 	you_hp = UI.bar(1.0, 280, 26)

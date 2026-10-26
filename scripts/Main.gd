@@ -137,6 +137,11 @@ func _top_button(row: HBoxContainer, text: String, code: String, fn: Callable) -
 	var b := UI.button(text, code, fn, true, 17)
 	b.custom_minimum_size = Vector2(0, 44)
 	b.clip_text = true
+	# seven buttons share 700 px, so the usual 28 px side padding leaves no room for a word
+	for st in ["normal", "hover", "pressed", "disabled"]:
+		var sb: StyleBox = b.get_theme_stylebox(st).duplicate()
+		sb.content_margin_left = 6; sb.content_margin_right = 6; sb.content_margin_top = 6; sb.content_margin_bottom = 6
+		b.add_theme_stylebox_override(st, sb)
 	row.add_child(b)
 	return b
 
