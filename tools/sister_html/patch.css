@@ -21,3 +21,5 @@ body.xmas .mwrap > .mhat.s, body.halloween .mwrap > .mhat.w { display: block; }
 .banner.titleO { font-weight: 700; font-size: 40px;
   text-shadow: 3px 0 0 #2b1d2a, -3px 0 0 #2b1d2a, 0 3px 0 #2b1d2a, 0 -3px 0 #2b1d2a, 2px 2px 0 #2b1d2a, -2px 2px 0 #2b1d2a, 2px -2px 0 #2b1d2a, -2px -2px 0 #2b1d2a; }
 #examList .grp { text-shadow: 2px 0 0 #2b1d2a, -2px 0 0 #2b1d2a, 0 2px 0 #2b1d2a, 0 -2px 0 #2b1d2a; }
+/* the exam list's title banner runs the full width, like Home's */
+#title > .banner { align-self: center; width: 668px; box-sizing: border-box; }
