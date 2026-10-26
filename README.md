@@ -28,6 +28,7 @@ lesson ends in a practice battle, and the mocks are laid out like the real ACCA 
 1. Open **Godot 4.x** (4.3 or later; 4.7 works).
 2. Open this folder (it finds `project.godot`) and press **F5**.
 3. Optional: copy the Franuka RPG UI pack into `assets/rpg/` for the full look (see `CREDITS.md`).
+4. Rebuild Zuru's sprites (not in the repo, see `CREDITS.md`): `Godot --headless --path . -s tools/make_zuru.gd`.
 
 > **Status:** the Godot port in `scripts/` runs cleanly in Godot 4.7.2 and is the v2.0 Android build. It was
 > checked headless by playing every chapter battle, lesson, Section B case, mock and planner screen with no

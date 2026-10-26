@@ -1,10 +1,11 @@
 # Builds ONE self-contained HTML file of the preview (questions, fonts and art all
 # embedded) so it opens straight from disk in Firefox - no server needed.
 #   powershell -ExecutionPolicy Bypass -File preview\build-standalone.ps1
-param([string]$Out = "")
+param([string]$Out = "")   # default: build\ACCA Study Buddy.html in this project (build\ is git-ignored)
 $ErrorActionPreference = 'Stop'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $root = [System.IO.Path]::GetFullPath((Join-Path $here '..'))
+if (-not $Out) { New-Item -ItemType Directory -Force (Join-Path $root 'build') | Out-Null; $Out = Join-Path $root 'build\ACCA Study Buddy.html' }
 
 # Questions: Content.gd's EXAMS constant is JSON apart from full-line # comments.
 $lines = Get-Content (Join-Path $root 'scripts\Content.gd') -Encoding UTF8
