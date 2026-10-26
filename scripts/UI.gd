@@ -125,6 +125,9 @@ func banner_style(name: String) -> StyleBox:
 	var s := StyleBoxTexture.new()
 	s.texture = t
 	s.texture_margin_left = 48; s.texture_margin_right = 48; s.texture_margin_top = 40; s.texture_margin_bottom = 40
+	if name.begins_with("BannerMedium"):   # the yellow face sits above a shaded lower edge: lift the title onto the face (same overall size)
+		s.content_margin_top = 28
+		s.content_margin_bottom = 52
 	return s
 
 # ---------------------------------------------------------------- controls
