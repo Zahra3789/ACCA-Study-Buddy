@@ -1,5 +1,5 @@
 # Her file as the other chat made it is the input (not kept in the repo: it carries the licensed art).
-param([string]$Src = "$env:USERPROFILE\Downloads\SM Study Buddy.html", [string]$Out = "$env:USERPROFILE\Downloads\SM Study Buddy - new art.html")
+param([string]$Src = "$env:USERPROFILE\GameDev\SM Study Buddy - original (rebuild input).html", [string]$Out = "$env:USERPROFILE\Downloads\SM Study Buddy.html")
 # Builds the sister's CIMA HTML with the Samurai Ledger art: same content, Zuru renamed Sisi, plain-English greetings
 # when E-LDN is off, the real Japan scenery banner, animated Sisi, theme hats and trimmings, readable titles.
 $ErrorActionPreference = 'Stop'
