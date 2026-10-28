@@ -5,6 +5,8 @@
 | Body font `assets/fonts/PixelifySans.ttf` | Pixelify Sans — Stefie Justprince (Google Fonts) | SIL OFL 1.1 (`assets/fonts/PixelifySans-OFL.txt`) |
 | Digit font `assets/fonts/VT323.ttf` | VT323 — Peter Hull (Google Fonts) | SIL OFL 1.1 (`assets/fonts/OFL-vt323.txt`) |
 | `assets/fonts/Silkscreen.ttf` (kept, unused) | Silkscreen — Jason Kottke (Google Fonts) | SIL OFL 1.1 (`assets/fonts/OFL-silkscreen.txt`) |
+| Symbol fallback `assets/fonts/DejaVuSans.ttf` | DejaVu Sans — DejaVu fonts team | Bitstream Vera / DejaVu licence (free to use and redistribute) |
+| Emoji fallback `assets/fonts/NotoEmoji.ttf` | Noto Emoji — Google | SIL OFL 1.1 |
 | Monster sprite `assets/monster.png`, `assets/font.ttf` | **Ninja Adventure Asset Pack** — Pixel-boy | CC0 1.0 |
 | Battle effects `assets/fx/*`, sword / impact / explosion / alert sounds `assets/sfx/slash*, sword, impact*, boom, alert, powerup`, fight music `assets/music/*` | **Ninja Adventure Asset Pack** — Pixel-boy | CC0 1.0 |
 | Zuru's voice `assets/voice/*` (attack, crit, finish, hurt, boss, win, lose - picked and renamed from the pack) | **Warrior Voice Pack** — John Carroll (johncarroll.itch.io) | CC0 1.0 |

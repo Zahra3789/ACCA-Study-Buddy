@@ -31,6 +31,15 @@ func _ready() -> void:
 	digit_font = _load_font(DIGIT_FONT, BODY_FONT)
 	title_font = body_font   # the RPG title font read badly; headings and name tags use the body font (title_o_font stays for battle shouts)
 	title_o_font = _load_font(TITLE_O_FONT, TITLE_FONT)
+	# Symbols the pixel fonts don't have (▶ ✓ ★ arrows, 📅 🔒 🍋): a phone fills them in from its own fonts, a browser
+	# can't, so the game carries two free fonts for them - DejaVu Sans (its licence allows this) and Noto Emoji (OFL)
+	var fb := []
+	for p in ["res://assets/fonts/DejaVuSans.ttf", "res://assets/fonts/NotoEmoji.ttf"]:
+		if ResourceLoader.exists(p):
+			fb.append(load(p))
+	for f in [body_font, digit_font, title_o_font]:
+		if f is Font and fb.size():
+			f.fallbacks = fb
 	has_pack = ResourceLoader.exists(RPG + "BGbox_01A.png")
 	var th := Theme.new()
 	th.default_font = body_font

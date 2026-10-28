@@ -194,7 +194,8 @@ func _draw_splash(c: Control) -> void:
 	for l in lines:
 		c.draw_multiline_string(font, Vector2(30, ly), l[0], HORIZONTAL_ALIGNMENT_CENTER, W - 60, l[1], -1, l[2])
 		ly += (l[1] + 14.0) * maxf(1.0, ceilf(font.get_string_size(l[0], HORIZONTAL_ALIGNMENT_LEFT, -1, l[1]).x / (W - 60)))
-	c.draw_string(font, Vector2(0, H - 30), "content version %d" % _sp["n"], HORIZONTAL_ALIGNMENT_CENTER, W, 14, Color(1, 1, 1, 0.4))
+	if ly < H - 50.0:   # only when there is room under the tip (a laptop screen held sideways is short)
+		c.draw_string(font, Vector2(0, H - 30), "content version %d" % _sp["n"], HORIZONTAL_ALIGNMENT_CENTER, W, 14, Color(1, 1, 1, 0.4))
 
 # ---------------------------------------------------------------- updates
 # Content updates arrive by themselves: Boot.gd fetches them at start-up, and while the app is open the live
@@ -547,7 +548,7 @@ func _scroll_at(pos: Vector2) -> ScrollContainer:
 # box. While it is up, slide the whole screen up just enough that the box being typed in sits above it.
 func _keyboard_lift(delta: float) -> void:
 	var lift := 0.0
-	var kb := DisplayServer.virtual_keyboard_get_height()
+	var kb := DisplayServer.virtual_keyboard_get_height() if DisplayServer.has_feature(DisplayServer.FEATURE_VIRTUAL_KEYBOARD) else 0   # none on desktop or the web
 	var f := get_viewport().gui_get_focus_owner()
 	if kb > 0 and f is LineEdit and f.is_visible_in_tree() and stage.is_ancestor_of(f):
 		var kb_h := kb * float(H) / DisplayServer.window_get_size().y
@@ -597,7 +598,7 @@ func _live_update_tick(delta: float) -> void:
 			_live_ready = false
 			_live_apply()
 		return
-	if BuildInfo.UPDATE_URL == "" or DisplayServer.get_name() == "headless" or OS.has_feature("editor") or _live_http != null:
+	if BuildInfo.UPDATE_URL == "" or DisplayServer.get_name() == "headless" or OS.has_feature("editor") or OS.has_feature("web") or _live_http != null:
 		return
 	_live_t -= delta
 	if _live_t > 0.0:

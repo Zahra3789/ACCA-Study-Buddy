@@ -30,7 +30,7 @@ func _ready() -> void:
 		j.position = Vector2(0, sz.y / 2.0 - 80.0 - hj)
 		j.size = Vector2(sz.x, hj)
 		add_child(j)
-	if BuildInfo.UPDATE_URL == "" or DisplayServer.get_name() == "headless" or OS.has_feature("editor"):
+	if BuildInfo.UPDATE_URL == "" or DisplayServer.get_name() == "headless" or OS.has_feature("editor") or OS.has_feature("web"):   # the web version is updated by publishing it again
 		_start()   # no update server, or running from source / in tests: just play
 		return
 	status = "Checking for updates..."
