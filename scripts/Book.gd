@@ -193,9 +193,72 @@ func _phases(l: Dictionary) -> Array:
 	ph.append(["turn", "Your turn"])
 	return ph
 
+# ---------------------------------------------------------------- bite-sized lesson pages
+# Each page's text is cut into pieces of at most CHUNK_SENTENCES sentences (or about CHUNK_CHARS letters), line by
+# line, so it reads 2-3 lines at a time. Nothing is reworded; a heading line ending in ":" stays with what follows,
+# and a page's table goes with its last piece.
+const CHUNK_SENTENCES := 3
+const CHUNK_CHARS := 230
+
+func _chunks(pages: Array) -> Array:
+	var out := []
+	var re := RegEx.new()
+	re.compile("(?<=[.!?])\\s+(?=[A-Z(\"'£$0-9])")
+	for p in pages:
+		var units := []   # [text, starts a new line, a blank line follows]
+		for line in str(p.get("text", "")).split("\n"):
+			if line.strip_edges() == "":
+				if units.size():
+					units[-1][2] = true
+				continue
+			var parts: Array = []
+			var last := 0
+			for m in re.search_all(line):
+				parts.append(line.substr(last, m.get_start() - last))
+				last = m.get_end()
+			parts.append(line.substr(last))
+			for k in parts.size():
+				units.append([parts[k], k == 0, false])
+		var pieces := []
+		var cur := ""
+		var n := 0
+		for u in units:
+			var t: String = u[0]
+			var sep := "" if cur == "" else ("\n" if u[1] else " ")
+			var heading := cur.strip_edges().ends_with(":")
+			if cur != "" and not heading and (n >= CHUNK_SENTENCES or (cur + sep + t).length() > CHUNK_CHARS):
+				pieces.append(cur)
+				cur = ""
+				n = 0
+				sep = ""
+			cur += sep + t
+			n += 1
+			if u[2]:
+				cur += "\n"
+		if cur.strip_edges() != "":
+			# a short last bit (the end of a list, a closing line) goes with the piece before rather than alone
+			if pieces.size() and cur.length() < 90 and (pieces[-1] + cur).length() < CHUNK_CHARS * 1.4:
+				pieces[-1] += "\n" + cur.strip_edges()
+			else:
+				pieces.append(cur)
+		if pieces.is_empty():
+			pieces.append(str(p.get("text", "")))
+		for k in pieces.size():
+			var q: Dictionary = p.duplicate()
+			q["text"] = str(pieces[k]).strip_edges()
+			if k < pieces.size() - 1:
+				q.erase("table")
+			out.append(q)
+	return out
+
 func render_lesson() -> void:
 	var c = main.get_ch(int(L["chId"]))
-	var l: Dictionary = c["lessons"][int(L["li"])]
+	var l: Dictionary = c["lessons"][int(L["li"])].duplicate()
+	# Learn and Apply-it pages are shown a bite at a time (a few sentences per page) so it isn't a wall of text
+	l["learn"] = _chunks(l.get("learn", []))
+	if l.has("apply"):
+		l["apply"] = l["apply"].duplicate()
+		l["apply"]["pages"] = _chunks(l["apply"].get("pages", []))
 	var phases := _phases(l)
 	var s: Control = main.screen("lesson")
 	var v: VBoxContainer = main.column(s, 58, 26, 24, 12, [Color("1f5d63"), Color("2a3f55"), Color("2a1e2e")])
