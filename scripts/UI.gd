@@ -216,8 +216,8 @@ func rich(text: String, size := 28, dark := true, center := false) -> RichTextLa
 	return r
 
 # Text that types itself out, like the battle dialogue (Sensei's messages, lesson pages, scroll answers).
-# The label keeps its full size from the start, so nothing jumps. About 28 letters a second (2.5 times slower than
-# it was - her reading pace), long pages finishing within 7 s.
+# The label keeps its full size from the start, so nothing jumps. About 23 letters a second (3 times slower than
+# it was - her reading pace), long pages finishing within 8.5 s.
 func typed(text: String, size := 28, dark := true, center := false) -> RichTextLabel:
 	return type_in(rich(text, size, dark, center))
 
@@ -225,7 +225,7 @@ func type_in(r: RichTextLabel) -> RichTextLabel:
 	var n := plain(str(r.get_meta("base", r.text))).length()
 	r.visible_ratio = 0.0
 	var tw := create_tween()
-	tw.tween_property(r, "visible_ratio", 1.0, clampf(n / 70.0 * 2.5, 0.75, 7.0))
+	tw.tween_property(r, "visible_ratio", 1.0, clampf(n / 70.0 * 3.0, 0.9, 8.5))
 	r.set_meta("typing", tw)
 	return r
 
