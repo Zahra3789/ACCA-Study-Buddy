@@ -41,6 +41,8 @@ $app = Must $app $east[2] $east[3] 'East London wrong-answer lines'
 $before = $app.Length
 $app = [regex]::Replace($app, '(<div class="stars">\$\{st\}</div></div>`)\s*\+ `<div class="senseiLine"[^\n]*', '$1;')
 if ($app.Length -eq $before) { throw "chapter Sensei line not removed" }
+# --- the Apply-it stories are set at Crafted Crisps now (reskin.js): a potato on their heading, not a lemon
+$app = Must $app "box.append(el('div', 'applyHead', ``&#127819; " "box.append(el('div', 'applyHead', ``&#129364; " 'apply-it heading emoji'
 # --- the Chapter Book says how many chapters there are
 $app = Must $app '`[b]${totalStars()} / ${EXAM.chapters.length * 3}[/b] stars collected.' ('`[b]${EXAM.chapters.length} chapters[/b]  ' + [char]0xB7 + '  [b]${totalStars()} / ${EXAM.chapters.length * 3}[/b] stars collected.') 'chapter count'
 # --- the character is Sisi in this version (names only; asset file names are lower case and untouched)
@@ -71,7 +73,8 @@ $app = Must $app '</body>' ($patch + "`n</body>") 'body end'
 
 # --- the EPA1 pre-seen chapter (Crafted Crisps 2026/27), added to the content before the app starts
 $preseen = [IO.File]::ReadAllText((Join-Path $here 'preseen.js'), $utf8)
-$html = $head + "`n" + $exams + "`n" + $assets + "`n<script>" + $preseen + "</script>`n" + $add.ToString() + "`n" + $app   # after the EXAMS + ASSETS script, which ends there
+$reskin = [IO.File]::ReadAllText((Join-Path $here 'reskin.js'), $utf8)   # the lesson stories set at Crafted Crisps
+$html = $head + "`n" + $exams + "`n" + $assets + "`n<script>" + $preseen + "`n" + $reskin + "</script>`n" + $add.ToString() + "`n" + $app   # after the EXAMS + ASSETS script, which ends there
 [IO.File]::WriteAllText($Out, $html, $utf8)
 "Wrote $Out  ({0:N1} MB)" -f ((Get-Item $Out).Length / 1MB)
 "Zuru left: " + ([regex]::Matches($head + $exams + $app, 'Zuru').Count)
