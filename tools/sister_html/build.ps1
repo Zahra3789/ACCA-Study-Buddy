@@ -69,7 +69,9 @@ foreach ($f in $files) {
 $patch = [IO.File]::ReadAllText((Join-Path $here 'patch.js'), $utf8)
 $app = Must $app '</body>' ($patch + "`n</body>") 'body end'
 
-$html = $head + "`n" + $exams + "`n" + $assets + "`n" + $add.ToString() + "`n" + $app
+# --- the EPA1 pre-seen chapter (Crafted Crisps 2026/27), added to the content before the app starts
+$preseen = [IO.File]::ReadAllText((Join-Path $here 'preseen.js'), $utf8)
+$html = $head + "`n" + $exams + "`n" + $assets + "`n<script>" + $preseen + "</script>`n" + $add.ToString() + "`n" + $app   # after the EXAMS + ASSETS script, which ends there
 [IO.File]::WriteAllText($Out, $html, $utf8)
 "Wrote $Out  ({0:N1} MB)" -f ((Get-Item $Out).Length / 1MB)
 "Zuru left: " + ([regex]::Matches($head + $exams + $app, 'Zuru').Count)
