@@ -1,8 +1,8 @@
 extends Control
 # The notepad (web / laptop only - her phone has no NOTES button): a sheet down the right-hand side to write
 # notes on while she reads (laid over the page), as she has no pen and paper to hand. It stays open across screens, saves as she
-# types (Game.notes, so Backup / Restore carry it too). "Heading" turns the line she is on into a heading (a gold
-# band) and "+ Lesson" drops in where she is (chapter and lesson), so the notes follow the book.
+# types (Game.notes, so Backup / Restore carry it too). She types a line, then "Heading" turns it into a heading
+# (a gold band); tapping it again turns it back into plain text.
 
 var main: Node
 var panel: PanelContainer
@@ -41,10 +41,6 @@ func setup(m: Node) -> void:
 	mk.size_flags_horizontal = Control.SIZE_SHRINK_END
 	mk.custom_minimum_size = Vector2(130, 52)
 	top.add_child(mk)
-	var head := UI.button("+ Lesson", "05A", _add_heading, true, 20)   # a heading for where she is
-	head.size_flags_horizontal = Control.SIZE_SHRINK_END
-	head.custom_minimum_size = Vector2(130, 52)
-	top.add_child(head)
 	var close := UI.button("Close", "04A", func(): toggle(false), false, 20)
 	close.size_flags_horizontal = Control.SIZE_SHRINK_END
 	close.custom_minimum_size = Vector2(110, 52)
@@ -149,27 +145,6 @@ func _save_now() -> void:
 		Game.notes = edit.text
 		Game.save_game()
 	status.text = "Saved"
-
-# A heading for where she is: the chapter and lesson when reading one, otherwise the screen.
-func _add_heading() -> void:
-	main.sfx("tap")
-	var h := "Notes"
-	if main.cur_screen == "lesson":
-		var c = main.get_ch(int(main.book.L["chId"]))
-		var l: Dictionary = c["lessons"][int(main.book.L["li"])]
-		h = "Ch %d %s - Lesson %d: %s" % [int(main.book.L["chId"]), c["title"], int(main.book.L["li"]) + 1, l["title"]]
-	elif main.cur_screen == "book":
-		var c = main.get_ch(int(main.book.book_sel))
-		h = "Ch %d %s" % [int(main.book.book_sel), c["title"]]
-	elif main.cur_screen == "battle":
-		h = "Battle notes"
-	var add := ("" if edit.text.strip_edges() == "" else "\n\n") + "== " + h + " ==\n"
-	edit.text = edit.text.rstrip("\n ") + add if edit.text.strip_edges() != "" else add
-	_paint_headings()
-	edit.grab_focus()
-	edit.set_caret_line(edit.get_line_count() - 1)
-	edit.set_caret_column(0)
-	_save_in = 0.3
 
 # 'Heading': the line she is on becomes a heading (gold band, dark red), or back to plain text if it already is one.
 func _make_heading() -> void:
