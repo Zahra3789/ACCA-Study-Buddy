@@ -66,6 +66,10 @@ var mtq: Node
 var exam: Node
 var planner: Node
 var calc: Node
+var notes: Node = null
+
+func has_notes() -> bool:
+	return OS.has_feature("web") or OS.has_feature("pc")
 var scrolls: Node
 var help: Node
 var menu_title := ""   # which menu() screen is showing, so Help can explain it
@@ -102,6 +106,10 @@ func _ready() -> void:
 	_build_top_bar()
 	add_child(calc)
 	calc.setup(self)
+	if has_notes():   # the notepad: laptop / web only, not the phone
+		notes = preload("res://scripts/Notes.gd").new()
+		add_child(notes)
+		notes.setup(self)
 	help = preload("res://scripts/Help.gd").new()
 	add_child(help)
 	help.setup(self)
@@ -256,6 +264,8 @@ func relayout() -> void:
 	lights.size = Vector2(W / 3.0, 8)
 	battle.relayout()
 	calc.relayout()
+	if notes:
+		notes.relayout()
 	help.relayout()
 	match cur_screen:
 		"title": show_title()
@@ -303,6 +313,8 @@ func _build_top_bar() -> void:
 	theme_btn = _top_button(row, "THEME OFF", "01A", toggle_theme)
 	sensei_btn = _top_button(row, "E-LDN OFF", "04A", toggle_sensei)
 	_top_button(row, "DATES", "03A", planner.show_key_dates)
+	if has_notes():
+		_top_button(row, "NOTES", "05A", func(): sfx("tap"); notes.toggle(not notes.visible))
 	_top_button(row, "CALC", "06A", func(): calc.toggle(true))
 	var hb := _top_button(row, "?", "03A", func(): sfx("tap"); help.open())
 	hb.size_flags_horizontal = Control.SIZE_FILL

@@ -1,0 +1,134 @@
+extends Control
+# The notepad (web / laptop only - her phone has no NOTES button): a sheet down the right-hand side to write
+# notes on while she reads, as she has no pen and paper to hand. It stays open across screens, saves as she
+# types (Game.notes, so Backup / Restore carry it too), and "+ Heading" drops in where she is (chapter and
+# lesson), so the notes follow the book.
+
+var main: Node
+var panel: PanelContainer
+var edit: TextEdit
+var status: Label
+var _save_in := -1.0   # seconds until the typing is saved, -1 = nothing waiting
+
+const PAPER := Color("fff6dc")
+const INK := Color("2b1d2a")
+
+func setup(m: Node) -> void:
+	main = m
+	visible = false
+	set_anchors_preset(Control.PRESET_FULL_RECT)
+	mouse_filter = Control.MOUSE_FILTER_IGNORE   # the page beside it stays usable
+	z_index = 40   # above the screens and theme trimmings, below the calculator and help
+	panel = PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = PAPER
+	sb.border_color = Color("6b3fa0")   # her favourite purple
+	sb.set_border_width_all(6)
+	sb.set_corner_radius_all(14)
+	sb.shadow_color = Color(0, 0, 0, 0.4)
+	sb.shadow_size = 12
+	sb.content_margin_left = 22; sb.content_margin_right = 22; sb.content_margin_top = 18; sb.content_margin_bottom = 18
+	panel.add_theme_stylebox_override("panel", sb)
+	add_child(panel)
+	var v := UI.vbox(10)
+	panel.add_child(v)
+	var top := UI.hbox(8)
+	var t := UI.title_label("NOTEPAD", 28, Color("6b3fa0"))
+	t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top.add_child(t)
+	var head := UI.button("+ Heading", "05A", _add_heading, true, 20)
+	head.size_flags_horizontal = Control.SIZE_SHRINK_END
+	head.custom_minimum_size = Vector2(150, 52)
+	top.add_child(head)
+	var close := UI.button("Close", "04A", func(): toggle(false), false, 20)
+	close.size_flags_horizontal = Control.SIZE_SHRINK_END
+	close.custom_minimum_size = Vector2(110, 52)
+	top.add_child(close)
+	v.add_child(top)
+	edit = TextEdit.new()
+	edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+	edit.placeholder_text = "Write anything here while you study - it saves as you type.\n\nTip: '+ Heading' adds the chapter and lesson you are on."
+	edit.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	edit.add_theme_font_override("font", UI.body_font)
+	edit.add_theme_font_size_override("font_size", 24)
+	edit.add_theme_color_override("font_color", INK)
+	edit.add_theme_color_override("font_placeholder_color", Color(INK, 0.45))
+	edit.add_theme_color_override("caret_color", INK)
+	edit.add_theme_color_override("selection_color", Color(0.42, 0.25, 0.63, 0.35))
+	var bg := StyleBoxFlat.new()
+	bg.bg_color = Color("fffdf4")
+	bg.border_color = Color("e2d3b0")
+	bg.set_border_width_all(2)
+	bg.set_corner_radius_all(8)
+	bg.content_margin_left = 12; bg.content_margin_right = 12; bg.content_margin_top = 10; bg.content_margin_bottom = 10
+	edit.add_theme_stylebox_override("normal", bg)
+	edit.add_theme_stylebox_override("focus", bg)
+	edit.text = str(Game.notes)
+	edit.text_changed.connect(_on_typed)
+	v.add_child(edit)
+	status = UI.label("Saved", 18, Color(INK, 0.6))
+	v.add_child(status)
+	relayout()
+
+# Docked down the right-hand side, a little over a third of the width, under the top buttons.
+func relayout() -> void:
+	var w := clampf(main.W * 0.36, 420.0, 640.0)
+	panel.position = Vector2(main.W - w - 12, 58)
+	panel.size = Vector2(w, main.H - 70)
+	_make_room()
+
+# While it is open the pages narrow to the left of it, so the lesson sits beside the notes rather than under them.
+func _make_room() -> void:
+	var space := (panel.size.x + 24.0) if visible else 0.0
+	for s in main.screens.values():
+		s.offset_right = -space
+
+func toggle(open: bool) -> void:
+	visible = open
+	_make_room()
+	if open:
+		edit.text = str(Game.notes)   # a Restore may have brought in other notes
+		relayout()
+		edit.grab_focus()
+		edit.set_caret_line(edit.get_line_count() - 1)
+		edit.set_caret_column(edit.get_line(edit.get_line_count() - 1).length())
+	else:
+		_save_now()
+
+func _on_typed() -> void:
+	_save_in = 0.8   # saved a moment after she stops typing
+	status.text = "Saving..."
+
+func _process(delta: float) -> void:
+	if _save_in < 0.0:
+		return
+	_save_in -= delta
+	if _save_in <= 0.0:
+		_save_now()
+
+func _save_now() -> void:
+	_save_in = -1.0
+	if Game.notes != edit.text:
+		Game.notes = edit.text
+		Game.save_game()
+	status.text = "Saved"
+
+# A heading for where she is: the chapter and lesson when reading one, otherwise the screen.
+func _add_heading() -> void:
+	main.sfx("tap")
+	var h := "Notes"
+	if main.cur_screen == "lesson":
+		var c = main.get_ch(int(main.book.L["chId"]))
+		var l: Dictionary = c["lessons"][int(main.book.L["li"])]
+		h = "Ch %d %s - Lesson %d: %s" % [int(main.book.L["chId"]), c["title"], int(main.book.L["li"]) + 1, l["title"]]
+	elif main.cur_screen == "book":
+		var c = main.get_ch(int(main.book.book_sel))
+		h = "Ch %d %s" % [int(main.book.book_sel), c["title"]]
+	elif main.cur_screen == "battle":
+		h = "Battle notes"
+	var add := ("" if edit.text.strip_edges() == "" else "\n\n") + "== " + h + " ==\n"
+	edit.text = edit.text.rstrip("\n ") + add if edit.text.strip_edges() != "" else add
+	edit.grab_focus()
+	edit.set_caret_line(edit.get_line_count() - 1)
+	edit.set_caret_column(0)
+	_save_in = 0.3

@@ -12,7 +12,7 @@ extends Node
 #   srs       "FFA/3/4", "FFA/card/12" -> { b, d }   spaced review: box 0-5 and the day it is next due
 
 const SAVE_PATH := "user://acca_study_buddy_save.json"
-const SAVED := ["progress", "stats", "mistakes", "xp", "lessons", "plan", "log", "dates", "srs"]
+const SAVED := ["progress", "stats", "mistakes", "xp", "lessons", "plan", "log", "dates", "srs", "notes"]
 # Daily Review: after each right answer a question waits longer before it comes back (1, 3, 7, 14, 30, 60 days);
 # a wrong answer or "I guessed" sends it back to tomorrow.
 
@@ -25,6 +25,7 @@ var plan = null
 var log: Dictionary = {}
 var dates: Dictionary = {}
 var srs: Dictionary = {}
+var notes: String = ""   # the notepad (web / laptop), saved with progress so Backup / Restore carry it
 const SRS_DAYS := [1, 3, 7, 14, 30, 60]
 var settings: Dictionary = {"voice": false, "sfx": true, "theme": "off", "sensei": "east", "ldn_default": true}   # theme: off/xmas/halloween; sensei: proper / east (East London)
 var exam_id: String = "FFA"
