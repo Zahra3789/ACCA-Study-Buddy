@@ -47,27 +47,35 @@ func show_book() -> void:
 	for i in spread.size():
 		(page_l if i < 2 else page_r).add_child(_chap_entry(spread[i]))
 	wrap.add_child(page_l); wrap.add_child(page_r)
-	var tabs := UI.vbox(2)
-	tabs.position = Vector2(668 - 30 - 60, 12)
-	for t in tabs_n:
-		var tt := t
-		var tab := Button.new()
-		tab.flat = true
-		tab.custom_minimum_size = Vector2(60, 60)
-		var im := UI.tex("Tab0%d_Right_%s" % [(t % 5) + 1, "Selected" if t == book_tab else "Normal"])
-		if im:
-			tab.icon = im
-			tab.expand_icon = true
-		tab.text = str(t * PER_SPREAD + 1)
-		tab.add_theme_font_size_override("font_size", 20)
-		tab.add_theme_color_override("font_color", UI.LIGHT)
-		tab.pressed.connect(func():
-			if tt != book_tab:
-				book_tab = tt
-				show_book())
-		tabs.add_child(tab)
-	wrap.add_child(tabs)
-	var wc := CenterContainer.new(); wc.add_child(wrap)
+	# turning the pages: an arrow either side of the book (her call - the coloured edge tabs looked off)
+	var flip := func(d: int) -> Button:
+		var to := book_tab + d
+		var b := UI.button("◀" if d < 0 else "▶", "05A", func():
+			main.sfx("page")
+			book_tab = to
+			show_book(), true, 34)
+		b.custom_minimum_size = Vector2(64, 120)
+		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		b.disabled = to < 0 or to >= tabs_n
+		b.modulate.a = 0.35 if b.disabled else 1.0
+		return b
+	var pages_lbl := UI.label("Chapters %d-%d of %d" % [start + 1, start + spread.size(), chs.size()], 22, UI.LIGHT, true)
+	var wc := UI.vbox(4)
+	wc.alignment = BoxContainer.ALIGNMENT_CENTER
+	var row := UI.hbox(8)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	if main.landscape:   # sideways there is room for the arrows either side of the book
+		row.add_child(flip.call(-1)); row.add_child(wrap); row.add_child(flip.call(1))
+		wc.add_child(row)
+		wc.add_child(pages_lbl)
+	else:   # upright the book fills the width, so the arrows sit in a row under it
+		var bc := CenterContainer.new(); bc.add_child(wrap)
+		wc.add_child(bc)
+		var l: Button = flip.call(-1); var r: Button = flip.call(1)
+		l.custom_minimum_size = Vector2(120, 64); r.custom_minimum_size = Vector2(120, 64)
+		pages_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(l); row.add_child(pages_lbl); row.add_child(r)
+		wc.add_child(row)
 	var side := v
 	var home_at := v
 	if main.landscape:   # held sideways: the book (Home under it) on the left, the chapter detail beside it
@@ -76,6 +84,8 @@ func show_book() -> void:
 		v.add_child(cols)
 		home_at = UI.vbox(6)
 		home_at.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		home_at.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		home_at.alignment = BoxContainer.ALIGNMENT_CENTER   # the book sits in the middle of its side, not stuck to the top
 		home_at.add_child(wc)
 		cols.add_child(home_at)
 		side = UI.vbox(8)

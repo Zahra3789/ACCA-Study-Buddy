@@ -771,7 +771,7 @@ func text_for(v: Control, s: String, size := 28) -> RichTextLabel:
 func show_title() -> void:
 	var s := screen("title")
 	var jh := journey_top(s)   # the moving banner runs edge to edge across the top; the title sits on its lower edge
-	var v := column(s, jh - 46, 26, 24, 14, [Color("141a33"), Color("3b2a52"), Color("2a1e2e")])
+	var v := column(s, (jh + 12) if landscape else (jh - 46), 26, 24, 14, [Color("141a33"), Color("3b2a52"), Color("2a1e2e")])   # sideways: under the banner, not over it
 	v.alignment = BoxContainer.ALIGNMENT_BEGIN
 	if not landscape:   # sideways the moving banner says enough; the space goes to Sensei and the cards
 		v.add_child(UI.banner("SAMURAI LEDGER"))
@@ -783,6 +783,7 @@ func show_title() -> void:
 		cols.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		v.add_child(cols)
 		left = UI.vbox(10); left.custom_minimum_size.x = 520
+		left.alignment = BoxContainer.ALIGNMENT_CENTER   # Sensei sits in the middle of his side, not stuck to the top
 		right = UI.vbox(8); right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		cols.add_child(left); cols.add_child(right)
 	var span := 616 if landscape else W   # width the decorations frame Zuru across

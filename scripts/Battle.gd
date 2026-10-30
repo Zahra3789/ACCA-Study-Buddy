@@ -75,7 +75,8 @@ func relayout() -> void:
 	ground_fill.size = Vector2(area.x, area.y - horizon)
 	lower.position = Vector2(area.x, 0) if main.landscape else Vector2(0, area.y)
 	lower.size = Vector2(main.W - area.x, main.H) if main.landscape else Vector2(main.W, main.H - area.y)
-	lower_margin.add_theme_constant_override("margin_top", 60 if main.landscape else 8)
+	# sideways the dialogue sits lower down its half, so it is not stuck to the top with empty space under it
+	lower_margin.add_theme_constant_override("margin_top", int(clampf(main.H * 0.16, 60.0, 200.0)) if main.landscape else 8)
 
 func _build() -> void:
 	var scr: Control = main.screens["battle"]
