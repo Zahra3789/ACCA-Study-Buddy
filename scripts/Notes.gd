@@ -6,6 +6,7 @@ extends Control
 
 var main: Node
 var panel: PanelContainer
+var top_fill: ColorRect
 var edit: TextEdit
 var status: Label
 var _save_in := -1.0   # seconds until the typing is saved, -1 = nothing waiting
@@ -19,14 +20,17 @@ func setup(m: Node) -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE   # the page beside it stays usable
 	z_index = 40   # above the screens and theme trimmings, below the calculator and help
+	top_fill = ColorRect.new()   # the notepad's paper carries on up behind the top buttons, so no black shows there
+	top_fill.color = PAPER
+	top_fill.z_as_relative = false
+	top_fill.z_index = -1   # above the page backgrounds, under the top buttons
+	add_child(top_fill)
 	panel = PanelContainer.new()
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = PAPER
 	sb.border_color = Color("6b3fa0")   # her favourite purple
-	sb.set_border_width_all(6)
-	sb.set_corner_radius_all(14)
-	sb.shadow_color = Color(0, 0, 0, 0.4)
-	sb.shadow_size = 12
+	sb.border_width_left = 5   # a single purple edge against the page; no dark shadow or gap round it
+	sb.corner_radius_top_left = 14; sb.corner_radius_bottom_left = 14
 	sb.content_margin_left = 22; sb.content_margin_right = 22; sb.content_margin_top = 18; sb.content_margin_bottom = 18
 	panel.add_theme_stylebox_override("panel", sb)
 	add_child(panel)
@@ -79,13 +83,15 @@ func setup(m: Node) -> void:
 # Docked down the right-hand side, a little over a third of the width, under the top buttons.
 func relayout() -> void:
 	var w := clampf(main.W * 0.36, 420.0, 640.0)
-	panel.position = Vector2(main.W - w - 12, 58)
-	panel.size = Vector2(w, main.H - 70)
+	panel.position = Vector2(main.W - w, 52)   # flush to the right edge, just under the top buttons
+	panel.size = Vector2(w, main.H - 52)
+	top_fill.position = Vector2(main.W - w, 0)
+	top_fill.size = Vector2(w, 54)
 	_make_room()
 
 # While it is open the pages narrow to the left of it, so the lesson sits beside the notes rather than under them.
 func _make_room() -> void:
-	var space := (panel.size.x + 24.0) if visible else 0.0
+	var space := panel.size.x if visible else 0.0   # exactly its width, so no strip of background shows between
 	for s in main.screens.values():
 		s.offset_right = -space
 
