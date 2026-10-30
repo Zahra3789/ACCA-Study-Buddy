@@ -773,7 +773,8 @@ func show_title() -> void:
 	var jh := journey_top(s)   # the moving banner runs edge to edge across the top; the title sits on its lower edge
 	var v := column(s, jh - 46, 26, 24, 14, [Color("141a33"), Color("3b2a52"), Color("2a1e2e")])
 	v.alignment = BoxContainer.ALIGNMENT_BEGIN
-	v.add_child(UI.banner("SAMURAI LEDGER"))
+	if not landscape:   # sideways the moving banner says enough; the space goes to Sensei and the cards
+		v.add_child(UI.banner("SAMURAI LEDGER"))
 	# held sideways: Zuru and Sensei on the left, the exam list on the right
 	var left := v
 	var right := v
@@ -912,7 +913,8 @@ func _exam_row(x: Dictionary) -> Control:
 func show_home() -> void:
 	var s := screen("home")
 	var jh := journey_top(s)   # the moving banner runs edge to edge across the top; the title sits on its lower edge
-	var v := column(s, jh - 46, 26, 14, 10, [Color("3b2a52"), Color("5a3a6e"), Color("2a1e2e")])
+	# upright the title sits on the banner's lower edge; sideways (laptops) there is no title and it all starts under the banner
+	var v := column(s, (jh + 12) if landscape else (jh - 46), 26, 14, 10, [Color("3b2a52"), Color("5a3a6e"), Color("2a1e2e")])
 	var right := v
 	if landscape:   # held sideways: banner, Zuru and Sensei on the left, the area cards on the right
 		var cols := UI.hbox(20)
@@ -925,7 +927,8 @@ func show_home() -> void:
 		right = UI.vbox(0); right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		cols.add_child(ls); cols.add_child(right)
 		v = left
-	v.add_child(UI.banner("SAMURAI LEDGER"))
+	if not landscape:   # sideways the moving banner says enough; the space goes to Sensei and the cards
+		v.add_child(UI.banner("SAMURAI LEDGER"))
 	var hero := UI.vbox(6)
 	var speech := UI.box("BGbox_04A", true, Vector4(36, 30, 36, 26))
 	speech.size_flags_horizontal = Control.SIZE_EXPAND_FILL
