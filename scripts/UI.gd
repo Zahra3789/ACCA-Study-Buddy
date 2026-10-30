@@ -234,7 +234,7 @@ func rich(text: String, size := 28, dark := true, center := false) -> RichTextLa
 	r.set_meta("base", text)
 	return r
 
-# Text that types itself out - only the chapter lesson pages now (everything else pops in, see pop_in).
+# Text that types itself out, like the battle dialogue (Sensei's messages, lesson pages, scroll answers).
 # The label keeps its full size from the start, so nothing jumps. About 28 letters a second (2.5 times slower than
 # it was - her reading pace), long pages finishing within 7 s.
 func typed(text: String, size := 28, dark := true, center := false) -> RichTextLabel:
@@ -256,7 +256,8 @@ func reading(text: String, size := 40) -> RichTextLabel:
 	r.text = bb(text, s)
 	_plain_digits = false
 	r.set_meta("base", text)
-	return type_in(r)
+	pop_in(r)
+	return r
 
 func type_in(r: RichTextLabel) -> RichTextLabel:
 	var n := plain(str(r.get_meta("base", r.text))).length()
@@ -266,8 +267,8 @@ func type_in(r: RichTextLabel) -> RichTextLabel:
 	r.set_meta("typing", tw)
 	return r
 
-# Everywhere but the chapters, text does not type itself out: it pops in whole, like a small pop-up (a quick
-# fade and grow with a little bounce). Long texts are still shown a piece at a time by whoever shows them.
+# Chapter pages do not type themselves out: each short page pops in whole, like a small pop-up (a quick fade and
+# grow with a little bounce). The pages are still split into small pieces (Book._chunks), shown one at a time.
 func pop_in(c: Control) -> Control:
 	c.modulate.a = 0.0
 	c.scale = Vector2(0.9, 0.9)
@@ -276,11 +277,6 @@ func pop_in(c: Control) -> Control:
 	tw.tween_property(c, "modulate:a", 1.0, 0.2)
 	tw.parallel().tween_property(c, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	return c
-
-func popped(text: String, size := 28, dark := true, center := false) -> RichTextLabel:
-	var r := rich(text, size, dark, center)
-	pop_in(r)
-	return r
 
 # Shows in full any text under root that is still typing. Returns true if there was some (so a tap only skips).
 func finish_typing(root: Node) -> bool:

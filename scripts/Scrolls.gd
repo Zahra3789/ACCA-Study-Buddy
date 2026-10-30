@@ -76,7 +76,7 @@ func _render() -> void:
 		v.add_child(UI.button("Reveal", "06A", func(): S["shown"] = true; main.sfx("page"); _render(), true, 28))
 		return
 	var back := UI.box("BGbox_04A", true, Vector4(36, 32, 36, 30))   # same light card as the front, so the answer reads clearly
-	UI.content(back).add_child(UI.popped(str(c["b"]), 26, true))
+	UI.content(back).add_child(UI.typed(str(c["b"]), 26, true))
 	v.add_child(back)
 	var row := UI.hbox(10)
 	row.add_child(UI.button("Not yet", "02A", func(): _mark(idx, false), true, 26))
