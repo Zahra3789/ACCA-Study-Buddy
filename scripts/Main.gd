@@ -841,7 +841,7 @@ func show_title() -> void:
 	else:
 		greet += " Which one are we training for today?"
 	var say := UI.box("BGbox_04A", true, Vector4(36, 30, 36, 26))
-	UI.content(say).add_child(UI.typed("[b]Sensei Otter:[/b] " + greet, 24, true, true))
+	UI.content(say).add_child(UI.popped("[b]Sensei Otter:[/b] " + greet, 24, true, true))
 	left.add_child(say)
 	var list := UI.vbox(8)
 	list.add_child(UI.button("Exam dates - set your sitting dates", "03A", planner.show_dates))
@@ -953,7 +953,7 @@ func show_home() -> void:
 	toprow.add_child(UI.button("📓 Notebook", "06A", planner.show_notebook, true, 24))
 	sv.add_child(toprow)
 	var nm := by_keys(Game.mistakes.keys()).size()
-	var say := UI.typed("[b]Sensei Otter:[/b] " + S("welcome_home") + " " + planner.plan_summary() + ((" %d wound%s to heal at the Shrine." % [nm, "" if nm == 1 else "s"]) if nm else ""), 24)
+	var say := UI.popped("[b]Sensei Otter:[/b] " + S("welcome_home") + " " + planner.plan_summary() + ((" %d wound%s to heal at the Shrine." % [nm, "" if nm == 1 else "s"]) if nm else ""), 24)
 	say.name = "homeSay"
 	sv.add_child(say)
 	var rd := readiness()
@@ -1059,7 +1059,7 @@ func home_say(text: String) -> void:
 	var r: RichTextLabel = screens["home"].find_child("homeSay", true, false)
 	if r:
 		UI.set_rich(r, "[b]Sensei Otter:[/b] " + text, 24)
-		UI.type_in(r)
+		UI.pop_in(r)
 
 func _ask_reset() -> void:
 	var cards: GridContainer = screens["home"].find_child("cards", true, false)

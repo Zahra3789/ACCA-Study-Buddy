@@ -234,7 +234,7 @@ func rich(text: String, size := 28, dark := true, center := false) -> RichTextLa
 	r.set_meta("base", text)
 	return r
 
-# Text that types itself out, like the battle dialogue (Sensei's messages, lesson pages, scroll answers).
+# Text that types itself out - only the chapter lesson pages now (everything else pops in, see pop_in).
 # The label keeps its full size from the start, so nothing jumps. About 28 letters a second (2.5 times slower than
 # it was - her reading pace), long pages finishing within 7 s.
 func typed(text: String, size := 28, dark := true, center := false) -> RichTextLabel:
@@ -264,6 +264,22 @@ func type_in(r: RichTextLabel) -> RichTextLabel:
 	var tw := create_tween()
 	tw.tween_property(r, "visible_ratio", 1.0, clampf(n / 70.0 * 2.5, 0.75, 7.0))
 	r.set_meta("typing", tw)
+	return r
+
+# Everywhere but the chapters, text does not type itself out: it pops in whole, like a small pop-up (a quick
+# fade and grow with a little bounce). Long texts are still shown a piece at a time by whoever shows them.
+func pop_in(c: Control) -> Control:
+	c.modulate.a = 0.0
+	c.scale = Vector2(0.9, 0.9)
+	var tw := c.create_tween()
+	tw.tween_callback(func(): c.pivot_offset = c.size / 2.0)
+	tw.tween_property(c, "modulate:a", 1.0, 0.2)
+	tw.parallel().tween_property(c, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	return c
+
+func popped(text: String, size := 28, dark := true, center := false) -> RichTextLabel:
+	var r := rich(text, size, dark, center)
+	pop_in(r)
 	return r
 
 # Shows in full any text under root that is still typing. Returns true if there was some (so a tap only skips).

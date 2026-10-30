@@ -456,12 +456,9 @@ func type_text(text: String) -> void:
 	UI.set_rich(dlg_text, text, 26)
 	typing = true
 	skip = false
-	dlg_text.visible_characters = 0
-	var total := dlg_text.get_total_character_count()
-	while dlg_text.visible_characters < total and not skip:
-		dlg_text.visible_characters += 2
-		await get_tree().process_frame
-	dlg_text.visible_characters = -1
+	dlg_text.visible_characters = -1   # each short page pops in whole (no typing) - see UI.pop_in
+	UI.pop_in(dlg_text)
+	await get_tree().create_timer(0.3).timeout
 	typing = false
 
 # Short dialogue pages: split on blank lines, then sentences, about 150 characters a page.
