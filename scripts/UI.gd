@@ -64,7 +64,7 @@ func tex(name: String) -> Texture2D:
 # ---------------------------------------------------------------- styleboxes
 # 9-slice frame: slice 48 px all round (the pack's BGbox art), content inset so text never touches the frame.
 func box_style(name: String, inset := Vector4(36, 40, 36, 36)) -> StyleBox:
-	var t := tex(name)
+	var t := tex(_art(name))
 	if t == null:
 		var f := StyleBoxFlat.new()
 		f.bg_color = Color("c9a97a") if name.begins_with("BGbox_0") else Color("3b3550")
@@ -78,17 +78,18 @@ func box_style(name: String, inset := Vector4(36, 40, 36, 36)) -> StyleBox:
 	s.texture_margin_left = 48; s.texture_margin_top = 48; s.texture_margin_right = 48; s.texture_margin_bottom = 48
 	s.content_margin_left = inset.x; s.content_margin_top = inset.y; s.content_margin_right = inset.z; s.content_margin_bottom = inset.w
 	s.draw_center = true
-	if name == "BGbox_01B":   # the pale lavender box read badly under light text: tinted a bold royal purple (her favourite)
-		s.modulate_color = PURPLE_TINT
 	return s
 
-const PURPLE_TINT := Color(0.72, 0.45, 1.0)
+# The pale lavender box read badly under light text (and the purple tint wasn't her taste): it is drawn as the
+# parchment scroll instead, with dark text.
+func _art(name: String) -> String:
+	return "BGbox_04A" if name == "BGbox_01B" else name
 
 # The same framed box drawn at half size (crisp pixel art, half as thick), for small cards that must fit many to a screen.
 var _half := {}
 func small_box(style_name: String, dark := true, inset := Vector4(20, 18, 20, 16)) -> PanelContainer:
 	var p := box(style_name, dark, inset)
-	var t := tex(style_name)
+	var t := tex(_art(style_name))
 	if t != null:
 		if not _half.has(style_name):
 			var img := t.get_image()
@@ -101,8 +102,6 @@ func small_box(style_name: String, dark := true, inset := Vector4(20, 18, 20, 16
 		s.texture_margin_left = 24; s.texture_margin_top = 24; s.texture_margin_right = 24; s.texture_margin_bottom = 24
 		s.content_margin_left = inset.x; s.content_margin_top = inset.y; s.content_margin_right = inset.z; s.content_margin_bottom = inset.w
 		s.draw_center = true
-		if style_name == "BGbox_01B":
-			s.modulate_color = PURPLE_TINT
 		p.add_theme_stylebox_override("panel", s)
 	return p
 
@@ -151,6 +150,8 @@ func banner_style(name: String) -> StyleBox:
 # ---------------------------------------------------------------- controls
 # A framed panel with a vertical content box inside.
 func box(style_name: String, dark := true, inset := Vector4(36, 40, 36, 36)) -> PanelContainer:
+	if style_name == "BGbox_01B":   # drawn as the parchment scroll (_art), so its text is dark
+		dark = true
 	var p := PanelContainer.new()
 	p.add_theme_stylebox_override("panel", box_style(style_name, inset))
 	var v := VBoxContainer.new()

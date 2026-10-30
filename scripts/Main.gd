@@ -41,7 +41,7 @@ const AREAS := [
 	{"id": "boss", "name": "Boss Arena", "sub": "Boss gauntlet - 32 bosses a lap", "box": "BGbox_07A", "icon": "Icon_06", "dark": false},
 	{"id": "bank", "name": "Training Grounds", "sub": "Drill by topic or type", "box": "BGbox_02B", "icon": "Icon_03", "dark": false},
 	{"id": "heal", "name": "Healer's Shrine", "sub": "Fix your mistakes", "box": "BGbox_01A", "icon": "Icon_09", "dark": true},
-	{"id": "mock", "name": "Exam Hall", "sub": "Five timed mock exams", "box": "BGbox_01B", "icon": "Icon_12", "dark": false},
+	{"id": "mock", "name": "Exam Hall", "sub": "Five timed mock exams", "box": "BGbox_01B", "icon": "Icon_12", "dark": true},
 	{"id": "rec", "name": "Hall of Records", "sub": "Strengths & weak spots", "box": "BGbox_05A", "icon": "Icon_01", "dark": true},
 ]
 
@@ -755,6 +755,8 @@ func column(s: Control, top := 58, side := 26, bottom := 20, sep := 14, bg: Arra
 # Menu screen: banner, framed scrolling panel, Home button. Returns the panel's content box.
 func menu(title: String, box_name := "BGbox_01B", dark := false) -> VBoxContainer:
 	menu_title = title
+	if box_name == "BGbox_01B":   # drawn as the parchment scroll (UI._art): dark text reads on it
+		dark = true
 	var s := screen("menu")
 	var v := column(s, 58, 26, 24, 16, [Color("24314f"), Color("283a5a"), Color("2a1e2e")])
 	v.add_child(UI.banner(title))
