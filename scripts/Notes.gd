@@ -1,12 +1,11 @@
 extends Control
 # The notepad (web / laptop only - her phone has no NOTES button): a sheet down the right-hand side to write
-# notes on while she reads, as she has no pen and paper to hand. It stays open across screens, saves as she
-# types (Game.notes, so Backup / Restore carry it too), and "+ Heading" drops in where she is (chapter and
-# lesson), so the notes follow the book.
+# notes on while she reads (laid over the page), as she has no pen and paper to hand. It stays open across screens, saves as she
+# types (Game.notes, so Backup / Restore carry it too). "Heading" turns the line she is on into a heading (a gold
+# band) and "+ Lesson" drops in where she is (chapter and lesson), so the notes follow the book.
 
 var main: Node
 var panel: PanelContainer
-var top_fill: ColorRect
 var edit: TextEdit
 var status: Label
 var _save_in := -1.0   # seconds until the typing is saved, -1 = nothing waiting
@@ -20,11 +19,6 @@ func setup(m: Node) -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE   # the page beside it stays usable
 	z_index = 40   # above the screens and theme trimmings, below the calculator and help
-	top_fill = ColorRect.new()   # the notepad's paper carries on up behind the top buttons, so no black shows there
-	top_fill.color = PAPER
-	top_fill.z_as_relative = false
-	top_fill.z_index = -1   # above the page backgrounds, under the top buttons
-	add_child(top_fill)
 	panel = PanelContainer.new()
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = PAPER
@@ -40,9 +34,13 @@ func setup(m: Node) -> void:
 	var t := UI.title_label("NOTEPAD", 28, Color("6b3fa0"))
 	t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(t)
-	var head := UI.button("+ Heading", "05A", _add_heading, true, 20)
+	var mk := UI.button("Heading", "03A", _make_heading, false, 20)   # this line <-> a heading
+	mk.size_flags_horizontal = Control.SIZE_SHRINK_END
+	mk.custom_minimum_size = Vector2(130, 52)
+	top.add_child(mk)
+	var head := UI.button("+ Lesson", "05A", _add_heading, true, 20)   # a heading for where she is
 	head.size_flags_horizontal = Control.SIZE_SHRINK_END
-	head.custom_minimum_size = Vector2(150, 52)
+	head.custom_minimum_size = Vector2(130, 52)
 	top.add_child(head)
 	var close := UI.button("Close", "04A", func(): toggle(false), false, 20)
 	close.size_flags_horizontal = Control.SIZE_SHRINK_END
@@ -51,7 +49,7 @@ func setup(m: Node) -> void:
 	v.add_child(top)
 	edit = TextEdit.new()
 	edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
-	edit.placeholder_text = "Write anything here while you study - it saves as you type.\n\nTip: '+ Heading' adds the chapter and lesson you are on."
+	edit.placeholder_text = "Write anything here while you study - it saves as you type.\n\n'Heading' turns the line you are on into a heading.\n'+ Lesson' adds the chapter and lesson you are on."
 	edit.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	edit.add_theme_font_override("font", UI.body_font)
 	edit.add_theme_font_size_override("font_size", 24)
@@ -80,20 +78,11 @@ func setup(m: Node) -> void:
 	v.add_child(status)
 	relayout()
 
-# Docked down the right-hand side, a little over a third of the width, under the top buttons.
+# Over the right-hand side of the page (an overlay: nothing else moves or shrinks), under the top buttons.
 func relayout() -> void:
 	var w := clampf(main.W * 0.36, 420.0, 640.0)
 	panel.position = Vector2(main.W - w, 52)   # flush to the right edge, just under the top buttons
 	panel.size = Vector2(w, main.H - 52)
-	top_fill.position = Vector2(main.W - w, 0)
-	top_fill.size = Vector2(w, 54)
-	_make_room()
-
-# While it is open the pages narrow to the left of it, so the lesson sits beside the notes rather than under them.
-func _make_room() -> void:
-	var space := panel.size.x if visible else 0.0   # exactly its width, so no strip of background shows between
-	for s in main.screens.values():
-		s.offset_right = -space
 
 var _anim: Tween
 
@@ -103,7 +92,6 @@ func toggle(open: bool) -> void:
 		_anim.kill()
 	if open:
 		visible = true
-		_make_room()
 		edit.text = str(Game.notes)   # a Restore may have brought in other notes
 		_paint_headings()
 		relayout()
@@ -129,7 +117,6 @@ func _closed() -> void:
 	visible = false
 	panel.scale = Vector2.ONE
 	panel.modulate.a = 1.0
-	_make_room()
 
 func _on_typed() -> void:
 	_save_in = 0.8   # saved a moment after she stops typing
@@ -180,3 +167,20 @@ func _add_heading() -> void:
 	edit.set_caret_line(edit.get_line_count() - 1)
 	edit.set_caret_column(0)
 	_save_in = 0.3
+
+# 'Heading': the line she is on becomes a heading (gold band, dark red), or back to plain text if it already is one.
+func _make_heading() -> void:
+	main.sfx("tap")
+	var i := edit.get_caret_line()
+	var t := edit.get_line(i).strip_edges()
+	if t.begins_with("==") and t.ends_with("==") and t.length() > 4:
+		t = t.trim_prefix("==").trim_suffix("==").strip_edges()
+	elif t == "":
+		t = "== New heading =="
+	else:
+		t = "== " + t + " =="
+	edit.set_line(i, t)
+	edit.set_caret_line(i)
+	edit.set_caret_column(t.length())
+	edit.grab_focus()
+	_on_typed()
