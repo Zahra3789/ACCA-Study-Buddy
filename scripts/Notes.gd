@@ -48,7 +48,7 @@ func setup(m: Node) -> void:
 	v.add_child(top)
 	edit = TextEdit.new()
 	edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
-	edit.placeholder_text = "Write anything here while you study - it saves as you type.\n\n'Heading' turns the line you are on into a heading.\n'+ Lesson' adds the chapter and lesson you are on."
+	edit.placeholder_text = "Write anything here while you study - it saves as you type.\n\nType a heading, then tap 'Heading' to turn that line gold."
 	edit.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	edit.add_theme_font_override("font", UI.body_font)
 	edit.add_theme_font_size_override("font_size", 24)
