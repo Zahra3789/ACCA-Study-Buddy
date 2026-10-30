@@ -2,13 +2,21 @@ extends Control
 # The notepad (web / laptop only - her phone has no NOTES button): a sheet down the right-hand side to write
 # notes on while she reads (laid over the page), as she has no pen and paper to hand. It stays open across screens, saves as she
 # types (Game.notes, so Backup / Restore carry it too). She types a line, then "Heading" turns it into a heading
-# (a gold band); tapping it again turns it back into plain text.
+# (a gold band); tapping it again turns it back into plain text. Like the calculator it can be dragged by its title,
+# resized from the ◢ corner and shrunk to a bar with _, and it remembers where she left it.
 
 var main: Node
 var panel: PanelContainer
 var edit: TextEdit
 var status: Label
 var _save_in := -1.0   # seconds until the typing is saved, -1 = nothing waiting
+var title: Label
+var mini_btn: Button
+var bottom: HBoxContainer
+var mini := false      # shrunk to just its title bar
+var dragging := false
+var resizing := false
+var drag_off := Vector2.ZERO
 
 const PAPER := Color("fff6dc")
 const INK := Color("2b1d2a")
@@ -34,9 +42,17 @@ func setup(m: Node) -> void:
 	var v := UI.vbox(10)
 	panel.add_child(v)
 	var top := UI.hbox(8)
-	var t := UI.title_label("NOTEPAD", 28, Color("6b3fa0"))
-	t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	top.add_child(t)
+	title = UI.title_label("NOTEPAD  (drag me)", 26, Color("6b3fa0"))   # like the calculator: drag it by its title
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.mouse_filter = Control.MOUSE_FILTER_STOP
+	title.autowrap_mode = TextServer.AUTOWRAP_OFF
+	title.clip_text = true
+	title.gui_input.connect(_title_input)
+	top.add_child(title)
+	mini_btn = UI.button("_", "03A", func(): set_mini(not mini), false, 22)   # shrink to a bar / open full again
+	mini_btn.size_flags_horizontal = Control.SIZE_SHRINK_END
+	mini_btn.custom_minimum_size = Vector2(56, 52)
+	top.add_child(mini_btn)
 	var mk := UI.button("Heading", "03A", _make_heading, false, 20)   # this line <-> a heading
 	mk.size_flags_horizontal = Control.SIZE_SHRINK_END
 	mk.custom_minimum_size = Vector2(130, 52)
@@ -73,15 +89,76 @@ func setup(m: Node) -> void:
 	edit.text_changed.connect(_on_typed)
 	v.add_child(edit)
 	_paint_headings()
+	bottom = UI.hbox(8)
 	status = UI.label("Saved", 18, Color(INK, 0.6))
-	v.add_child(status)
+	status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bottom.add_child(status)
+	var grip := UI.label("◢", 40, Color("8a4b22"))   # drag the corner to make it bigger or smaller
+	grip.size_flags_horizontal = Control.SIZE_SHRINK_END
+	grip.mouse_filter = Control.MOUSE_FILTER_STOP
+	grip.mouse_default_cursor_shape = Control.CURSOR_FDIAGSIZE
+	grip.gui_input.connect(_grip_input)
+	bottom.add_child(grip)
+	v.add_child(bottom)
+	mini = bool(_layout().get("mini", false))
 	relayout()
 
-# Over the right-hand side of the page (an overlay: nothing else moves or shrinks), under the top buttons.
+# Over the page (an overlay: nothing else moves or shrinks). At first down the right-hand side under the top
+# buttons; once she drags or resizes it, it stays where she put it (Game.settings.notes_layout), kept on screen.
 func relayout() -> void:
 	var w := clampf(main.W * 0.36, 420.0, 640.0)
-	panel.position = Vector2(main.W - w - 14, 60)   # a small gap from the screen edges, under the top buttons
-	panel.size = Vector2(w, main.H - 74)
+	var r := Rect2(main.W - w - 14, 60, w, main.H - 74)
+	var d := _layout()
+	if d.has("w"):
+		r = Rect2(float(d["x"]), float(d["y"]), float(d["w"]), float(d["h"]))
+	r.size = Vector2(clampf(r.size.x, MIN_SIZE.x, main.W - 20), clampf(r.size.y, MIN_SIZE.y, main.H - 64))
+	edit.visible = not mini
+	bottom.visible = not mini
+	mini_btn.text = "▢" if mini else "_"
+	panel.size = Vector2(r.size.x, 1) if mini else r.size   # shrunk: as short as the title bar allows
+	panel.position = Vector2(clampf(r.position.x, 0, main.W - panel.size.x), clampf(r.position.y, 58, maxf(58, main.H - panel.size.y)))
+
+const MIN_SIZE := Vector2(460, 300)
+
+func _layout() -> Dictionary:
+	var d = Game.settings.get("notes_layout", {})
+	return d if typeof(d) == TYPE_DICTIONARY else {}
+
+func _save_layout() -> void:
+	var h := panel.size.y if not mini else float(_layout().get("h", main.H - 74))
+	Game.remember("notes_layout", {"x": panel.position.x, "y": panel.position.y, "w": panel.size.x, "h": h, "mini": mini})
+
+func _title_input(e: InputEvent) -> void:
+	if e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT:
+		dragging = e.pressed
+		drag_off = get_global_mouse_position() - panel.global_position
+		if not dragging:
+			_save_layout()
+	elif e is InputEventMouseMotion and dragging:
+		var p := get_global_mouse_position() - drag_off
+		panel.position = Vector2(clampf(p.x, 0, main.W - panel.size.x), clampf(p.y, 58, maxf(58, main.H - panel.size.y)))
+
+func _grip_input(e: InputEvent) -> void:
+	if e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT:
+		resizing = e.pressed
+		if not resizing:
+			_save_layout()
+	elif e is InputEventMouseMotion and resizing:
+		var m := get_global_mouse_position()
+		panel.size = Vector2(clampf(m.x - panel.position.x + 20, MIN_SIZE.x, main.W - panel.position.x), clampf(m.y - panel.position.y + 20, MIN_SIZE.y, main.H - panel.position.y))
+
+# _ shrinks the notepad to a small bar so the page underneath can be read; ▢ opens it full again.
+func set_mini(on: bool) -> void:
+	main.sfx("tap")
+	if on and not mini:
+		_save_layout()   # keep the full size to come back to
+	mini = on
+	var d := _layout().duplicate()   # only the flag changes: the full size she had is kept for when it opens again
+	d["mini"] = mini
+	Game.remember("notes_layout", d)
+	relayout()
+	if not mini:
+		edit.grab_focus()
 
 var _anim: Tween
 
@@ -94,7 +171,7 @@ func toggle(open: bool) -> void:
 		edit.text = str(Game.notes)   # a Restore may have brought in other notes
 		_paint_headings()
 		relayout()
-		panel.pivot_offset = Vector2(panel.size.x - 90.0, 0.0)   # under the NOTES button
+		panel.pivot_offset = Vector2(panel.size.x * 0.5, 0.0)   # from its top edge, wherever she has put it
 		panel.scale = Vector2(0.2, 0.2)
 		panel.modulate.a = 0.0
 		_anim = create_tween().set_parallel(true)
