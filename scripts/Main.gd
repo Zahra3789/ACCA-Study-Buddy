@@ -236,6 +236,8 @@ func _apply_orientation(rebuild: bool) -> void:
 		return
 	var wide := win.x > win.y
 	var base := Vector2i(1280, 720) if wide else Vector2i(720, 1280)
+	if wide and (OS.has_feature("web") or OS.has_feature("pc")):   # a laptop or desktop window: a roomier layout, so it all fits instead of looking zoomed in
+		base = Vector2i(1600, 900)
 	var k := minf(float(win.x) / base.x, float(win.y) / base.y)
 	var w := int(round(win.x / k))
 	var h := int(round(win.y / k))
