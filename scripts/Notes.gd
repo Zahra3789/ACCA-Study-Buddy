@@ -83,17 +83,40 @@ func _make_room() -> void:
 	for s in main.screens.values():
 		s.offset_right = -space
 
+var _anim: Tween
+
+# It pops out of the NOTES button (top right) with a little bounce, and shrinks back into it when closed.
 func toggle(open: bool) -> void:
-	visible = open
-	_make_room()
+	if _anim and _anim.is_valid():
+		_anim.kill()
 	if open:
+		visible = true
+		_make_room()
 		edit.text = str(Game.notes)   # a Restore may have brought in other notes
 		relayout()
+		panel.pivot_offset = Vector2(panel.size.x - 90.0, 0.0)   # under the NOTES button
+		panel.scale = Vector2(0.2, 0.2)
+		panel.modulate.a = 0.0
+		_anim = create_tween().set_parallel(true)
+		_anim.tween_property(panel, "scale", Vector2.ONE, 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		_anim.tween_property(panel, "modulate:a", 1.0, 0.18)
 		edit.grab_focus()
 		edit.set_caret_line(edit.get_line_count() - 1)
 		edit.set_caret_column(edit.get_line(edit.get_line_count() - 1).length())
 	else:
 		_save_now()
+		if not visible:
+			return
+		_anim = create_tween().set_parallel(true)
+		_anim.tween_property(panel, "scale", Vector2(0.2, 0.2), 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+		_anim.tween_property(panel, "modulate:a", 0.0, 0.2)
+		_anim.chain().tween_callback(_closed)
+
+func _closed() -> void:
+	visible = false
+	panel.scale = Vector2.ONE
+	panel.modulate.a = 1.0
+	_make_room()
 
 func _on_typed() -> void:
 	_save_in = 0.8   # saved a moment after she stops typing
