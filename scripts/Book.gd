@@ -334,7 +334,7 @@ func render_lesson() -> void:
 	match phase:
 		"learn":
 			var p: Dictionary = l["learn"][i]
-			box.add_child(UI.typed(str(p.get("text", "")), 40))
+			box.add_child(UI.reading(str(p.get("text", ""))))
 			if p.has("table"):
 				box.add_child(UI.table(p["table"]))
 			box.add_child(UI.label("Page %d of %d" % [i + 1, l["learn"].size()], 22, UI.BROWN))
@@ -358,7 +358,7 @@ func render_lesson() -> void:
 			head.add_theme_stylebox_override("panel", hs)
 			head.add_child(UI.label("🍋 " + str(a.get("title", "Zuru's Lemonade Stand")), 30, UI.GREEN))
 			box.add_child(head)
-			box.add_child(UI.typed(str(p.get("text", "")), 40))
+			box.add_child(UI.reading(str(p.get("text", ""))))
 			if p.has("table"):
 				box.add_child(UI.table(p["table"]))
 			box.add_child(UI.label("Scene %d of %d" % [i + 1, a["pages"].size()], 22, UI.BROWN))
@@ -377,7 +377,7 @@ func render_lesson() -> void:
 		"example":
 			var ex: Dictionary = l["example"]
 			box.add_child(UI.rich("[b]%s[/b] - step %d of %d" % [ex["title"], i + 1, ex["steps"].size()], 34))
-			box.add_child(UI.typed(str(ex["steps"][i]), 40))
+			box.add_child(UI.reading(str(ex["steps"][i])))
 			box.add_child(UI.table(ex["table"], i + 1))
 			var n_steps: int = ex["steps"].size()
 			nav.add_child(UI.button("Back", "04A", func():

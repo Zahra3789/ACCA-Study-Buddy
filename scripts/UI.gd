@@ -23,6 +23,7 @@ var digit_font: Font
 var title_font: Font
 var title_o_font: Font
 var has_pack := false
+var _plain_digits := false   # reading text is all VT323 already, so its digits need no swap
 var compact := false   # set by Main when the phone is held sideways: slimmer banners
 var _tex_cache: Dictionary = {}
 
@@ -239,6 +240,24 @@ func rich(text: String, size := 28, dark := true, center := false) -> RichTextLa
 func typed(text: String, size := 28, dark := true, center := false) -> RichTextLabel:
 	return type_in(rich(text, size, dark, center))
 
+# Chapter reading text (lesson pages, story scenes, worked examples) in VT323, the old-computer font she finds
+# easiest to read. It runs small for its size, so it is drawn a quarter bigger, with a little more space between lines.
+func reading(text: String, size := 40) -> RichTextLabel:
+	var s := int(size * 1.25)
+	var r := rich("", s)
+	var bold := FontVariation.new()   # VT323 has no bold of its own
+	bold.base_font = digit_font
+	bold.variation_embolden = 0.5
+	r.add_theme_font_override("normal_font", digit_font)
+	r.add_theme_font_override("italics_font", digit_font)
+	r.add_theme_font_override("bold_font", bold)
+	r.add_theme_constant_override("line_separation", 6)
+	_plain_digits = true
+	r.text = bb(text, s)
+	_plain_digits = false
+	r.set_meta("base", text)
+	return type_in(r)
+
 func type_in(r: RichTextLabel) -> RichTextLabel:
 	var n := plain(str(r.get_meta("base", r.text))).length()
 	r.visible_ratio = 0.0
@@ -284,7 +303,7 @@ func bb(text: String, size := 28) -> String:
 	return nums(s, size)
 
 func nums(s: String, size: int) -> String:
-	if digit_font == body_font:
+	if digit_font == body_font or _plain_digits:
 		return s
 	var re := RegEx.new()
 	re.compile("[0-9][0-9,.]*")
