@@ -63,9 +63,15 @@ func setup(m: Node) -> void:
 	bg.content_margin_left = 12; bg.content_margin_right = 12; bg.content_margin_top = 10; bg.content_margin_bottom = 10
 	edit.add_theme_stylebox_override("normal", bg)
 	edit.add_theme_stylebox_override("focus", bg)
+	# headings ("== ... ==") in dark red on a gold band, so they stand out as headings
+	var hl := CodeHighlighter.new()
+	hl.add_color_region("==", "==", HEAD_INK, true)
+	hl.number_color = INK; hl.symbol_color = INK; hl.function_color = INK; hl.member_variable_color = INK
+	edit.syntax_highlighter = hl
 	edit.text = str(Game.notes)
 	edit.text_changed.connect(_on_typed)
 	v.add_child(edit)
+	_paint_headings()
 	status = UI.label("Saved", 18, Color(INK, 0.6))
 	v.add_child(status)
 	relayout()
@@ -93,6 +99,7 @@ func toggle(open: bool) -> void:
 		visible = true
 		_make_room()
 		edit.text = str(Game.notes)   # a Restore may have brought in other notes
+		_paint_headings()
 		relayout()
 		panel.pivot_offset = Vector2(panel.size.x - 90.0, 0.0)   # under the NOTES button
 		panel.scale = Vector2(0.2, 0.2)
@@ -121,6 +128,17 @@ func _closed() -> void:
 func _on_typed() -> void:
 	_save_in = 0.8   # saved a moment after she stops typing
 	status.text = "Saving..."
+	_paint_headings()
+
+const HEAD_BAND := Color("f2c14e")   # the gold of the game's buttons
+const HEAD_INK := Color("8c2b3c")
+
+# Every heading line gets the gold band (a line typed as "== something ==" counts too).
+func _paint_headings() -> void:
+	for i in edit.get_line_count():
+		var t := edit.get_line(i).strip_edges()
+		var head := t.begins_with("==") and t.ends_with("==") and t.length() > 4
+		edit.set_line_background_color(i, HEAD_BAND if head else Color(0, 0, 0, 0))
 
 func _process(delta: float) -> void:
 	if _save_in < 0.0:
@@ -151,6 +169,7 @@ func _add_heading() -> void:
 		h = "Battle notes"
 	var add := ("" if edit.text.strip_edges() == "" else "\n\n") + "== " + h + " ==\n"
 	edit.text = edit.text.rstrip("\n ") + add if edit.text.strip_edges() != "" else add
+	_paint_headings()
 	edit.grab_focus()
 	edit.set_caret_line(edit.get_line_count() - 1)
 	edit.set_caret_column(0)
