@@ -22,9 +22,12 @@ func setup(m: Node) -> void:
 	panel = PanelContainer.new()
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = PAPER
-	sb.border_color = Color("6b3fa0")   # her favourite purple
-	sb.border_width_left = 5   # a single purple edge against the page; no dark shadow or gap round it
-	sb.corner_radius_top_left = 14; sb.corner_radius_bottom_left = 14
+	sb.border_color = Color("8a4b22")   # a warm brown frame all round, like the game's wooden frames
+	sb.set_border_width_all(7)
+	sb.set_corner_radius_all(16)
+	sb.shadow_color = Color(0.1, 0.05, 0.02, 0.35)   # a soft brown shadow so it lifts off the page
+	sb.shadow_size = 10
+	sb.shadow_offset = Vector2(-3, 4)
 	sb.content_margin_left = 22; sb.content_margin_right = 22; sb.content_margin_top = 18; sb.content_margin_bottom = 18
 	panel.add_theme_stylebox_override("panel", sb)
 	add_child(panel)
@@ -81,8 +84,8 @@ func setup(m: Node) -> void:
 # Over the right-hand side of the page (an overlay: nothing else moves or shrinks), under the top buttons.
 func relayout() -> void:
 	var w := clampf(main.W * 0.36, 420.0, 640.0)
-	panel.position = Vector2(main.W - w, 52)   # flush to the right edge, just under the top buttons
-	panel.size = Vector2(w, main.H - 52)
+	panel.position = Vector2(main.W - w - 14, 60)   # a small gap from the screen edges, under the top buttons
+	panel.size = Vector2(w, main.H - 74)
 
 var _anim: Tween
 
@@ -175,8 +178,10 @@ func _make_heading() -> void:
 	var t := edit.get_line(i).strip_edges()
 	if t.begins_with("==") and t.ends_with("==") and t.length() > 4:
 		t = t.trim_prefix("==").trim_suffix("==").strip_edges()
-	elif t == "":
-		t = "== New heading =="
+	elif t == "":   # nothing typed yet: she types the heading first, then taps Heading
+		status.text = "Type your heading first, then tap Heading."
+		edit.grab_focus()
+		return
 	else:
 		t = "== " + t + " =="
 	edit.set_line(i, t)
